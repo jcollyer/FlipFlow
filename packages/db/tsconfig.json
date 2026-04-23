@@ -1,0 +1,8 @@
+{
+  "extends": "@flipflow/config/tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts"]
+}

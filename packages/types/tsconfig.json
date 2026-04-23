@@ -1,0 +1,4 @@
+{
+  "extends": "@flipflow/config/tsconfig.node.json",
+  "include": ["src/**/*.ts"]
+}
