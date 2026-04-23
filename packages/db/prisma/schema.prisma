@@ -7,6 +7,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Generate into our own package so npm workspaces hoisting doesn't hide
+  // the client from `prisma generate`. Imported via @flipflow/db.
+  output   = "../src/generated/client"
 }
 
 datasource db {

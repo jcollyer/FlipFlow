@@ -30,6 +30,7 @@ yarn-error.log*
 
 # Prisma
 packages/db/prisma/migrations/dev.db*
+packages/db/src/generated/
 
 # Coverage
 coverage/

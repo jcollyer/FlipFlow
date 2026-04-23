@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/client';
 
 // Reuse a single PrismaClient instance across hot-reloads in dev so we don't
 // exhaust the database connection pool.
@@ -17,4 +17,4 @@ if (process.env.NODE_ENV !== 'production') {
   globalThis.__flipflow_prisma__ = prisma;
 }
 
-export * from '@prisma/client';
+export * from './generated/client';
