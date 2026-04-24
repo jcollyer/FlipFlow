@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 
 import { prisma } from '@flipflow/db';
 import { auth } from '@/server/auth';
@@ -18,16 +19,45 @@ import { auth } from '@/server/auth';
  * No changes to `@flipflow/api` — this bridge lives entirely in the Next app.
  */
 export async function GET(req: Request) {
+  // In Next.js route handlers behind a proxy (ngrok, Vercel, etc.) `req.url`
+  // can reflect the internal origin (http://localhost:3000) instead of the
+  // public one. Prefer AUTH_URL, then x-forwarded-*, and fall back to req.url.
+  const h = await headers();
+  const forwardedHost = h.get('x-forwarded-host') ?? h.get('host');
+  const forwardedProto = h.get('x-forwarded-proto') ?? 'https';
+  const publicOrigin =
+    process.env.AUTH_URL ||
+    (forwardedHost ? `${forwardedProto}://${forwardedHost}` : new URL(req.url).origin);
+
   const url = new URL(req.url);
   const scheme = url.searchParams.get('scheme') ?? 'flipflow';
-  const errorRedirect = `${scheme}://auth?error=sign_in_failed`;
+
+  // Prefer an explicit returnUrl passed by the client (needed in Expo Go,
+  // which doesn't register custom URL schemes — the real return URL looks
+  // like `exp://<devserver>/--/auth`). Fall back to the custom scheme for
+  // older clients and built dev/prod apps.
+  const clientReturnUrl = url.searchParams.get('returnUrl');
+  const returnBase = clientReturnUrl ?? `${scheme}://auth`;
+  const errorRedirect = appendParams(returnBase, { error: 'sign_in_failed' });
+
+  // Helpful while you're debugging the ngrok flow — remove once it works.
+  console.log(
+    '[auth/mobile] req.url=%s publicOrigin=%s returnBase=%s',
+    req.url,
+    publicOrigin,
+    returnBase,
+  );
 
   const session = await auth();
 
   if (!session?.user?.id) {
-    // Kick into Auth.js sign-in, then loop back here.
-    const signInUrl = new URL('/signin', url.origin);
-    signInUrl.searchParams.set('callbackUrl', `/auth/mobile?scheme=${encodeURIComponent(scheme)}`);
+    // Kick into Auth.js sign-in, then loop back here. Re-include returnUrl
+    // so the bridge still has it after the sign-in round-trip.
+    const signInUrl = new URL('/signin', publicOrigin);
+    const loopBack = new URL('/auth/mobile', publicOrigin);
+    loopBack.searchParams.set('scheme', scheme);
+    if (clientReturnUrl) loopBack.searchParams.set('returnUrl', clientReturnUrl);
+    signInUrl.searchParams.set('callbackUrl', loopBack.pathname + loopBack.search);
     return NextResponse.redirect(signInUrl);
   }
 
@@ -44,9 +74,23 @@ export async function GET(req: Request) {
     return NextResponse.redirect(errorRedirect);
   }
 
-  const deepLink = new URL(`${scheme}://auth`);
-  deepLink.searchParams.set('token', dbSession.sessionToken);
-  deepLink.searchParams.set('expires', dbSession.expires.toISOString());
+  const deepLink = appendParams(returnBase, {
+    token: dbSession.sessionToken,
+    expires: dbSession.expires.toISOString(),
+  });
 
-  return NextResponse.redirect(deepLink.toString());
+  return NextResponse.redirect(deepLink);
+}
+
+/**
+ * Safely append query params to a URL that may use a custom scheme
+ * (`flipflow://`, `exp://`), where `new URL(...).searchParams` behavior can
+ * be quirky across runtimes. String concatenation keeps the scheme intact.
+ */
+function appendParams(base: string, params: Record<string, string>): string {
+  const sep = base.includes('?') ? '&' : '?';
+  const qs = Object.entries(params)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+  return `${base}${sep}${qs}`;
 }

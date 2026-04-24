@@ -9,14 +9,19 @@ import { Label } from '@/components/ui/label';
 import { auth, signIn } from '@/server/auth';
 
 interface SignInPageProps {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const session = await auth();
-  if (session?.user) redirect('/app');
+  const { error, callbackUrl } = await searchParams;
 
-  const { error } = await searchParams;
+  // Only accept same-origin callbacks (must start with "/"). This stops
+  // someone from crafting a link like /signin?callbackUrl=https://evil.com
+  // and phishing us after sign-in.
+  const target = callbackUrl && callbackUrl.startsWith('/') ? callbackUrl : '/app';
+
+  const session = await auth();
+  if (session?.user) redirect(target);
 
   const hasGoogle = !!process.env.AUTH_GOOGLE_ID;
   const hasEmail = !!process.env.AUTH_RESEND_KEY;
@@ -43,7 +48,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <form
               action={async () => {
                 'use server';
-                await signIn('google', { redirectTo: '/app' });
+                await signIn('google', { redirectTo: target });
               }}
             >
               <Button type="submit" variant="outline" className="w-full">
@@ -70,7 +75,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 'use server';
                 const email = String(formData.get('email') ?? '').trim();
                 if (!email) return;
-                await signIn('resend', { email, redirectTo: '/app' });
+                await signIn('resend', { email, redirectTo: target });
               }}
               className="space-y-3"
             >

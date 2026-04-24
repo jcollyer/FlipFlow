@@ -7,7 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "npm --workspace=@flipflow/web run dev",
+    "ngrok": "ngrok http --url=jointly-topical-leech.ngrok-free.app 3000",
+    "mobile": " EXPO_PUBLIC_API_URL=https://jointly-topical-leech.ngrok-free.app npm --workspace=@flipflow/mobile exec -- expo start --clear",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

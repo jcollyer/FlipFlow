@@ -15,9 +15,9 @@ import { TRPCProvider } from '../src/lib/TRPCProvider';
  *       TRPCProvider  — tRPC + React Query, reads the session token
  *         Stack       — navigation
  *
- * `index.tsx` handles the signed-in/out split, so this file just lays out
- * the three top-level routes and lets individual screens pick their own
- * header behavior.
+ * The `(app)` group owns `/` and handles its own auth guard in its layout,
+ * so we don't need a top-level index screen. `/signin` sits outside the
+ * group so it's reachable even when signed out.
  */
 export default function RootLayout() {
   return (
@@ -26,7 +26,6 @@ export default function RootLayout() {
         <TRPCProvider>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
             <Stack.Screen name="signin" />
             <Stack.Screen name="(app)" />
           </Stack>

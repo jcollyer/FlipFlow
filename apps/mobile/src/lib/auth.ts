@@ -43,17 +43,26 @@ export async function clearStoredSession(): Promise<void> {
 /**
  * Launches the hosted sign-in flow in an in-app browser.
  *
- * 1. Opens `${API_URL}/auth/mobile?scheme=flipflow`
- * 2. The server redirects us through Auth.js sign-in (Google / magic link)
- * 3. On success the bridge redirects to `flipflow://auth?token=...`
- * 4. `WebBrowser.openAuthSessionAsync` resolves with that URL
- * 5. We parse the token and return it
+ * 1. Compute the correct return URL for this runtime:
+ *      - Expo Go:         exp://<devserver>/--/auth
+ *      - dev/prod build:  flipflow://auth
+ * 2. Opens `${API_URL}/auth/mobile?returnUrl=<encoded>` so the server knows
+ *    exactly where to bounce us after sign-in (custom schemes don't resolve
+ *    inside Expo Go, which is why we can't hardcode flipflow://).
+ * 3. The server redirects us through Auth.js sign-in (Google / magic link)
+ * 4. On success the bridge redirects to `<returnUrl>?token=...&expires=...`
+ * 5. `WebBrowser.openAuthSessionAsync` resolves with that URL
+ * 6. We parse the token and return it
  *
  * Throws on cancel or any non-success result.
  */
 export async function signInWithBrowser(): Promise<StoredSession> {
-  const startUrl = `${API_URL}/auth/mobile?scheme=${APP_SCHEME}`;
   const returnUrl = Linking.createURL('auth');
+  const startUrl =
+    `${API_URL}/auth/mobile` +
+    `?returnUrl=${encodeURIComponent(returnUrl)}` +
+    // Keep `scheme` around for older bridge versions and for clarity in logs.
+    `&scheme=${APP_SCHEME}`;
 
   const result = await WebBrowser.openAuthSessionAsync(startUrl, returnUrl);
 
