@@ -23,8 +23,14 @@ interface Props {
  */
 export function PracticeSession({ categoryId }: Props) {
   const utils = trpc.useUtils();
+
+  // When `practiceAll` is true we ignore the SM-2 schedule and pull every
+  // card in the deck. The user opts in via "Practice anyway" on the empty
+  // state, so we only flip this on after they confirm.
+  const [practiceAll, setPracticeAll] = useState(false);
+
   const { data, isLoading } = trpc.practice.queue.useQuery(
-    { categoryId, limit: 20 },
+    { categoryId, limit: 20, includeAll: practiceAll },
     { refetchOnMount: 'always' },
   );
 
@@ -87,7 +93,11 @@ export function PracticeSession({ categoryId }: Props) {
       </div>
 
       {!isLoading && cards.length === 0 ? (
-        <EmptyQueue categoryId={categoryId} />
+        <EmptyQueue
+          categoryId={categoryId}
+          practiceAll={practiceAll}
+          onPracticeAnyway={() => setPracticeAll(true)}
+        />
       ) : done ? (
         <SessionSummary categoryId={categoryId} reviewed={reviewed} />
       ) : (
@@ -180,21 +190,40 @@ function RatingButtons({ onRate, disabled }: { onRate: (q: number) => void; disa
   );
 }
 
-function EmptyQueue({ categoryId }: { categoryId: string }) {
+function EmptyQueue({
+  categoryId,
+  practiceAll,
+  onPracticeAnyway,
+}: {
+  categoryId: string;
+  practiceAll: boolean;
+  onPracticeAnyway: () => void;
+}) {
+  // If the user already opted into "Practice anyway" and we still got zero
+  // cards back, the deck is genuinely empty — don't keep saying "caught up"
+  // and don't offer the button again.
+  const deckIsEmpty = practiceAll;
+
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
           <CheckCircle2 className="h-6 w-6" />
         </div>
-        <div className="text-lg font-semibold">Nothing due right now</div>
+        <div className="text-lg font-semibold">
+          {deckIsEmpty ? 'No cards in this deck' : 'Nothing due right now'}
+        </div>
         <p className="max-w-sm text-sm text-muted-foreground">
-          You're all caught up. Add more cards or come back later — your schedule will surface
-          cards as they become due.
+          {deckIsEmpty
+            ? "There's nothing here to practice yet. Add some cards to get started."
+            : "You're all caught up. Your schedule will surface cards as they become due — or jump back in early with Practice anyway."}
         </p>
-        <Button asChild>
-          <Link href={`/app/categories/${categoryId}`}>Back to deck</Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline">
+            <Link href={`/app/categories/${categoryId}`}>Back to deck</Link>
+          </Button>
+          {!deckIsEmpty && <Button onClick={onPracticeAnyway}>Practice anyway</Button>}
+        </div>
       </CardContent>
     </Card>
   );

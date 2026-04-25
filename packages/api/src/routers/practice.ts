@@ -10,12 +10,17 @@ export const practiceRouter = router({
    * Returns the next batch of cards to study in a category.
    * Cards never reviewed (nextReview = null) come first, then overdue cards
    * sorted by how long they've been overdue.
+   *
+   * When `includeAll` is true, the nextReview filter is skipped and every
+   * card in the category is eligible — this powers "Practice anyway" when
+   * the user is already caught up on their schedule.
    */
   queue: protectedProcedure
     .input(
       z.object({
         categoryId: z.string().cuid(),
         limit: z.number().int().min(1).max(100).default(20),
+        includeAll: z.boolean().default(false),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -29,7 +34,9 @@ export const practiceRouter = router({
       const cards = await ctx.prisma.flashcard.findMany({
         where: {
           categoryId: input.categoryId,
-          OR: [{ nextReview: null }, { nextReview: { lte: now } }],
+          ...(input.includeAll
+            ? {}
+            : { OR: [{ nextReview: null }, { nextReview: { lte: now } }] }),
         },
         orderBy: [{ nextReview: 'asc' }, { createdAt: 'asc' }],
         take: input.limit,

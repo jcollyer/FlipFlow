@@ -26,8 +26,13 @@ export default function PracticeScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
 
+  // When `practiceAll` is true we ignore the SM-2 schedule and pull every
+  // card in the deck. The user opts in via "Practice anyway" on the empty
+  // state, so we only flip this on after they confirm.
+  const [practiceAll, setPracticeAll] = useState(false);
+
   const { data, isLoading } = trpc.practice.queue.useQuery(
-    { categoryId, limit: 20 },
+    { categoryId, limit: 20, includeAll: practiceAll },
     { refetchOnMount: 'always' },
   );
 
@@ -77,7 +82,11 @@ export default function PracticeScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
         {cards.length === 0 ? (
-          <EmptyQueue onBack={() => router.back()} />
+          <EmptyQueue
+            practiceAll={practiceAll}
+            onBack={() => router.back()}
+            onPracticeAnyway={() => setPracticeAll(true)}
+          />
         ) : done ? (
           <SessionSummary
             reviewed={reviewed}
@@ -166,18 +175,38 @@ function RatingButtons({ onRate }: { onRate: (q: number) => void }) {
   );
 }
 
-function EmptyQueue({ onBack }: { onBack: () => void }) {
+function EmptyQueue({
+  practiceAll,
+  onBack,
+  onPracticeAnyway,
+}: {
+  practiceAll: boolean;
+  onBack: () => void;
+  onPracticeAnyway: () => void;
+}) {
+  // If the user already opted into "Practice anyway" and we still got zero
+  // cards back, the deck is genuinely empty — change the message and drop
+  // the button.
+  const deckIsEmpty = practiceAll;
+
   return (
     <Card className="items-center gap-3 p-10">
       <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-50">
         <Text className="text-2xl">✓</Text>
       </View>
-      <Text className="text-lg font-semibold text-slate-900">Nothing due right now</Text>
-      <Text className="text-center text-sm text-slate-500">
-        You're all caught up. Your schedule will surface cards as they become due.
+      <Text className="text-lg font-semibold text-slate-900">
+        {deckIsEmpty ? 'No cards in this deck' : 'Nothing due right now'}
       </Text>
-      <View className="mt-2 w-full">
-        <Button onPress={onBack}>Back to deck</Button>
+      <Text className="text-center text-sm text-slate-500">
+        {deckIsEmpty
+          ? "There's nothing here to practice yet. Add some cards to get started."
+          : "You're all caught up. Your schedule will surface cards as they become due — or jump back in early with Practice anyway."}
+      </Text>
+      <View className="mt-2 w-full gap-2">
+        <Button variant="outline" onPress={onBack}>
+          Back to deck
+        </Button>
+        {!deckIsEmpty && <Button onPress={onPracticeAnyway}>Practice anyway</Button>}
       </View>
     </Card>
   );
