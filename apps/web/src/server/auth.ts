@@ -1,4 +1,4 @@
-import NextAuth, { type DefaultSession } from 'next-auth';
+import NextAuth, { type DefaultSession, type NextAuthResult } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import Google from 'next-auth/providers/google';
@@ -34,7 +34,7 @@ if (process.env.AUTH_RESEND_KEY) {
   );
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth }: NextAuthResult = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers,
   session: { strategy: 'database' },

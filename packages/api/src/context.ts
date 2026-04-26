@@ -1,4 +1,4 @@
-import { prisma } from '@flipflow/db';
+import { prisma, PrismaClient } from '@flipflow/db';
 
 /**
  * Minimal session shape that the API expects from the consumer (the Next.js
@@ -20,7 +20,11 @@ export interface CreateContextOptions {
   headers?: Headers;
 }
 
-export function createTRPCContext(opts: CreateContextOptions) {
+export function createTRPCContext(opts: CreateContextOptions): {
+  session: SessionLike | null;
+  headers: Headers | undefined;
+  prisma: PrismaClient;
+} {
   return {
     session: opts.session,
     headers: opts.headers,
