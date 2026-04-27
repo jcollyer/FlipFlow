@@ -10,9 +10,10 @@ import {
   View,
 } from 'react-native';
 
-import { CategoryCreateInput } from '@flipflow/types';
+import { type BackLanguageValue, CategoryCreateInput } from '@flipflow/types';
 
 import { Button } from '../../src/components/Button';
+import { LanguagePicker } from '../../src/components/LanguagePicker';
 import { TextField } from '../../src/components/TextField';
 import { trpc } from '../../src/lib/trpc';
 
@@ -28,7 +29,13 @@ export default function NewDeckScreen() {
 
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
+  const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
   const [nameError, setNameError] = useState<string | undefined>();
+
+  // Only surface the audio-language picker if the server can actually call
+  // Google Cloud TTS — otherwise the option would be a dead end.
+  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
+  const ttsAvailable = !!ttsAvailability?.available;
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -40,7 +47,7 @@ export default function NewDeckScreen() {
 
   function handleSubmit() {
     setNameError(undefined);
-    const parsed = CategoryCreateInput.safeParse({ name, color });
+    const parsed = CategoryCreateInput.safeParse({ name, color, backLanguage });
     if (!parsed.success) {
       const msg = parsed.error.issues.find((i) => i.path[0] === 'name')?.message ?? 'Invalid input';
       setNameError(msg);
@@ -92,6 +99,19 @@ export default function NewDeckScreen() {
               })}
             </View>
           </View>
+
+          {ttsAvailable ? (
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-slate-700">
+                Audio language (back of card)
+              </Text>
+              <LanguagePicker value={backLanguage} onChange={setBackLanguage} />
+              <Text className="text-xs text-slate-500">
+                Pick a language to enable a speaker button on the back of cards
+                during practice.
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View className="mt-8 flex-row gap-3">

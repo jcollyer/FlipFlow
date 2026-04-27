@@ -1,5 +1,7 @@
+import { Feather } from '@expo/vector-icons';
+import { Audio, type AVPlaybackStatus } from 'expo-av';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -7,6 +9,8 @@ import {
   Text,
   View,
 } from 'react-native';
+
+import { type BackLanguageValue } from '@flipflow/types';
 
 import { Button } from '../../../../src/components/Button';
 import { Card } from '../../../../src/components/Card';
@@ -121,6 +125,20 @@ export default function PracticeScreen() {
                 <Text className="mt-6 text-xs uppercase tracking-wider text-slate-400">
                   {flipped ? 'Answer' : 'Tap to reveal'}
                 </Text>
+
+                {/* Floating speaker button on the back of the card. Only
+                    rendered when the deck has a configured language and we
+                    have a card to read. Absolute-positioned so it doesn't
+                    push the centered text around. */}
+                {flipped && current && data?.category.backLanguage ? (
+                  <View className="absolute right-3 top-3">
+                    <AudioButton
+                      cardId={current.id}
+                      text={current.back}
+                      languageCode={data.category.backLanguage as BackLanguageValue}
+                    />
+                  </View>
+                ) : null}
               </Card>
             </Pressable>
 
@@ -209,6 +227,157 @@ function EmptyQueue({
         {!deckIsEmpty && <Button onPress={onPracticeAnyway}>Practice anyway</Button>}
       </View>
     </Card>
+  );
+}
+
+/**
+ * Speaker button that fetches and plays a TTS pronunciation of the back-of-
+ * card text via the `tts.synthesize` mutation. Mirrors the web AudioButton
+ * but uses `expo-av` for playback.
+ *
+ * Caching: per-session in-memory cache keyed by `cardId` so the same card
+ * never re-bills the user — flipping back to a card you've already heard
+ * plays instantly. Cache holds the base64 data URI string (lightweight) and
+ * each play creates a fresh `Audio.Sound`, which is unloaded on finish or
+ * on the next click.
+ *
+ * `stopPropagation` doesn't exist in React Native — instead, the parent
+ * Pressable for "tap to flip" wraps the *card content*, but this button is
+ * positioned absolutely on top of it. RN's Pressable consumes its own taps
+ * and doesn't bubble to the parent Pressable, so a nested Pressable here is
+ * sufficient to keep the flip from toggling on tap.
+ */
+function AudioButton({
+  cardId,
+  text,
+  languageCode,
+}: {
+  cardId: string;
+  text: string;
+  languageCode: BackLanguageValue;
+}) {
+  const synthesize = trpc.tts.synthesize.useMutation();
+
+  // cardId -> base64 data URI for `Audio.Sound.createAsync({ uri })`.
+  const cacheRef = useRef<Map<string, string>>(new Map());
+  // Currently-loaded sound. We unload before playing the next so repeated
+  // taps restart cleanly rather than overlapping audio.
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Best-effort cleanup if the user navigates away mid-playback.
+  useEffect(() => {
+    return () => {
+      const s = soundRef.current;
+      soundRef.current = null;
+      if (s) {
+        // Fire-and-forget; we're already unmounting.
+        s.unloadAsync().catch(() => {
+          // Already unloaded or torn down — nothing to do.
+        });
+      }
+    };
+  }, []);
+
+  const play = useCallback(async (dataUrl: string) => {
+    try {
+      // Tear down any previous sound so taps always restart cleanly.
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync().catch(() => {
+          // ignore — likely already unloaded
+        });
+        soundRef.current = null;
+      }
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: dataUrl },
+        { shouldPlay: true },
+      );
+      soundRef.current = sound;
+      setPlaying(true);
+
+      sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+        if (!status.isLoaded) {
+          // `error` only exists on the unloaded variant of the union.
+          if ('error' in status && status.error) {
+            setPlaying(false);
+            setError('Audio playback failed.');
+          }
+          return;
+        }
+        if (status.didJustFinish) {
+          setPlaying(false);
+          // Async unload; no need to await here.
+          sound.unloadAsync().catch(() => {
+            // ignore
+          });
+          if (soundRef.current === sound) soundRef.current = null;
+        }
+      });
+    } catch {
+      setPlaying(false);
+      setError('Audio playback failed.');
+    }
+  }, []);
+
+  const handlePress = useCallback(() => {
+    setError(null);
+
+    const cached = cacheRef.current.get(cardId);
+    if (cached) {
+      void play(cached);
+      return;
+    }
+
+    synthesize.mutate(
+      { text, languageCode },
+      {
+        onSuccess: ({ audioContent }) => {
+          const dataUrl = `data:audio/mp3;base64,${audioContent}`;
+          cacheRef.current.set(cardId, dataUrl);
+          void play(dataUrl);
+        },
+        onError: (err) => {
+          setError(err.message);
+        },
+      },
+    );
+  }, [cardId, text, languageCode, synthesize, play]);
+
+  const loading = synthesize.isPending;
+
+  return (
+    <View className="items-end gap-1">
+      <Pressable
+        onPress={handlePress}
+        disabled={loading}
+        accessibilityLabel={playing ? 'Playing pronunciation' : 'Hear pronunciation'}
+        accessibilityRole="button"
+        hitSlop={6}
+        className={`h-10 w-10 items-center justify-center rounded-full border border-border bg-white active:opacity-70 ${
+          playing ? 'bg-blue-50' : ''
+        }`}
+        style={{ opacity: loading ? 0.6 : 1 }}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#3b82f6" />
+        ) : (
+          // Same icon for idle and playing — the blue background on the
+          // wrapper signals "currently playing", and Feather doesn't ship
+          // an animated spinner equivalent to lucide's Loader2.
+          <Feather name="volume-2" size={18} color="#3b82f6" />
+        )}
+      </Pressable>
+      {error ? (
+        <View className="max-w-[180px] rounded bg-red-50 px-2 py-1">
+          <Text className="text-[10px] text-destructive" numberOfLines={2}>
+            {error}
+          </Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 

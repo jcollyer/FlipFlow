@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { BackLanguageSchema } from './languages';
+
 // ----------------------------------------------------------------------------
 // Category
 // ----------------------------------------------------------------------------
@@ -9,9 +11,19 @@ export const CategoryColorSchema = z
   .regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a 6-digit hex value like #3b82f6')
   .nullish();
 
+/**
+ * Optional BCP-47 language tag for the back of cards in this deck. Used by
+ * the Google Cloud Text-to-Speech feature on the practice screen.
+ *
+ * `null` clears the previously-stored value (turns off audio playback for
+ * the deck); `undefined` leaves it unchanged on update.
+ */
+export const CategoryBackLanguageSchema = BackLanguageSchema.nullish();
+
 export const CategoryCreateInput = z.object({
   name: z.string().trim().min(1, 'Name is required').max(80),
   color: CategoryColorSchema,
+  backLanguage: CategoryBackLanguageSchema,
 });
 export type CategoryCreateInput = z.infer<typeof CategoryCreateInput>;
 
@@ -19,6 +31,7 @@ export const CategoryUpdateInput = z.object({
   id: z.string().cuid(),
   name: z.string().trim().min(1).max(80).optional(),
   color: CategoryColorSchema,
+  backLanguage: CategoryBackLanguageSchema,
 });
 export type CategoryUpdateInput = z.infer<typeof CategoryUpdateInput>;
 

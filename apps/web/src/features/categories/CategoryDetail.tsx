@@ -7,7 +7,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Loader2, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 
-import { FlashcardCreateInput, FlashcardUpdateInput } from '@flipflow/types';
+import {
+  BACK_LANGUAGES,
+  type BackLanguageValue,
+  FlashcardCreateInput,
+  FlashcardUpdateInput,
+} from '@flipflow/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -109,6 +114,11 @@ export function CategoryDetail({ categoryId }: Props) {
         <Stat label="Mastered" value={stats?.mastered ?? 0} />
       </div>
 
+      <DeckAudioLanguage
+        categoryId={categoryId}
+        backLanguage={category?.backLanguage ?? null}
+      />
+
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -197,6 +207,78 @@ export function CategoryDetail({ categoryId }: Props) {
         />
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Inline editor for the deck's back-of-card audio language. Hidden entirely
+ * if the server can't reach Google Cloud TTS (no API key) so the user
+ * doesn't see a setting that wouldn't do anything. Saves on every change —
+ * it's a single dropdown so there's nothing to "submit".
+ */
+function DeckAudioLanguage({
+  categoryId,
+  backLanguage,
+}: {
+  categoryId: string;
+  backLanguage: BackLanguageValue | string | null;
+}) {
+  const utils = trpc.useUtils();
+
+  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery(undefined, {
+    staleTime: Infinity,
+  });
+  const ttsAvailable = !!ttsAvailability?.available;
+
+  const update = trpc.categories.update.useMutation({
+    onSuccess: () => {
+      utils.categories.byId.invalidate({ id: categoryId });
+      utils.categories.list.invalidate();
+    },
+  });
+
+  if (!ttsAvailable) return null;
+
+  const NO_LANGUAGE = '__none__';
+  const current = (backLanguage ?? NO_LANGUAGE) as string;
+
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="space-y-0.5">
+          <Label htmlFor="deck-audio-language" className="cursor-pointer">
+            Audio language (back of card)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Pick a language to enable a speaker button on the back of cards during practice.
+          </p>
+        </div>
+        <div className="min-w-[200px]">
+          <Select
+            value={current}
+            disabled={update.isPending}
+            onValueChange={(v) => {
+              const next = v === NO_LANGUAGE ? null : (v as BackLanguageValue);
+              // No-op if the value didn't actually change.
+              if ((next ?? null) === (backLanguage ?? null)) return;
+              update.mutate({ id: categoryId, backLanguage: next });
+            }}
+          >
+            <SelectTrigger id="deck-audio-language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_LANGUAGE}>No audio</SelectItem>
+              {BACK_LANGUAGES.map((lang) => (
+                <SelectItem key={lang.value} value={lang.value}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

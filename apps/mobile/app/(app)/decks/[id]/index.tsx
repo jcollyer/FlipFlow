@@ -9,8 +9,11 @@ import {
   View,
 } from 'react-native';
 
+import { type BackLanguageValue } from '@flipflow/types';
+
 import { Button } from '../../../../src/components/Button';
 import { Card } from '../../../../src/components/Card';
+import { LanguagePicker } from '../../../../src/components/LanguagePicker';
 import { formatRelative } from '../../../../src/lib/format';
 import { trpc } from '../../../../src/lib/trpc';
 
@@ -125,6 +128,11 @@ export default function DeckDetailScreen() {
                 </Button>
               </View>
             </View>
+
+            <DeckAudioLanguage
+              categoryId={categoryId}
+              backLanguage={(category?.backLanguage ?? null) as BackLanguageValue | null}
+            />
           </View>
         }
         renderItem={({ item }) => (
@@ -216,6 +224,56 @@ function Stat({
         className={`mt-1 text-2xl font-bold ${highlight ? 'text-primary' : 'text-slate-900'}`}
       >
         {value}
+      </Text>
+    </Card>
+  );
+}
+
+/**
+ * Inline editor for the deck's back-of-card audio language. Hidden if the
+ * server can't reach Google Cloud TTS (no API key) so the user doesn't see
+ * a setting that wouldn't do anything. Saves on every change — there's
+ * nothing to "submit".
+ */
+function DeckAudioLanguage({
+  categoryId,
+  backLanguage,
+}: {
+  categoryId: string;
+  backLanguage: BackLanguageValue | null;
+}) {
+  const utils = trpc.useUtils();
+
+  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
+  const ttsAvailable = !!ttsAvailability?.available;
+
+  const update = trpc.categories.update.useMutation({
+    onSuccess: () => {
+      utils.categories.byId.invalidate({ id: categoryId });
+      utils.categories.list.invalidate();
+    },
+    onError: (err) => Alert.alert('Could not update deck', err.message),
+  });
+
+  if (!ttsAvailable) return null;
+
+  return (
+    <Card className="gap-2 p-4">
+      <Text className="text-sm font-medium text-slate-700">
+        Audio language (back of card)
+      </Text>
+      <LanguagePicker
+        value={backLanguage}
+        disabled={update.isPending}
+        onChange={(next) => {
+          // No-op if unchanged (the picker fires onChange even when the
+          // user re-selects the current value).
+          if ((next ?? null) === (backLanguage ?? null)) return;
+          update.mutate({ id: categoryId, backLanguage: next });
+        }}
+      />
+      <Text className="text-xs text-slate-500">
+        Pick a language to enable a speaker button on the back of cards during practice.
       </Text>
     </Card>
   );

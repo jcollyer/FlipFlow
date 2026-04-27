@@ -81,6 +81,11 @@ model Category {
   id        String      @id @default(cuid())
   name      String
   color     String?
+  // BCP-47 language tag for the back of cards in this deck (e.g. "fr-FR",
+  // "es-ES", "ja-JP"). Drives the Google Cloud Text-to-Speech voice when
+  // the user clicks the audio button on the back of a card. Null means no
+  // language has been configured yet — the audio button is hidden.
+  backLanguage String?
   userId    String
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   cards     Flashcard[]

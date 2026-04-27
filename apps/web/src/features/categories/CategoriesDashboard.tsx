@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Layers, Clock } from 'lucide-react';
 
-import { CategoryCreateInput } from '@flipflow/types';
+import { BACK_LANGUAGES, CategoryCreateInput } from '@flipflow/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -19,7 +19,18 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { trpc } from '@/lib/trpc/client';
+
+// Sentinel because the Radix Select doesn't allow an empty-string value.
+// We translate this back to `null` before submitting.
+const NO_LANGUAGE = '__none__';
 
 const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -35,9 +46,16 @@ export function CategoriesDashboard() {
     },
   });
 
+  // Only show the audio-language picker if the server can actually call
+  // Google Cloud TTS — otherwise the option would be a dead end.
+  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery(undefined, {
+    staleTime: Infinity,
+  });
+  const ttsAvailable = !!ttsAvailability?.available;
+
   const form = useForm<CategoryCreateInput>({
     resolver: zodResolver(CategoryCreateInput),
-    defaultValues: { name: '', color: PALETTE[0] },
+    defaultValues: { name: '', color: PALETTE[0], backLanguage: null },
   });
 
   return (
@@ -123,6 +141,37 @@ export function CategoriesDashboard() {
                 })}
               </div>
             </div>
+            {ttsAvailable ? (
+              <div className="space-y-2">
+                <Label htmlFor="back-language">Audio language (back of card)</Label>
+                <Select
+                  // The Radix Select can't bind to `null`, so we use a
+                  // sentinel for "no language" and translate at the edges.
+                  value={form.watch('backLanguage') ?? NO_LANGUAGE}
+                  onValueChange={(v) =>
+                    form.setValue('backLanguage', v === NO_LANGUAGE ? null : (v as never), {
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="back-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_LANGUAGE}>No audio</SelectItem>
+                    {BACK_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Pick a language to enable a speaker button on the back of cards
+                  during practice.
+                </p>
+              </div>
+            ) : null}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Cancel

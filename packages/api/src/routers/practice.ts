@@ -26,7 +26,9 @@ export const practiceRouter = router({
     .query(async ({ ctx, input }) => {
       const category = await ctx.prisma.category.findFirst({
         where: { id: input.categoryId, userId: ctx.userId },
-        select: { id: true, name: true, color: true },
+        // backLanguage powers the per-card audio button; the practice UI
+        // hides the button entirely when it's null.
+        select: { id: true, name: true, color: true, backLanguage: true },
       });
       if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
 

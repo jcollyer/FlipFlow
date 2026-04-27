@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, RotateCcw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, CheckCircle2, Loader2, RotateCcw, Volume2 } from 'lucide-react';
+
+import type { BackLanguageValue } from '@flipflow/types';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -112,6 +114,10 @@ export function PracticeSession({ categoryId }: Props) {
             back={current?.back ?? ''}
             flipped={flipped}
             onClick={() => setFlipped((f) => !f)}
+            cardId={current?.id}
+            // Cast: backLanguage is widened to `string | null` from the wire,
+            // but on the server we only ever store BackLanguageValue values.
+            backLanguage={(data?.category.backLanguage ?? null) as BackLanguageValue | null}
           />
 
           {flipped ? (
@@ -137,11 +143,15 @@ function FlipCard({
   back,
   flipped,
   onClick,
+  cardId,
+  backLanguage,
 }: {
   front: string;
   back: string;
   flipped: boolean;
   onClick: () => void;
+  cardId: string | undefined;
+  backLanguage: BackLanguageValue | null;
 }) {
   return (
     <button
@@ -154,11 +164,143 @@ function FlipCard({
         <Card className="flip-card-face flex items-center justify-center p-6 text-center shadow-md">
           <CardContent className="text-2xl font-medium leading-snug">{front}</CardContent>
         </Card>
-        <Card className="flip-card-face flip-card-back flex items-center justify-center border-primary/40 bg-primary/5 p-6 text-center shadow-md">
+        <Card className="flip-card-face flip-card-back relative flex items-center justify-center border-primary/40 bg-primary/5 p-6 text-center shadow-md">
           <CardContent className="text-xl leading-snug">{back}</CardContent>
+          {/* Only render the audio button if the deck has a configured language. */}
+          {backLanguage && cardId ? (
+            <AudioButton cardId={cardId} text={back} languageCode={backLanguage} />
+          ) : null}
         </Card>
       </div>
     </button>
+  );
+}
+
+/**
+ * Speaker button that fetches and plays a TTS pronunciation of the back-of-
+ * card text via the `tts.synthesize` mutation.
+ *
+ * Caching: we keep a per-session in-memory cache keyed by `cardId` so the
+ * same card never re-bills the user — flipping back to a card you've heard
+ * already plays instantly with no network round-trip. The cache lives on a
+ * useRef Map (instead of useState) because we never need a re-render when
+ * an entry is added; we just lazily read from it on click.
+ *
+ * `stopPropagation` on the click is essential — the audio button is nested
+ * inside the FlipCard `<button>`, so without it the click would also
+ * toggle the flip and rate the user's progress out from under them.
+ */
+function AudioButton({
+  cardId,
+  text,
+  languageCode,
+}: {
+  cardId: string;
+  text: string;
+  languageCode: BackLanguageValue;
+}) {
+  const synthesize = trpc.tts.synthesize.useMutation();
+
+  // cardId -> data URL we can hand to `new Audio()`.
+  const cacheRef = useRef<Map<string, string>>(new Map());
+  // Holds the currently-playing element so a second click while playing
+  // restarts cleanly rather than overlapping audio.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // If the user navigates away mid-playback the parent unmounts; stop the
+  // audio so it doesn't keep playing in the background.
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  const play = useCallback(
+    (dataUrl: string) => {
+      // Always tear down any previous element so repeated clicks restart.
+      audioRef.current?.pause();
+      const audio = new Audio(dataUrl);
+      audioRef.current = audio;
+      setPlaying(true);
+      audio.addEventListener('ended', () => setPlaying(false));
+      audio.addEventListener('error', () => {
+        setPlaying(false);
+        setError('Audio playback failed.');
+      });
+      // play() returns a Promise; some browsers reject if interrupted.
+      audio.play().catch(() => {
+        setPlaying(false);
+        setError('Audio playback failed.');
+      });
+    },
+    [],
+  );
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setError(null);
+
+      const cached = cacheRef.current.get(cardId);
+      if (cached) {
+        play(cached);
+        return;
+      }
+
+      synthesize.mutate(
+        { text, languageCode },
+        {
+          onSuccess: ({ audioContent }) => {
+            const dataUrl = `data:audio/mp3;base64,${audioContent}`;
+            cacheRef.current.set(cardId, dataUrl);
+            play(dataUrl);
+          },
+          onError: (err) => {
+            setError(err.message);
+          },
+        },
+      );
+    },
+    [cardId, text, languageCode, synthesize, play],
+  );
+
+  const loading = synthesize.isPending;
+
+  return (
+    <span
+      className="absolute right-3 top-3 inline-flex flex-col items-end gap-1"
+      // Stop the wrapper too so hovering / focusing the button area never
+      // accidentally triggers the surrounding flip-card click target.
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading}
+        aria-label={playing ? 'Playing pronunciation' : 'Hear pronunciation'}
+        className={cn(
+          'inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background text-primary shadow-sm transition',
+          'hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
+          'disabled:cursor-progress disabled:opacity-60',
+          playing && 'animate-pulse bg-primary/10',
+        )}
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Volume2 className="h-4 w-4" />
+        )}
+      </button>
+      {error ? (
+        <span className="max-w-[180px] truncate rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">
+          {error}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

@@ -32,6 +32,7 @@ export const categoriesRouter = router({
       id: c.id,
       name: c.name,
       color: c.color,
+      backLanguage: c.backLanguage,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       cardCount: c._count.cards,
@@ -53,6 +54,7 @@ export const categoriesRouter = router({
       data: {
         name: input.name,
         color: input.color ?? null,
+        backLanguage: input.backLanguage ?? null,
         userId: ctx.userId,
       },
     }),
@@ -71,6 +73,9 @@ export const categoriesRouter = router({
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.color !== undefined ? { color: input.color ?? null } : {}),
+        ...(input.backLanguage !== undefined
+          ? { backLanguage: input.backLanguage ?? null }
+          : {}),
       },
     });
   }),
