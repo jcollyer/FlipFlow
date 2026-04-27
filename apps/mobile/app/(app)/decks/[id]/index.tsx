@@ -138,12 +138,26 @@ export default function DeckDetailScreen() {
         renderItem={({ item }) => (
           <Card className="flex-row items-start gap-3 p-4">
             <View className="flex-1 gap-1">
-              <Text className="font-medium text-slate-900" numberOfLines={2}>
+              <Text className="font-semibold text-slate-900" numberOfLines={2}>
                 {item.front}
               </Text>
               <Text className="text-sm text-slate-500" numberOfLines={2}>
                 {item.back}
               </Text>
+              {(item.frontExamples?.length > 0 || item.backExamples?.length > 0) ? (
+                <View className="mt-1.5 gap-1 border-t border-slate-100 pt-1.5">
+                  {Array.from({ length: Math.max(item.frontExamples?.length ?? 0, item.backExamples?.length ?? 0) }).map((_, i) => (
+                    <View key={i} className="flex-row gap-2">
+                      <Text className="flex-1 text-xs font-semibold text-slate-800" numberOfLines={2}>
+                        {item.frontExamples?.[i] ?? ''}
+                      </Text>
+                      <Text className="flex-1 text-xs text-slate-400" numberOfLines={2}>
+                        {item.backExamples?.[i] ?? ''}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
               <View className="mt-1 flex-row gap-2">
                 <Text className="text-xs text-slate-400">
                   Next: {formatRelative(item.nextReview)}

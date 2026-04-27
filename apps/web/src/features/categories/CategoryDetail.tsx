@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlignLeft, AlignRight, ArrowLeft, Loader2, Pencil, Play, Plus, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Play, Plus, Trash2, X } from 'lucide-react';
 
 import {
   BACK_LANGUAGES,

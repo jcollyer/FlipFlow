@@ -117,11 +117,24 @@ export default function PracticeScreen() {
               >
                 <Text
                   className={`text-center leading-snug ${
-                    flipped ? 'text-xl text-slate-900' : 'text-2xl font-medium text-slate-900'
+                    flipped ? 'text-xl font-bold text-slate-900' : 'text-2xl font-bold text-slate-900'
                   }`}
                 >
                   {flipped ? current?.back : current?.front}
                 </Text>
+                {flipped && (current?.backExamples?.length ?? 0) > 0 ? (
+                  <View className="mt-3 w-full gap-1 self-start pl-2">
+                    {current!.backExamples.map((ex, i) => (
+                      <Text key={i} className="text-sm italic text-slate-500">{ex}</Text>
+                    ))}
+                  </View>
+                ) : !flipped && (current?.frontExamples?.length ?? 0) > 0 ? (
+                  <View className="mt-3 w-full gap-1 self-start pl-2">
+                    {current!.frontExamples.map((ex, i) => (
+                      <Text key={i} className="text-sm italic text-slate-500">{ex}</Text>
+                    ))}
+                  </View>
+                ) : null}
                 <Text className="mt-6 text-xs uppercase tracking-wider text-slate-400">
                   {flipped ? 'Answer' : 'Tap to reveal'}
                 </Text>

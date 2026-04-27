@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -7,15 +7,60 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { FlashcardUpdateInput } from '@flipflow/types';
 
 import { Button } from '../../../../src/components/Button';
 import { TextField } from '../../../../src/components/TextField';
+import { useDebouncedValue } from '../../../../src/lib/hooks';
 import { trpc } from '../../../../src/lib/trpc';
+
+const TRANSLATE_TARGETS = [
+  { value: 'fr', label: 'French' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'de', label: 'German' },
+] as const;
+type TranslateTargetValue = (typeof TRANSLATE_TARGETS)[number]['value'];
+
+interface TranslatePrefs {
+  v: 1;
+  enabled: boolean;
+  target: TranslateTargetValue;
+}
+
+const prefsKey = (categoryId: string | null) =>
+  categoryId ? `flipflow:translate:${categoryId}` : `flipflow:translate:__none__`;
+
+async function readPrefs(categoryId: string | null): Promise<TranslatePrefs | null> {
+  try {
+    const raw = await AsyncStorage.getItem(prefsKey(categoryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<TranslatePrefs>;
+    if (
+      parsed.v === 1 &&
+      typeof parsed.enabled === 'boolean' &&
+      TRANSLATE_TARGETS.some((t) => t.value === parsed.target)
+    ) {
+      return parsed as TranslatePrefs;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+async function writePrefs(categoryId: string | null, prefs: TranslatePrefs): Promise<void> {
+  try {
+    await AsyncStorage.setItem(prefsKey(categoryId), JSON.stringify(prefs));
+  } catch {
+    // non-fatal
+  }
+}
 
 // Sentinel for "leave the card uncategorized" — we represent that as
 // undefined in the payload (don't touch the field) but need a stable string
@@ -44,7 +89,21 @@ export default function EditCardScreen() {
   const [back, setBack] = useState('');
   const [frontError, setFrontError] = useState<string | undefined>();
   const [backError, setBackError] = useState<string | undefined>();
+  const [frontExamples, setFrontExamples] = useState<string[]>([]);
+  const [backExamples, setBackExamples] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
+
+  // Translation state
+  const [translateOn, setTranslateOn] = useState(false);
+  const [target, setTarget] = useState<TranslateTargetValue>('fr');
+  const [translateHydrated, setTranslateHydrated] = useState(false);
+
+  const lastTranslatedRef = useRef<{ text: string; target: string } | null>(null);
+  const lastTranslatedExamplesRef = useRef(new Map<number, { text: string; target: string }>());
+  // Gates: auto-translate only fires after the user actively edits the field,
+  // not during initial hydration from the fetched card.
+  const userEditedFrontRef = useRef(false);
+  const userEditedExamplesRef = useRef(false);
 
   // Tracks the deck-assignment picker. Only meaningful when the card is
   // currently uncategorized; a value other than KEEP_UNCATEGORIZED means
@@ -57,9 +116,38 @@ export default function EditCardScreen() {
     if (card && !hydrated) {
       setFront(card.front);
       setBack(card.back);
+      setFrontExamples(card.frontExamples ?? []);
+      setBackExamples(card.backExamples ?? []);
       setHydrated(true);
     }
   }, [card, hydrated]);
+
+  // Hydrate translation prefs from the card's categoryId.
+  useEffect(() => {
+    if (!card) return;
+    let cancelled = false;
+    setTranslateHydrated(false);
+    (async () => {
+      const stored = await readPrefs(card.categoryId ?? null);
+      if (cancelled) return;
+      if (stored) {
+        setTranslateOn(stored.enabled);
+        setTarget(stored.target);
+      } else {
+        setTranslateOn(false);
+        setTarget('fr');
+      }
+      setTranslateHydrated(true);
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card?.id]);
+
+  // Persist translate prefs changes.
+  useEffect(() => {
+    if (!translateHydrated || !card) return;
+    writePrefs(card.categoryId ?? null, { v: 1, enabled: translateOn, target });
+  }, [translateHydrated, card, translateOn, target]);
 
   const update = trpc.flashcards.update.useMutation({
     onSuccess: (updated) => {
@@ -77,6 +165,65 @@ export default function EditCardScreen() {
     },
     onError: (err) => Alert.alert('Could not save card', err.message),
   });
+
+  const translate = trpc.translate.translate.useMutation();
+  const { data: availability } = trpc.translate.isAvailable.useQuery(undefined, {
+    staleTime: Infinity,
+  });
+  const translateAvailable = !!availability?.available;
+
+  const debouncedFront = useDebouncedValue(front.trim(), 500);
+  const debouncedFrontExamples = useDebouncedValue(frontExamples, 500);
+
+  useEffect(() => {
+    if (!translateOn || !translateAvailable || !userEditedFrontRef.current) return;
+    if (!debouncedFront) {
+      setBack('');
+      lastTranslatedRef.current = null;
+      return;
+    }
+    const last = lastTranslatedRef.current;
+    if (last && last.text === debouncedFront && last.target === target) return;
+    const request = { text: debouncedFront, target };
+    lastTranslatedRef.current = request;
+    translate.mutate(
+      { text: debouncedFront, target },
+      {
+        onSuccess: ({ translation }) => {
+          if (lastTranslatedRef.current !== request) return;
+          setBack(translation);
+          setBackError(undefined);
+        },
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFront, target, translateOn, translateAvailable]);
+
+  useEffect(() => {
+    if (!translateOn || !translateAvailable || !userEditedExamplesRef.current) return;
+    debouncedFrontExamples.forEach((text, i) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const last = lastTranslatedExamplesRef.current.get(i);
+      if (last && last.text === trimmed && last.target === target) return;
+      const request = { text: trimmed, target };
+      lastTranslatedExamplesRef.current.set(i, request);
+      translate.mutate(
+        { text: trimmed, target },
+        {
+          onSuccess: ({ translation }) => {
+            if (lastTranslatedExamplesRef.current.get(i) !== request) return;
+            setBackExamples((prev) => {
+              const next = [...prev];
+              next[i] = translation;
+              return next;
+            });
+          },
+        },
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFrontExamples, target, translateOn, translateAvailable]);
 
   // Sorted decks for the picker. Stable order = predictable UI.
   const decks = useMemo(
@@ -107,6 +254,8 @@ export default function EditCardScreen() {
       front,
       back,
       ...(categoryId ? { categoryId } : {}),
+      frontExamples,
+      backExamples,
     });
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -136,7 +285,7 @@ export default function EditCardScreen() {
           <TextField
             label="Front"
             value={front}
-            onChangeText={setFront}
+            onChangeText={(v) => { userEditedFrontRef.current = true; setFront(v); }}
             error={frontError}
             multiline
             style={{ minHeight: 80, textAlignVertical: 'top' }}
@@ -149,6 +298,104 @@ export default function EditCardScreen() {
             multiline
             style={{ minHeight: 120, textAlignVertical: 'top' }}
           />
+
+          {translateAvailable ? (
+            <View className="gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className="text-base font-semibold text-slate-900">Translation card</Text>
+                  <Text className="mt-0.5 text-sm text-slate-500">
+                    Auto-translate the front into the chosen language.
+                  </Text>
+                </View>
+                <Switch value={translateOn} onValueChange={setTranslateOn} />
+              </View>
+              {translateOn ? (
+                <View className="flex-row gap-2">
+                  {TRANSLATE_TARGETS.map((opt) => {
+                    const active = target === opt.value;
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        onPress={() => setTarget(opt.value)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        className={`flex-1 rounded-md border px-3 py-2 active:opacity-80 ${
+                          active ? 'border-primary bg-primary' : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <Text
+                          className={`text-center text-sm font-semibold ${
+                            active ? 'text-white' : 'text-slate-700'
+                          }`}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {frontExamples.length > 0 ? (
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-slate-700">Examples</Text>
+              {frontExamples.map((ex, i) => (
+                <View key={i} className="gap-1.5">
+                  <View className="flex-row items-center gap-2">
+                    <View className="flex-1">
+                      <TextField
+                        placeholder="Front example"
+                        value={ex}
+                        onChangeText={(v) => {
+                          userEditedExamplesRef.current = true;
+                          setFrontExamples((prev) => {
+                            const next = [...prev];
+                            next[i] = v;
+                            return next;
+                          });
+                        }}
+                      />
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        setFrontExamples((prev) => prev.filter((_, j) => j !== i));
+                        setBackExamples((prev) => prev.filter((_, j) => j !== i));
+                        lastTranslatedExamplesRef.current.delete(i);
+                      }}
+                      hitSlop={8}
+                      className="h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white active:opacity-70"
+                    >
+                      <Text className="text-base text-slate-500">✕</Text>
+                    </Pressable>
+                  </View>
+                  <TextField
+                    placeholder="Back example"
+                    value={backExamples[i] ?? ''}
+                    onChangeText={(v) => {
+                      setBackExamples((prev) => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      });
+                    }}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          <Pressable
+            onPress={() => {
+              setFrontExamples((prev) => [...prev, '']);
+              setBackExamples((prev) => [...prev, '']);
+            }}
+            className="flex-row items-center gap-2 py-1 active:opacity-70"
+          >
+            <Text className="text-sm font-medium text-primary">+ Add example</Text>
+          </Pressable>
 
           {showAssign ? (
             <View className="gap-2">

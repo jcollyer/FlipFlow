@@ -103,6 +103,8 @@ export default function NewCardScreen() {
   const [back, setBack] = useState('');
   const [frontError, setFrontError] = useState<string | undefined>();
   const [backError, setBackError] = useState<string | undefined>();
+  const [frontExamples, setFrontExamples] = useState<string[]>([]);
+  const [backExamples, setBackExamples] = useState<string[]>([]);
 
   // Translation state. `hydrated` gates the persist effect so the initial
   // defaults don't clobber stored prefs before the read completes.
@@ -126,6 +128,12 @@ export default function NewCardScreen() {
       utils.flashcards.listAll.invalidate();
       utils.practice.stats.invalidate({});
       utils.categories.list.invalidate();
+      setFront('');
+      setBack('');
+      setFrontExamples([]);
+      setBackExamples([]);
+      lastTranslatedRef.current = null;
+      lastTranslatedExamplesRef.current.clear();
       router.back();
     },
     onError: (err) => Alert.alert('Could not add card', err.message),
@@ -136,6 +144,8 @@ export default function NewCardScreen() {
   // Object-identity guard against out-of-order responses. See the web client
   // for the detailed rationale — same race, same fix.
   const lastTranslatedRef = useRef<{ text: string; target: string } | null>(null);
+  // Per-slot memoization for example translations: slot index -> last {text, target} sent
+  const lastTranslatedExamplesRef = useRef(new Map<number, { text: string; target: string }>());
 
   // Re-hydrate prefs when the selected deck changes — each deck remembers
   // its own translation defaults. Using selectedCategoryId in the dep list
@@ -169,6 +179,7 @@ export default function NewCardScreen() {
 
   // Debounced translation on front-text change.
   const debouncedFront = useDebouncedValue(front.trim(), 500);
+  const debouncedFrontExamples = useDebouncedValue(frontExamples, 500);
 
   useEffect(() => {
     if (!translateOn || !translateAvailable) return;
@@ -200,6 +211,34 @@ export default function NewCardScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFront, target, translateOn, translateAvailable]);
 
+  // Per-example translation: translate each front example slot into the
+  // corresponding back example slot when the toggle is on.
+  useEffect(() => {
+    if (!translateOn || !translateAvailable) return;
+    debouncedFrontExamples.forEach((text, i) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const last = lastTranslatedExamplesRef.current.get(i);
+      if (last && last.text === trimmed && last.target === target) return;
+      const request = { text: trimmed, target };
+      lastTranslatedExamplesRef.current.set(i, request);
+      translate.mutate(
+        { text: trimmed, target },
+        {
+          onSuccess: ({ translation }) => {
+            if (lastTranslatedExamplesRef.current.get(i) !== request) return;
+            setBackExamples((prev) => {
+              const next = [...prev];
+              next[i] = translation;
+              return next;
+            });
+          },
+        },
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFrontExamples, target, translateOn, translateAvailable]);
+
   // Sorted decks for the picker. Stable order = predictable UI.
   const decks = useMemo(
     () =>
@@ -216,6 +255,8 @@ export default function NewCardScreen() {
       front,
       back,
       categoryId: selectedCategoryId,
+      frontExamples,
+      backExamples,
     });
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -342,6 +383,64 @@ export default function NewCardScreen() {
               <Text className="text-xs text-destructive">{translate.error.message}</Text>
             ) : null}
           </View>
+
+          {/* Examples section */}
+          {frontExamples.length > 0 ? (
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-slate-700">Examples</Text>
+              {frontExamples.map((ex, i) => (
+                <View key={i} className="gap-1.5">
+                  <View className="flex-row items-center gap-2">
+                    <View className="flex-1">
+                      <TextField
+                        placeholder="Front example"
+                        value={ex}
+                        onChangeText={(v) => {
+                          setFrontExamples((prev) => {
+                            const next = [...prev];
+                            next[i] = v;
+                            return next;
+                          });
+                        }}
+                      />
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        setFrontExamples((prev) => prev.filter((_, j) => j !== i));
+                        setBackExamples((prev) => prev.filter((_, j) => j !== i));
+                        lastTranslatedExamplesRef.current.delete(i);
+                      }}
+                      hitSlop={8}
+                      className="h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white active:opacity-70"
+                    >
+                      <Text className="text-base text-slate-500">✕</Text>
+                    </Pressable>
+                  </View>
+                  <TextField
+                    placeholder="Back example"
+                    value={backExamples[i] ?? ''}
+                    onChangeText={(v) => {
+                      setBackExamples((prev) => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      });
+                    }}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          <Pressable
+            onPress={() => {
+              setFrontExamples((prev) => [...prev, '']);
+              setBackExamples((prev) => [...prev, '']);
+            }}
+            className="flex-row items-center gap-2 py-1 active:opacity-70"
+          >
+            <Text className="text-sm font-medium text-primary">+ Add example</Text>
+          </Pressable>
         </View>
 
         <View className="mt-8 flex-row gap-3">
