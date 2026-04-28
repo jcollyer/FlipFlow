@@ -28,6 +28,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc/client';
 import { useDebouncedValue } from '@/lib/hooks';
+import { ClassSelect } from '@/features/cards/ClassSelect';
 
 /** Languages exposed in the translation dropdown. Must match the server enum. */
 const TRANSLATE_TARGETS = [
@@ -204,6 +205,10 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
   const [frontExamples, setFrontExamples] = useState<string[]>([]);
   const [backExamples, setBackExamples] = useState<string[]>([]);
 
+  // Word class (part of speech) — optional. Tracked outside RHF so the dialog
+  // can map between `null` and the Radix sentinel without RHF type gymnastics.
+  const [wordClass, setWordClass] = useState<string | null>(null);
+
   // Reset form state when the dialog closes so the next open starts clean.
   // We deliberately do NOT reset translateOn / target — those are sticky.
   useEffect(() => {
@@ -217,6 +222,7 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
       lastTranslatedRef.current = null;
       setFrontExamples([]);
       setBackExamples([]);
+      setWordClass(null);
       lastTranslatedExamplesRef.current.clear();
     }
     // form / translate are stable refs from their hooks — don't include them
@@ -308,7 +314,13 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
         : selectedDeck === NO_DECK
           ? null
           : selectedDeck;
-    create.mutate({ ...values, categoryId, frontExamples, backExamples });
+    create.mutate({
+      ...values,
+      categoryId,
+      frontExamples,
+      backExamples,
+      class: wordClass,
+    });
   });
 
   return (
@@ -433,6 +445,10 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
                 Add example
               </Button>
             ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="card-class">Class (optional)</Label>
+            <ClassSelect id="card-class" value={wordClass} onChange={setWordClass} />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">

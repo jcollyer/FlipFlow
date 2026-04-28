@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { trpc } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
+import { ClassBadge } from '@/features/cards/ClassBadge';
 
 interface Props {
   categoryId: string;
@@ -114,6 +115,7 @@ export function PracticeSession({ categoryId }: Props) {
             back={current?.back ?? ''}
             frontExamples={current?.frontExamples ?? []}
             backExamples={current?.backExamples ?? []}
+            cardClass={current?.class ?? null}
             flipped={flipped}
             onClick={() => setFlipped((f) => !f)}
             cardId={current?.id}
@@ -145,6 +147,7 @@ function FlipCard({
   back,
   frontExamples,
   backExamples,
+  cardClass,
   flipped,
   onClick,
   cardId,
@@ -154,6 +157,7 @@ function FlipCard({
   back: string;
   frontExamples: string[];
   backExamples: string[];
+  cardClass: string | null;
   flipped: boolean;
   onClick: () => void;
   cardId: string | undefined;
@@ -169,6 +173,11 @@ function FlipCard({
       <div className="flip-card-inner">
         <Card className="flip-card-face flex items-center justify-center p-6 text-center shadow-md">
           <CardContent className="w-full space-y-3">
+            {cardClass ? (
+              <div className="flex justify-center">
+                <ClassBadge value={cardClass} size="md" />
+              </div>
+            ) : null}
             <p className="text-2xl font-bold leading-snug">{front}</p>
             {frontExamples.length > 0 ? (
               <ul className="space-y-1 text-left">
@@ -181,6 +190,11 @@ function FlipCard({
         </Card>
         <Card className="flip-card-face flip-card-back relative flex items-center justify-center border-primary/40 bg-primary/5 p-6 text-center shadow-md">
           <CardContent className="w-full space-y-3">
+            {cardClass ? (
+              <div className="flex justify-center">
+                <ClassBadge value={cardClass} size="md" />
+              </div>
+            ) : null}
             <p className="text-xl font-bold leading-snug">{back}</p>
             {backExamples.length > 0 ? (
               <ul className="space-y-1 text-left">

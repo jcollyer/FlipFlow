@@ -63,6 +63,7 @@ export const flashcardsRouter = router({
         back: input.back,
         frontExamples: input.frontExamples,
         backExamples: input.backExamples,
+        class: input.class ?? null,
         categoryId: input.categoryId ?? null,
         userId: ctx.userId,
       },
@@ -93,6 +94,7 @@ export const flashcardsRouter = router({
         ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
         ...(input.frontExamples !== undefined ? { frontExamples: input.frontExamples } : {}),
         ...(input.backExamples !== undefined ? { backExamples: input.backExamples } : {}),
+        ...(input.class !== undefined ? { class: input.class } : {}),
       },
     });
   }),

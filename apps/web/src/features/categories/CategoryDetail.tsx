@@ -36,6 +36,8 @@ import { trpc } from '@/lib/trpc/client';
 import { formatRelative } from '@/lib/utils';
 import { useDebouncedValue } from '@/lib/hooks';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
+import { ClassSelect } from '@/features/cards/ClassSelect';
+import { ClassBadge } from '@/features/cards/ClassBadge';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -186,7 +188,8 @@ export function CategoryDetail({ categoryId }: Props) {
                       ))}
                     </div>
                   ) : null}
-                  <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
+                    {card.class ? <ClassBadge value={card.class} /> : null}
                     <span>Next review: {formatRelative(card.nextReview)}</span>
                     <span>·</span>
                     <span>{card.repetitions} reps</span>
@@ -394,12 +397,15 @@ function EditCardDialog({
 
   const [frontExamples, setFrontExamples] = useState<string[]>([]);
   const [backExamples, setBackExamples] = useState<string[]>([]);
+  // Word class — optional. `null` = clear it on save.
+  const [wordClass, setWordClass] = useState<string | null>(null);
 
   // Sync form + example state when the card data loads.
   useEffect(() => {
     if (card) {
       setFrontExamples(card.frontExamples);
       setBackExamples(card.backExamples);
+      setWordClass(card.class ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card?.id]);
@@ -473,7 +479,7 @@ function EditCardDialog({
         </DialogHeader>
         <form
           onSubmit={form.handleSubmit((values) =>
-            update.mutate({ ...values, frontExamples, backExamples }),
+            update.mutate({ ...values, frontExamples, backExamples, class: wordClass }),
           )}
           className="space-y-3"
         >
@@ -567,6 +573,11 @@ function EditCardDialog({
                 Add example
               </Button>
             ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-card-class">Class (optional)</Label>
+            <ClassSelect id="edit-card-class" value={wordClass} onChange={setWordClass} />
           </div>
 
           <div className="space-y-2">

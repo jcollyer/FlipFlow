@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { BackLanguageSchema } from './languages';
+import { WordClassSchema } from './wordClass';
 
 // ----------------------------------------------------------------------------
 // Category
@@ -52,6 +53,8 @@ export const FlashcardCreateInput = z.object({
   back: z.string().trim().min(1, 'Back is required').max(4000),
   frontExamples: ExamplesArray.default([]),
   backExamples: ExamplesArray.default([]),
+  /** Optional part-of-speech of the front word — see WORD_CLASS_OPTIONS. */
+  class: WordClassSchema,
 });
 export type FlashcardCreateInput = z.infer<typeof FlashcardCreateInput>;
 
@@ -67,6 +70,11 @@ export const FlashcardUpdateInput = z.object({
   categoryId: z.string().cuid().optional(),
   frontExamples: ExamplesArray.optional(),
   backExamples: ExamplesArray.optional(),
+  /**
+   * Optional part-of-speech for the front word. `null` clears the value,
+   * `undefined` leaves it unchanged.
+   */
+  class: WordClassSchema,
 });
 export type FlashcardUpdateInput = z.infer<typeof FlashcardUpdateInput>;
 

@@ -104,6 +104,10 @@ model Flashcard {
   // to empty array). Stored as a Postgres text array.
   frontExamples String[] @map("front_examples")
   backExamples  String[] @map("back_examples")
+  // Optional part-of-speech ("class") for the front word — e.g. "noun",
+  // "verb", "adjective". Free-form string so we don't have to migrate the
+  // schema every time we tweak the list of options shown in the UI.
+  class      String?
   // Optional. Cards can live outside of a deck — they show up only in the
   // "All decks" view. When the deck is deleted, the card cascades with it.
   categoryId String?
