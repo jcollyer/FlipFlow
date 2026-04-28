@@ -30,8 +30,11 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     <main className="flex min-h-dvh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="mx-auto mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-4 w-4 text-primary" />
+          <Link
+            href="/"
+            className="text-muted-foreground mx-auto mb-2 inline-flex items-center gap-2 text-sm"
+          >
+            <RefreshCw className="text-primary h-4 w-4" />
             FlipFlow
           </Link>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
@@ -39,7 +42,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-3 text-sm">
               Couldn't sign you in: {error}
             </div>
           ) : null}
@@ -64,7 +67,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
+                <span className="bg-card text-muted-foreground px-2">or</span>
               </div>
             </div>
           ) : null}
@@ -81,7 +84,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             >
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
               <Button type="submit" className="w-full">
                 <Mail className="h-4 w-4" />
@@ -91,7 +100,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           ) : null}
 
           {!hasGoogle && !hasEmail ? (
-            <div className="rounded-md border bg-muted/50 p-4 text-sm text-muted-foreground">
+            <div className="bg-muted/50 text-muted-foreground rounded-md border p-4 text-sm">
               No auth providers are configured yet. Set <code>AUTH_GOOGLE_ID</code> /
               <code> AUTH_GOOGLE_SECRET</code> or <code>AUTH_RESEND_KEY</code> in your{' '}
               <code>.env.local</code>.

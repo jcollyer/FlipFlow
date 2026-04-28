@@ -13,9 +13,7 @@ interface Props extends TextInputProps {
 export function TextField({ label, error, hint, style, ...rest }: Props) {
   return (
     <View className="space-y-1.5">
-      {label ? (
-        <Text className="text-sm font-medium text-slate-700">{label}</Text>
-      ) : null}
+      {label ? <Text className="text-sm font-medium text-slate-700">{label}</Text> : null}
       <TextInput
         placeholderTextColor="#94a3b8"
         {...rest}
@@ -25,7 +23,7 @@ export function TextField({ label, error, hint, style, ...rest }: Props) {
         style={style}
       />
       {error ? (
-        <Text className="text-xs text-destructive">{error}</Text>
+        <Text className="text-destructive text-xs">{error}</Text>
       ) : hint ? (
         <Text className="text-xs text-slate-500">{hint}</Text>
       ) : null}

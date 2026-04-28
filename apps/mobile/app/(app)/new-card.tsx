@@ -58,10 +58,7 @@ async function readPrefs(categoryId: string | null): Promise<TranslatePrefs | nu
   return null;
 }
 
-async function writePrefs(
-  categoryId: string | null,
-  prefs: TranslatePrefs,
-): Promise<void> {
+async function writePrefs(categoryId: string | null, prefs: TranslatePrefs): Promise<void> {
   try {
     await AsyncStorage.setItem(prefsKey(categoryId), JSON.stringify(prefs));
   } catch {
@@ -94,9 +91,7 @@ export default function NewCardScreen() {
   // The deck selector is bound to a string (Radix-style sentinel). We
   // translate to/from null at the edges. Initialize from the query param
   // so the deck-detail entry point pre-fills correctly.
-  const [deckSelection, setDeckSelection] = useState<string>(
-    initialCategoryId ?? NO_DECK,
-  );
+  const [deckSelection, setDeckSelection] = useState<string>(initialCategoryId ?? NO_DECK);
   const selectedCategoryId = deckSelection === NO_DECK ? null : deckSelection;
 
   const [front, setFront] = useState('');
@@ -300,9 +295,7 @@ export default function NewCardScreen() {
                 />
               ))}
             </View>
-            <Text className="text-xs text-slate-500">
-              Choose a deck or leave uncategorized.
-            </Text>
+            <Text className="text-xs text-slate-500">Choose a deck or leave uncategorized.</Text>
           </View>
 
           {translateAvailable ? (
@@ -380,7 +373,7 @@ export default function NewCardScreen() {
               style={{ minHeight: 120, textAlignVertical: 'top' }}
             />
             {translate.error ? (
-              <Text className="text-xs text-destructive">{translate.error.message}</Text>
+              <Text className="text-destructive text-xs">{translate.error.message}</Text>
             ) : null}
           </View>
 
@@ -439,7 +432,7 @@ export default function NewCardScreen() {
             }}
             className="flex-row items-center gap-2 py-1 active:opacity-70"
           >
-            <Text className="text-sm font-medium text-primary">+ Add example</Text>
+            <Text className="text-primary text-sm font-medium">+ Add example</Text>
           </Pressable>
         </View>
 
@@ -486,24 +479,17 @@ function DeckOption({
       }`}
     >
       {color ? (
-        <View
-          className="h-4 w-4 rounded-sm"
-          style={{ backgroundColor: color }}
-        />
+        <View className="h-4 w-4 rounded-sm" style={{ backgroundColor: color }} />
       ) : (
         <View className="h-4 w-4 rounded-sm border border-dashed border-slate-300" />
       )}
       <Text
-        className={`flex-1 text-base ${
-          selected ? 'font-semibold text-primary' : 'text-slate-900'
-        }`}
+        className={`flex-1 text-base ${selected ? 'text-primary font-semibold' : 'text-slate-900'}`}
         numberOfLines={1}
       >
         {label}
       </Text>
-      {selected ? (
-        <Text className="text-base font-bold text-primary">✓</Text>
-      ) : null}
+      {selected ? <Text className="text-primary text-base font-bold">✓</Text> : null}
     </Pressable>
   );
 }

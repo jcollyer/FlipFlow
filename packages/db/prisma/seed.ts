@@ -26,11 +26,26 @@ async function main() {
         userId: user.id,
         cards: {
           create: [
-            { front: 'What does `as const` do?', back: 'Treats a literal as a deeply readonly literal type.' },
-            { front: 'Difference between `interface` and `type`?', back: 'Interfaces are open and extendable; type aliases are closed but more flexible (unions, intersections, mapped types).' },
-            { front: 'What is `satisfies`?', back: 'Validates that an expression matches a type without widening or narrowing the inferred type.' },
-            { front: 'What is a discriminated union?', back: 'A union of object types sharing a common literal `kind` field that lets TS narrow the variant.' },
-            { front: 'What does `keyof T` return?', back: 'A union of the literal string/number/symbol keys of `T`.' },
+            {
+              front: 'What does `as const` do?',
+              back: 'Treats a literal as a deeply readonly literal type.',
+            },
+            {
+              front: 'Difference between `interface` and `type`?',
+              back: 'Interfaces are open and extendable; type aliases are closed but more flexible (unions, intersections, mapped types).',
+            },
+            {
+              front: 'What is `satisfies`?',
+              back: 'Validates that an expression matches a type without widening or narrowing the inferred type.',
+            },
+            {
+              front: 'What is a discriminated union?',
+              back: 'A union of object types sharing a common literal `kind` field that lets TS narrow the variant.',
+            },
+            {
+              front: 'What does `keyof T` return?',
+              back: 'A union of the literal string/number/symbol keys of `T`.',
+            },
           ],
         },
       },

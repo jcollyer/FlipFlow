@@ -28,8 +28,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url: `${API_URL}/api/trpc`,
           transformer: superjson,
-          headers: () =>
-            session?.token ? { Authorization: `Bearer ${session.token}` } : {},
+          headers: () => (session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         }),
       ],
     });

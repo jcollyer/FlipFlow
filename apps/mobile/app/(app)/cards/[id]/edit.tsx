@@ -139,8 +139,10 @@ export default function EditCardScreen() {
       }
       setTranslateHydrated(true);
     })();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card?.id]);
 
   // Persist translate prefs changes.
@@ -246,8 +248,7 @@ export default function EditCardScreen() {
     // Only include categoryId in the payload if the user explicitly picked
     // a deck for an uncategorized card. Leaving it out preserves the
     // "don't touch this field" semantics of the partial update.
-    const categoryId =
-      showAssign && assignDeck !== KEEP_UNCATEGORIZED ? assignDeck : undefined;
+    const categoryId = showAssign && assignDeck !== KEEP_UNCATEGORIZED ? assignDeck : undefined;
 
     const parsed = FlashcardUpdateInput.safeParse({
       id: cardId,
@@ -325,7 +326,10 @@ export default function EditCardScreen() {
           <TextField
             label="Front"
             value={front}
-            onChangeText={(v) => { userEditedFrontRef.current = true; setFront(v); }}
+            onChangeText={(v) => {
+              userEditedFrontRef.current = true;
+              setFront(v);
+            }}
             error={frontError}
             multiline
             style={{ minHeight: 80, textAlignVertical: 'top' }}
@@ -394,7 +398,7 @@ export default function EditCardScreen() {
             }}
             className="flex-row items-center gap-2 py-1 active:opacity-70"
           >
-            <Text className="text-sm font-medium text-primary">+ Add example</Text>
+            <Text className="text-primary text-sm font-medium">+ Add example</Text>
           </Pressable>
 
           {showAssign ? (
@@ -417,8 +421,8 @@ export default function EditCardScreen() {
                 ))}
               </View>
               <Text className="text-xs text-slate-500">
-                Move this card into one of your decks. You can&apos;t move it back
-                to uncategorized once assigned.
+                Move this card into one of your decks. You can&apos;t move it back to uncategorized
+                once assigned.
               </Text>
             </View>
           ) : null}
@@ -466,24 +470,17 @@ function DeckOption({
       }`}
     >
       {color ? (
-        <View
-          className="h-4 w-4 rounded-sm"
-          style={{ backgroundColor: color }}
-        />
+        <View className="h-4 w-4 rounded-sm" style={{ backgroundColor: color }} />
       ) : (
         <View className="h-4 w-4 rounded-sm border border-dashed border-slate-300" />
       )}
       <Text
-        className={`flex-1 text-base ${
-          selected ? 'font-semibold text-primary' : 'text-slate-900'
-        }`}
+        className={`flex-1 text-base ${selected ? 'text-primary font-semibold' : 'text-slate-900'}`}
         numberOfLines={1}
       >
         {label}
       </Text>
-      {selected ? (
-        <Text className="text-base font-bold text-primary">✓</Text>
-      ) : null}
+      {selected ? <Text className="text-primary text-base font-bold">✓</Text> : null}
     </Pressable>
   );
 }

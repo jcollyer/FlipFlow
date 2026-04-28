@@ -67,9 +67,7 @@ export async function signInWithBrowser(): Promise<StoredSession> {
   const result = await WebBrowser.openAuthSessionAsync(startUrl, returnUrl);
 
   if (result.type !== 'success' || !result.url) {
-    throw new Error(
-      result.type === 'cancel' ? 'Sign in was cancelled.' : 'Sign in failed.',
-    );
+    throw new Error(result.type === 'cancel' ? 'Sign in was cancelled.' : 'Sign in failed.');
   }
 
   const parsed = Linking.parse(result.url);

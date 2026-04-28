@@ -34,7 +34,7 @@ export default function SignInScreen() {
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-white">
       <View className="flex-1 items-center justify-center px-8">
         <View className="mb-10 items-center">
-          <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-primary">
+          <View className="bg-primary mb-4 h-16 w-16 items-center justify-center rounded-2xl">
             <Text className="text-3xl font-bold text-white">F</Text>
           </View>
           <Text className="text-3xl font-bold text-slate-900">FlipFlow</Text>
@@ -46,7 +46,7 @@ export default function SignInScreen() {
         <Pressable
           onPress={handleSignIn}
           disabled={pending}
-          className="w-full flex-row items-center justify-center rounded-lg bg-primary px-4 py-4 active:opacity-80 disabled:opacity-60"
+          className="bg-primary w-full flex-row items-center justify-center rounded-lg px-4 py-4 active:opacity-80 disabled:opacity-60"
         >
           {pending ? (
             <ActivityIndicator color="#ffffff" />
@@ -56,8 +56,8 @@ export default function SignInScreen() {
         </Pressable>
 
         <Text className="mt-6 px-4 text-center text-xs text-slate-400">
-          You'll be taken to your browser to sign in with Google or a magic link, then bounced
-          right back here.
+          You'll be taken to your browser to sign in with Google or a magic link, then bounced right
+          back here.
         </Text>
       </View>
     </SafeAreaView>

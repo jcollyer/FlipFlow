@@ -7,11 +7,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Loader2, Pencil, Play, Plus, Trash2, X } from 'lucide-react';
 
-import {
-  BACK_LANGUAGES,
-  type BackLanguageValue,
-  FlashcardUpdateInput,
-} from '@flipflow/types';
+import { BACK_LANGUAGES, type BackLanguageValue, FlashcardUpdateInput } from '@flipflow/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -126,7 +122,9 @@ export function CategoryDetail({ categoryId }: Props) {
               className="h-9 w-9 rounded-md"
               style={{ backgroundColor: category?.color ?? '#94a3b8' }}
             />
-            <h1 className="text-3xl font-semibold tracking-tight">{category?.name ?? 'Loading…'}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {category?.name ?? 'Loading…'}
+            </h1>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -149,15 +147,12 @@ export function CategoryDetail({ categoryId }: Props) {
         <Stat label="Mastered" value={stats?.mastered ?? 0} />
       </div>
 
-      <DeckAudioLanguage
-        categoryId={categoryId}
-        backLanguage={category?.backLanguage ?? null}
-      />
+      <DeckAudioLanguage categoryId={categoryId} backLanguage={category?.backLanguage ?? null} />
 
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl border bg-muted/50" />
+            <div key={i} className="bg-muted/50 h-20 animate-pulse rounded-xl border" />
           ))}
         </div>
       ) : cards && cards.length > 0 ? (
@@ -167,15 +162,15 @@ export function CategoryDetail({ categoryId }: Props) {
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="line-clamp-2 font-medium">{card.front}</div>
-                  <div className="line-clamp-2 text-sm text-muted-foreground">{card.back}</div>
-                  {(card.frontExamples.length > 0 || card.backExamples.length > 0) ? (
-                    <div className="divide-y divide-border/50 px-3 py-1 mt-2">
+                  <div className="text-muted-foreground line-clamp-2 text-sm">{card.back}</div>
+                  {card.frontExamples.length > 0 || card.backExamples.length > 0 ? (
+                    <div className="divide-border/50 mt-2 divide-y px-3 py-1">
                       {Array.from({
                         length: Math.max(card.frontExamples.length, card.backExamples.length),
                       }).map((_, i) => (
                         <div key={i} className="flex items-baseline gap-3 py-1 text-xs">
                           <span className="flex min-w-0 items-baseline gap-1">
-                            <span className="font-semibold text-foreground">
+                            <span className="text-foreground font-semibold">
                               {card.frontExamples[i] ?? ''}
                             </span>
                           </span>
@@ -188,7 +183,7 @@ export function CategoryDetail({ categoryId }: Props) {
                       ))}
                     </div>
                   ) : null}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs">
                     {card.class ? <ClassBadge value={card.class} /> : null}
                     <span>Next review: {formatRelative(card.nextReview)}</span>
                     <span>·</span>
@@ -196,7 +191,12 @@ export function CategoryDetail({ categoryId }: Props) {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setEditingId(card.id)} aria-label="Edit">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEditingId(card.id)}
+                    aria-label="Edit"
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
@@ -218,7 +218,7 @@ export function CategoryDetail({ categoryId }: Props) {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
             <div className="text-lg font-semibold">No cards yet</div>
-            <p className="max-w-sm text-sm text-muted-foreground">
+            <p className="text-muted-foreground max-w-sm text-sm">
               Add your first card to start practicing this deck.
             </p>
             <Button onClick={() => setCreateOpen(true)}>
@@ -307,7 +307,7 @@ function DeckAudioLanguage({
           <Label htmlFor="deck-audio-language" className="cursor-pointer">
             Audio language (back of card)
           </Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Pick a language to enable a speaker button on the back of cards during practice.
           </p>
         </div>
@@ -344,7 +344,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <Card>
       <CardHeader className="pb-1">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-muted-foreground text-xs uppercase tracking-wide">{label}</div>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-semibold">{value}</div>
@@ -450,7 +450,11 @@ function EditCardDialog({
     debouncedFrontExamples.forEach((text, i) => {
       const trimmed = text.trim();
       if (!trimmed) {
-        setBackExamples((prev) => { const next = [...prev]; next[i] = ''; return next; });
+        setBackExamples((prev) => {
+          const next = [...prev];
+          next[i] = '';
+          return next;
+        });
         lastTranslatedExamplesRef.current.delete(i);
         return;
       }
@@ -463,7 +467,11 @@ function EditCardDialog({
         {
           onSuccess: ({ translation }) => {
             if (lastTranslatedExamplesRef.current.get(i) !== request) return;
-            setBackExamples((prev) => { const next = [...prev]; next[i] = translation; return next; });
+            setBackExamples((prev) => {
+              const next = [...prev];
+              next[i] = translation;
+              return next;
+            });
           },
         },
       );
@@ -484,13 +492,13 @@ function EditCardDialog({
           className="space-y-3"
         >
           {translateAvailable ? (
-            <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+            <div className="bg-muted/30 space-y-3 rounded-md border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
                   <Label htmlFor="edit-translate-toggle" className="cursor-pointer">
                     Translation card
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Auto-translate the front into the chosen language.
                   </p>
                 </div>
@@ -522,6 +530,11 @@ function EditCardDialog({
               ) : null}
             </div>
           ) : null}
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-card-class">Class (optional)</Label>
+            <ClassSelect id="edit-card-class" value={wordClass} onChange={setWordClass} />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="front">Front</Label>
@@ -563,7 +576,7 @@ function EditCardDialog({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="-ml-1 h-7 text-xs text-muted-foreground"
+                className="text-muted-foreground -ml-1 h-7 text-xs"
                 onClick={() => {
                   setFrontExamples((prev) => [...prev, '']);
                   setBackExamples((prev) => [...prev, '']);
@@ -576,15 +589,10 @@ function EditCardDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-card-class">Class (optional)</Label>
-            <ClassSelect id="edit-card-class" value={wordClass} onChange={setWordClass} />
-          </div>
-
-          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="back">Back</Label>
               {translateOn && translate.isPending ? (
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Translating…
                 </span>
@@ -624,4 +632,3 @@ function EditCardDialog({
     </Dialog>
   );
 }
-

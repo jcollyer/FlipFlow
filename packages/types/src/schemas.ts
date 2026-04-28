@@ -83,11 +83,7 @@ export type FlashcardUpdateInput = z.infer<typeof FlashcardUpdateInput>;
 // ----------------------------------------------------------------------------
 
 /** SM-2 quality of recall (0 = total blackout, 5 = perfect). */
-export const ConfidenceRating = z
-  .number()
-  .int()
-  .min(0)
-  .max(5);
+export const ConfidenceRating = z.number().int().min(0).max(5);
 export type ConfidenceRating = z.infer<typeof ConfidenceRating>;
 
 export const SubmitReviewInput = z.object({

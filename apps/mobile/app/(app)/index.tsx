@@ -66,9 +66,7 @@ export default function DecksScreen() {
             <View className="flex-row items-center justify-between">
               <View>
                 <Text className="text-2xl font-bold text-slate-900">Your decks</Text>
-                <Text className="text-sm text-slate-500">
-                  Practice with spaced repetition.
-                </Text>
+                <Text className="text-sm text-slate-500">Practice with spaced repetition.</Text>
               </View>
               <Pressable onPress={confirmSignOut} hitSlop={8}>
                 <Text className="text-sm font-medium text-slate-500">Sign out</Text>
@@ -90,10 +88,7 @@ export default function DecksScreen() {
                     className="h-10 w-10 rounded-md"
                     style={{ backgroundColor: item.color ?? '#94a3b8' }}
                   />
-                  <Text
-                    className="flex-1 text-lg font-semibold text-slate-900"
-                    numberOfLines={1}
-                  >
+                  <Text className="flex-1 text-lg font-semibold text-slate-900" numberOfLines={1}>
                     {item.name}
                   </Text>
                 </View>
@@ -104,7 +99,7 @@ export default function DecksScreen() {
                   <Text className="text-sm text-slate-500">•</Text>
                   <Text
                     className={`text-sm ${
-                      item.dueCount > 0 ? 'font-medium text-primary' : 'text-slate-500'
+                      item.dueCount > 0 ? 'text-primary font-medium' : 'text-slate-500'
                     }`}
                   >
                     {item.dueCount} due
@@ -121,9 +116,7 @@ export default function DecksScreen() {
               Create your first deck to start adding flashcards.
             </Text>
             <View className="mt-2 w-full">
-              <Button onPress={() => router.push('/new-deck')}>
-                Create your first deck
-              </Button>
+              <Button onPress={() => router.push('/new-deck')}>Create your first deck</Button>
             </View>
           </Card>
         }
@@ -135,11 +128,7 @@ export default function DecksScreen() {
       {/* Stacked floating action buttons. + New card sits above + New deck
           so the higher-frequency action is closer to the thumb. */}
       <View className="absolute bottom-6 left-4 right-4 gap-2">
-        <Button
-          size="lg"
-          variant="outline"
-          onPress={() => router.push('/new-card')}
-        >
+        <Button size="lg" variant="outline" onPress={() => router.push('/new-card')}>
           + New card
         </Button>
         <Button size="lg" onPress={() => router.push('/new-deck')}>
@@ -165,13 +154,10 @@ function AllDecksEntry() {
       <Pressable className="active:opacity-70">
         <Card className="border-2 border-dashed border-slate-300 p-4">
           <View className="flex-row items-center gap-3">
-            <View className="h-10 w-10 items-center justify-center rounded-md bg-primary/10">
-              <Text className="text-lg font-bold text-primary">≡</Text>
+            <View className="bg-primary/10 h-10 w-10 items-center justify-center rounded-md">
+              <Text className="text-primary text-lg font-bold">≡</Text>
             </View>
-            <Text
-              className="flex-1 text-lg font-bold text-slate-900"
-              numberOfLines={1}
-            >
+            <Text className="flex-1 text-lg font-bold text-slate-900" numberOfLines={1}>
               All decks
             </Text>
           </View>
@@ -180,11 +166,7 @@ function AllDecksEntry() {
               {total} {total === 1 ? 'card' : 'cards'}
             </Text>
             <Text className="text-sm text-slate-500">•</Text>
-            <Text
-              className={`text-sm ${
-                due > 0 ? 'font-medium text-primary' : 'text-slate-500'
-              }`}
-            >
+            <Text className={`text-sm ${due > 0 ? 'text-primary font-medium' : 'text-slate-500'}`}>
               {due} due
             </Text>
           </View>

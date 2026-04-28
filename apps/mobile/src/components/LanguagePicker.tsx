@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  SafeAreaView,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Modal, Pressable, SafeAreaView, Text, View } from 'react-native';
 
 import { BACK_LANGUAGES, type BackLanguageValue } from '@flipflow/types';
 
@@ -62,7 +55,7 @@ export function LanguagePicker({ value, onChange, disabled, accessibilityLabel }
         disabled={disabled}
         accessibilityLabel={accessibilityLabel ?? 'Select audio language'}
         accessibilityRole="button"
-        className="flex-row items-center justify-between rounded-lg border border-border bg-white px-4 py-3 active:opacity-80"
+        className="border-border flex-row items-center justify-between rounded-lg border bg-white px-4 py-3 active:opacity-80"
         style={{ opacity: disabled ? 0.5 : 1 }}
       >
         <Text className="text-base text-slate-900">{labelFor(value)}</Text>
@@ -76,19 +69,17 @@ export function LanguagePicker({ value, onChange, disabled, accessibilityLabel }
         onRequestClose={() => setOpen(false)}
       >
         <SafeAreaView className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between border-b border-border px-4 py-3">
+          <View className="border-border flex-row items-center justify-between border-b px-4 py-3">
             <Text className="text-lg font-semibold text-slate-900">Audio language</Text>
             <Pressable onPress={() => setOpen(false)} hitSlop={8} className="px-2 py-1">
-              <Text className="text-base font-medium text-primary">Done</Text>
+              <Text className="text-primary text-base font-medium">Done</Text>
             </Pressable>
           </View>
 
           <FlatList
             data={OPTIONS}
             keyExtractor={(o) => o.value}
-            ItemSeparatorComponent={() => (
-              <View className="ml-4 h-px bg-border" />
-            )}
+            ItemSeparatorComponent={() => <View className="bg-border ml-4 h-px" />}
             renderItem={({ item }) => {
               const selected =
                 (item.value === NO_LANGUAGE && value === null) || item.value === value;
@@ -102,7 +93,7 @@ export function LanguagePicker({ value, onChange, disabled, accessibilityLabel }
                 >
                   <Text className="text-base text-slate-900">{item.label}</Text>
                   {selected ? (
-                    <Text className="text-base font-semibold text-primary">✓</Text>
+                    <Text className="text-primary text-base font-semibold">✓</Text>
                   ) : null}
                 </Pressable>
               );

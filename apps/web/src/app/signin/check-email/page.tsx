@@ -9,7 +9,7 @@ export default function CheckEmailPage() {
     <main className="flex min-h-dvh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="bg-primary/10 text-primary mx-auto mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full">
             <Mail className="h-6 w-6" />
           </div>
           <CardTitle>Check your email</CardTitle>

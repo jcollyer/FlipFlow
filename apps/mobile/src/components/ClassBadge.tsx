@@ -42,9 +42,7 @@ export function ClassBadge({ value, size = 'sm' }: ClassBadgeProps) {
       }
     >
       <Feather name="tag" size={iconSize} color={color} />
-      <Text className={isMd ? 'text-sm text-slate-500' : 'text-xs text-slate-500'}>
-        {label}
-      </Text>
+      <Text className={isMd ? 'text-sm text-slate-500' : 'text-xs text-slate-500'}>{label}</Text>
     </View>
   );
 }

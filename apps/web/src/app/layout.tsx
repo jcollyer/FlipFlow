@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-dvh bg-background font-sans">
+      <body className="bg-background min-h-dvh font-sans">
         <TRPCProvider>{children}</TRPCProvider>
       </body>
     </html>

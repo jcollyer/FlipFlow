@@ -31,14 +31,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="border-b">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/app" className="flex items-center gap-2 font-semibold">
-            <RefreshCw className="h-5 w-5 text-primary" />
+            <RefreshCw className="text-primary h-5 w-5" />
             FlipFlow
           </Link>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-9 gap-2 px-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                <span className="bg-primary/15 text-primary flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold">
                   {initials}
                 </span>
                 <span className="hidden text-sm sm:inline">

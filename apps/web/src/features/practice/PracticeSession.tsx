@@ -90,9 +90,7 @@ export function PracticeSession({ categoryId }: Props) {
             Back to deck
           </Link>
         </Button>
-        <div className="text-sm text-muted-foreground">
-          {data?.category.name ?? ''}
-        </div>
+        <div className="text-muted-foreground text-sm">{data?.category.name ?? ''}</div>
       </div>
 
       {!isLoading && cards.length === 0 ? (
@@ -106,7 +104,7 @@ export function PracticeSession({ categoryId }: Props) {
       ) : (
         <>
           <Progress value={progress} />
-          <div className="text-center text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-center text-xs">
             {Math.min(index + 1, cards.length)} of {cards.length}
           </div>
 
@@ -130,7 +128,7 @@ export function PracticeSession({ categoryId }: Props) {
             <div className="flex justify-center">
               <Button onClick={() => setFlipped(true)} size="lg">
                 Show answer
-                <span className="ml-2 rounded border bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                <span className="bg-muted text-muted-foreground ml-2 rounded border px-1.5 py-0.5 text-xs">
                   Space
                 </span>
               </Button>
@@ -167,7 +165,10 @@ function FlipCard({
     <button
       type="button"
       onClick={onClick}
-      className={cn('flip-card block min-h-72 w-full select-text outline-none', flipped && 'is-flipped')}
+      className={cn(
+        'flip-card block min-h-72 w-full select-text outline-none',
+        flipped && 'is-flipped',
+      )}
       aria-label={flipped ? 'Hide answer' : 'Show answer'}
     >
       <div className="flip-card-inner">
@@ -182,13 +183,15 @@ function FlipCard({
             {frontExamples.length > 0 ? (
               <ul className="space-y-1 text-left">
                 {frontExamples.map((ex, i) => (
-                  <li key={i} className="pl-4 text-base italic text-muted-foreground">{ex}</li>
+                  <li key={i} className="text-muted-foreground pl-4 text-base italic">
+                    {ex}
+                  </li>
                 ))}
               </ul>
             ) : null}
           </CardContent>
         </Card>
-        <Card className="flip-card-face flip-card-back relative flex items-center justify-center border-primary/40 bg-primary/5 p-6 text-center shadow-md">
+        <Card className="flip-card-face flip-card-back border-primary/40 bg-primary/5 relative flex items-center justify-center p-6 text-center shadow-md">
           <CardContent className="w-full space-y-3">
             {cardClass ? (
               <div className="flex justify-center">
@@ -199,14 +202,21 @@ function FlipCard({
             {backExamples.length > 0 ? (
               <ul className="space-y-1 text-left">
                 {backExamples.map((ex, i) => (
-                  <li key={i} className="pl-4 text-base italic text-muted-foreground">{ex}</li>
+                  <li key={i} className="text-muted-foreground pl-4 text-base italic">
+                    {ex}
+                  </li>
                 ))}
               </ul>
             ) : null}
           </CardContent>
           {/* Only render the audio button if the deck has a configured language. */}
           {backLanguage && cardId ? (
-            <AudioButton cardId={cardId} text={back} examples={backExamples} languageCode={backLanguage} />
+            <AudioButton
+              cardId={cardId}
+              text={back}
+              examples={backExamples}
+              languageCode={backLanguage}
+            />
           ) : null}
         </Card>
       </div>
@@ -348,20 +358,16 @@ function AudioButton({
         disabled={loading}
         aria-label={playing ? 'Playing pronunciation' : 'Hear pronunciation'}
         className={cn(
-          'inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background text-primary shadow-sm transition',
-          'hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
+          'bg-background text-primary inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition',
+          'hover:bg-primary/10 focus:ring-ring focus:outline-none focus:ring-2 focus:ring-offset-1',
           'disabled:cursor-progress disabled:opacity-60',
-          playing && 'animate-pulse bg-primary/10',
+          playing && 'bg-primary/10 animate-pulse',
         )}
       >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Volume2 className="h-4 w-4" />
-        )}
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
       </button>
       {error ? (
-        <span className="max-w-[180px] truncate rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">
+        <span className="bg-destructive/10 text-destructive max-w-[180px] truncate rounded px-1.5 py-0.5 text-[10px]">
           {error}
         </span>
       ) : null}
@@ -385,12 +391,12 @@ function RatingButtons({ onRate, disabled }: { onRate: (q: number) => void; disa
           onClick={() => onRate(r.value)}
           disabled={disabled}
           className={cn(
-            'flex flex-col items-center rounded-md border bg-background py-3 transition disabled:opacity-50',
+            'bg-background flex flex-col items-center rounded-md border py-3 transition disabled:opacity-50',
             r.tone,
           )}
         >
           <span className="text-base font-semibold">{r.label}</span>
-          <span className="text-xs text-muted-foreground">{r.sub}</span>
+          <span className="text-muted-foreground text-xs">{r.sub}</span>
         </button>
       ))}
     </div>
@@ -414,13 +420,13 @@ function EmptyQueue({
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <div className="text-lg font-semibold">
           {deckIsEmpty ? 'No cards in this deck' : 'Nothing due right now'}
         </div>
-        <p className="max-w-sm text-sm text-muted-foreground">
+        <p className="text-muted-foreground max-w-sm text-sm">
           {deckIsEmpty
             ? "There's nothing here to practice yet. Add some cards to get started."
             : "You're all caught up. Your schedule will surface cards as they become due — or jump back in early with Practice anyway."}
@@ -444,7 +450,7 @@ function SessionSummary({ categoryId, reviewed }: { categoryId: string; reviewed
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <div className="text-lg font-semibold">Session complete</div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           You reviewed <strong>{reviewed}</strong> {reviewed === 1 ? 'card' : 'cards'}. Nice.
         </p>
         <div className="flex gap-2">

@@ -41,13 +41,15 @@ export const categoriesRouter = router({
   }),
 
   /** Single category (with ownership check). */
-  byId: protectedProcedure.input(z.object({ id: z.string().cuid() })).query(async ({ ctx, input }) => {
-    const category = await ctx.prisma.category.findFirst({
-      where: { id: input.id, userId: ctx.userId },
-    });
-    if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
-    return category;
-  }),
+  byId: protectedProcedure
+    .input(z.object({ id: z.string().cuid() }))
+    .query(async ({ ctx, input }) => {
+      const category = await ctx.prisma.category.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+      });
+      if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
+      return category;
+    }),
 
   create: protectedProcedure.input(CategoryCreateInput).mutation(async ({ ctx, input }) =>
     ctx.prisma.category.create({
@@ -73,9 +75,7 @@ export const categoriesRouter = router({
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.color !== undefined ? { color: input.color ?? null } : {}),
-        ...(input.backLanguage !== undefined
-          ? { backLanguage: input.backLanguage ?? null }
-          : {}),
+        ...(input.backLanguage !== undefined ? { backLanguage: input.backLanguage ?? null } : {}),
       },
     });
   }),

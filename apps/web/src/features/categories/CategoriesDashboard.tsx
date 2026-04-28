@@ -67,7 +67,7 @@ export function CategoriesDashboard() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Your decks</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Organize cards into decks and practice them with spaced repetition.
           </p>
         </div>
@@ -90,16 +90,16 @@ export function CategoriesDashboard() {
           <AllDecksCard />
           {categories.map((c) => (
             <Link key={c.id} href={`/app/categories/${c.id}`} className="group">
-              <Card className="transition hover:border-primary/40 hover:shadow-md">
+              <Card className="hover:border-primary/40 transition hover:shadow-md">
                 <CardHeader className="flex flex-row items-center gap-3">
                   <div
                     aria-hidden
                     className="h-10 w-10 rounded-md"
                     style={{ backgroundColor: c.color ?? '#94a3b8' }}
                   />
-                  <CardTitle className="truncate group-hover:text-primary">{c.name}</CardTitle>
+                  <CardTitle className="group-hover:text-primary truncate">{c.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex items-center gap-4 text-sm text-muted-foreground">
+                <CardContent className="text-muted-foreground flex items-center gap-4 text-sm">
                   <span className="inline-flex items-center gap-1.5">
                     <Layers className="h-4 w-4" />
                     {c.cardCount} {c.cardCount === 1 ? 'card' : 'cards'}
@@ -134,7 +134,7 @@ export function CategoriesDashboard() {
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="e.g. Spanish verbs" {...form.register('name')} />
               {form.formState.errors.name ? (
-                <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                <p className="text-destructive text-sm">{form.formState.errors.name.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">
@@ -147,7 +147,7 @@ export function CategoriesDashboard() {
                       key={color}
                       type="button"
                       onClick={() => form.setValue('color', color, { shouldDirty: true })}
-                      className={`h-8 w-8 rounded-md ring-offset-2 transition ${selected ? 'ring-2 ring-ring' : ''}`}
+                      className={`h-8 w-8 rounded-md ring-offset-2 transition ${selected ? 'ring-ring ring-2' : ''}`}
                       style={{ backgroundColor: color }}
                       aria-label={`Color ${color}`}
                     />
@@ -180,9 +180,8 @@ export function CategoriesDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Pick a language to enable a speaker button on the back of cards
-                  during practice.
+                <p className="text-muted-foreground text-xs">
+                  Pick a language to enable a speaker button on the back of cards during practice.
                 </p>
               </div>
             ) : null}
@@ -218,19 +217,17 @@ function AllDecksCard() {
   const { data: stats } = trpc.practice.stats.useQuery({});
   return (
     <Link href="/app/all-categories" className="group">
-      <Card className="border-dashed transition hover:border-primary/60 hover:shadow-md">
+      <Card className="hover:border-primary/60 border-dashed transition hover:shadow-md">
         <CardHeader className="flex flex-row items-center gap-3">
           <div
             aria-hidden
-            className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary"
+            className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-md"
           >
             <Library className="h-5 w-5" />
           </div>
-          <CardTitle className="truncate font-bold group-hover:text-primary">
-            All decks
-          </CardTitle>
+          <CardTitle className="group-hover:text-primary truncate font-bold">All decks</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center gap-4 text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground flex items-center gap-4 text-sm">
           <span className="inline-flex items-center gap-1.5">
             <Layers className="h-4 w-4" />
             {stats?.total ?? 0} {stats?.total === 1 ? 'card' : 'cards'}
@@ -249,11 +246,11 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <Card className="border-dashed sm:col-span-1 lg:col-span-2">
       <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
           <Layers className="h-6 w-6" />
         </div>
         <div className="text-lg font-semibold">No decks yet</div>
-        <p className="max-w-sm text-sm text-muted-foreground">
+        <p className="text-muted-foreground max-w-sm text-sm">
           Create your first deck to start adding flashcards. Each deck has its own practice queue.
         </p>
         <Button onClick={onCreate}>
@@ -269,7 +266,7 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-32 animate-pulse rounded-xl border bg-muted/50" />
+        <div key={i} className="bg-muted/50 h-32 animate-pulse rounded-xl border" />
       ))}
     </div>
   );

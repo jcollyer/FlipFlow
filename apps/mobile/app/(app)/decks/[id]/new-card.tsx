@@ -10,7 +10,5 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 export default function LegacyDeckNewCardRedirect() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const categoryId = typeof id === 'string' ? id : '';
-  return (
-    <Redirect href={categoryId ? `/new-card?categoryId=${categoryId}` : '/new-card'} />
-  );
+  return <Redirect href={categoryId ? `/new-card?categoryId=${categoryId}` : '/new-card'} />;
 }

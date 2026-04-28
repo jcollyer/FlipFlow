@@ -55,16 +55,16 @@ The web app is at `http://localhost:3000`.
 
 All variables live in `.env.local` at the repo root (Turbo passes them through to each workspace).
 
-| Variable | Purpose |
-| --- | --- |
-| `DATABASE_URL` | Pooled Postgres URL (Neon "Pooled connection") |
-| `DIRECT_URL` | Unpooled URL for `prisma migrate` |
-| `AUTH_SECRET` | Random string for Auth.js (`openssl rand -base64 32`) |
-| `AUTH_URL` | Base URL of the app (`http://localhost:3000` in dev) |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth credentials |
-| `AUTH_RESEND_KEY` | Resend API key for magic-link email |
-| `EMAIL_FROM` | "From" address for magic-link emails |
-| `GOOGLE_TRANSLATE_API_KEY` | Optional. Enables the translation toggle on the New Card dialog. |
+| Variable                                | Purpose                                                          |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`                          | Pooled Postgres URL (Neon "Pooled connection")                   |
+| `DIRECT_URL`                            | Unpooled URL for `prisma migrate`                                |
+| `AUTH_SECRET`                           | Random string for Auth.js (`openssl rand -base64 32`)            |
+| `AUTH_URL`                              | Base URL of the app (`http://localhost:3000` in dev)             |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth credentials                                         |
+| `AUTH_RESEND_KEY`                       | Resend API key for magic-link email                              |
+| `EMAIL_FROM`                            | "From" address for magic-link emails                             |
+| `GOOGLE_TRANSLATE_API_KEY`              | Optional. Enables the translation toggle on the New Card dialog. |
 
 If a provider's env vars are missing, that sign-in option is hidden — the app still runs. Same goes for `GOOGLE_TRANSLATE_API_KEY`: when it's not set, the new-card dialog quietly omits the translation toggle.
 
@@ -102,7 +102,7 @@ npm run db:migrate       # create + apply a migration
 npm run db:seed          # seed a demo deck
 ```
 
-`npm run dev` only starts the *web* dev server; the mobile app runs separately because Metro has its own lifecycle and QR-code UI.
+`npm run dev` only starts the _web_ dev server; the mobile app runs separately because Metro has its own lifecycle and QR-code UI.
 
 ## How the spaced-repetition piece works
 
@@ -160,7 +160,7 @@ The app is registered as `flipflow://` in `apps/mobile/app.json`. The sign-in fl
 1. Mobile calls `WebBrowser.openAuthSessionAsync("${API_URL}/auth/mobile?scheme=flipflow")`.
 2. The new `/auth/mobile` route in `apps/web` checks the user's session. If signed out, it bounces to `/signin` with a callback. If signed in, it looks up the corresponding `Session` row and redirects to `flipflow://auth?token=<sessionToken>&expires=<iso>`.
 3. Mobile stores `token` + `expires` in `expo-secure-store`, then sends `Authorization: Bearer <token>` on every tRPC request.
-4. The tRPC handler (`apps/web/src/app/api/trpc/[trpc]/route.ts`) accepts *either* a cookie session (web) *or* a bearer token (mobile) — bearer tokens are resolved against the same `Session` table Auth.js already maintains.
+4. The tRPC handler (`apps/web/src/app/api/trpc/[trpc]/route.ts`) accepts _either_ a cookie session (web) _or_ a bearer token (mobile) — bearer tokens are resolved against the same `Session` table Auth.js already maintains.
 
 Result: zero changes to `@flipflow/api`, and mobile sign-out is just `clearStoredSession()`.
 

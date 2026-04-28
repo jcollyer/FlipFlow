@@ -2,13 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Audio, type AVPlaybackStatus } from 'expo-av';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { type BackLanguageValue } from '@flipflow/types';
 
@@ -123,7 +117,9 @@ export default function PracticeScreen() {
                 ) : null}
                 <Text
                   className={`text-center leading-snug ${
-                    flipped ? 'text-xl font-bold text-slate-900' : 'text-2xl font-bold text-slate-900'
+                    flipped
+                      ? 'text-xl font-bold text-slate-900'
+                      : 'text-2xl font-bold text-slate-900'
                   }`}
                 >
                   {flipped ? current?.back : current?.front}
@@ -131,13 +127,17 @@ export default function PracticeScreen() {
                 {flipped && (current?.backExamples?.length ?? 0) > 0 ? (
                   <View className="mt-3 w-full gap-1 self-start pl-2">
                     {current!.backExamples.map((ex, i) => (
-                      <Text key={i} className="text-sm italic text-slate-500">{ex}</Text>
+                      <Text key={i} className="text-sm italic text-slate-500">
+                        {ex}
+                      </Text>
                     ))}
                   </View>
                 ) : !flipped && (current?.frontExamples?.length ?? 0) > 0 ? (
                   <View className="mt-3 w-full gap-1 self-start pl-2">
                     {current!.frontExamples.map((ex, i) => (
-                      <Text key={i} className="text-sm italic text-slate-500">{ex}</Text>
+                      <Text key={i} className="text-sm italic text-slate-500">
+                        {ex}
+                      </Text>
                     ))}
                   </View>
                 ) : null}
@@ -181,10 +181,7 @@ export default function PracticeScreen() {
 function ProgressBar({ value }: { value: number }) {
   return (
     <View className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-      <View
-        className="h-full bg-primary"
-        style={{ width: `${Math.round(value * 100)}%` }}
-      />
+      <View className="bg-primary h-full" style={{ width: `${Math.round(value * 100)}%` }} />
     </View>
   );
 }
@@ -203,7 +200,7 @@ function RatingButtons({ onRate }: { onRate: (q: number) => void }) {
         <Pressable
           key={r.value}
           onPress={() => onRate(r.value)}
-          className={`flex-1 min-w-[45%] items-center rounded-lg border bg-white py-3 active:opacity-70 ${r.tone}`}
+          className={`min-w-[45%] flex-1 items-center rounded-lg border bg-white py-3 active:opacity-70 ${r.tone}`}
         >
           <Text className="text-base font-semibold text-slate-900">{r.label}</Text>
           <Text className="text-xs text-slate-500">{r.sub}</Text>
@@ -323,10 +320,7 @@ function AudioButton({
           soundRef.current = null;
         }
         try {
-          const { sound } = await Audio.Sound.createAsync(
-            { uri: dataUrl },
-            { shouldPlay: true },
-          );
+          const { sound } = await Audio.Sound.createAsync({ uri: dataUrl }, { shouldPlay: true });
           soundRef.current = sound;
 
           sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
@@ -402,7 +396,7 @@ function AudioButton({
         accessibilityLabel={playing ? 'Playing pronunciation' : 'Hear pronunciation'}
         accessibilityRole="button"
         hitSlop={6}
-        className={`h-10 w-10 items-center justify-center rounded-full border border-border bg-white active:opacity-70 ${
+        className={`border-border h-10 w-10 items-center justify-center rounded-full border bg-white active:opacity-70 ${
           playing ? 'bg-blue-50' : ''
         }`}
         style={{ opacity: loading ? 0.6 : 1 }}
@@ -418,7 +412,7 @@ function AudioButton({
       </Pressable>
       {error ? (
         <View className="max-w-[180px] rounded bg-red-50 px-2 py-1">
-          <Text className="text-[10px] text-destructive" numberOfLines={2}>
+          <Text className="text-destructive text-[10px]" numberOfLines={2}>
             {error}
           </Text>
         </View>

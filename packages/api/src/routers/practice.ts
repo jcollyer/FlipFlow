@@ -36,9 +36,7 @@ export const practiceRouter = router({
       const cards = await ctx.prisma.flashcard.findMany({
         where: {
           categoryId: input.categoryId,
-          ...(input.includeAll
-            ? {}
-            : { OR: [{ nextReview: null }, { nextReview: { lte: now } }] }),
+          ...(input.includeAll ? {} : { OR: [{ nextReview: null }, { nextReview: { lte: now } }] }),
         },
         orderBy: [{ nextReview: 'asc' }, { createdAt: 'asc' }],
         take: input.limit,

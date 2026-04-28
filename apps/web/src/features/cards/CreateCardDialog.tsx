@@ -309,11 +309,7 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
 
   const onSubmit = form.handleSubmit((values) => {
     const categoryId =
-      props.mode === 'fixed'
-        ? props.categoryId
-        : selectedDeck === NO_DECK
-          ? null
-          : selectedDeck;
+      props.mode === 'fixed' ? props.categoryId : selectedDeck === NO_DECK ? null : selectedDeck;
     create.mutate({
       ...values,
       categoryId,
@@ -349,20 +345,20 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
                     : null}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Cards without a deck still show up in the All decks view.
               </p>
             </div>
           ) : null}
 
           {translateAvailable ? (
-            <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+            <div className="bg-muted/30 space-y-3 rounded-md border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
                   <Label htmlFor="translate-toggle" className="cursor-pointer">
                     Translation card
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Auto-translate the front into the chosen language.
                   </p>
                 </div>
@@ -394,7 +390,10 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
               ) : null}
             </div>
           ) : null}
-
+          <div className="space-y-2">
+            <Label htmlFor="card-class">Class (optional)</Label>
+            <ClassSelect id="card-class" value={wordClass} onChange={setWordClass} />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="front">Front</Label>
             <Textarea id="front" rows={2} {...form.register('front')} />
@@ -435,7 +434,7 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="-ml-1 h-7 text-xs text-muted-foreground"
+                className="text-muted-foreground -ml-1 h-7 text-xs"
                 onClick={() => {
                   setFrontExamples((prev) => [...prev, '']);
                   setBackExamples((prev) => [...prev, '']);
@@ -447,14 +446,10 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="card-class">Class (optional)</Label>
-            <ClassSelect id="card-class" value={wordClass} onChange={setWordClass} />
-          </div>
-          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="back">Back</Label>
               {translateOn && translate.isPending ? (
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Translating…
                 </span>
@@ -480,7 +475,7 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
               </div>
             ) : null}
             {translate.error ? (
-              <p className="text-xs text-destructive">{translate.error.message}</p>
+              <p className="text-destructive text-xs">{translate.error.message}</p>
             ) : null}
           </div>
           <DialogFooter>

@@ -145,11 +145,19 @@ export default function DeckDetailScreen() {
               <Text className="text-sm text-slate-500" numberOfLines={2}>
                 {item.back}
               </Text>
-              {(item.frontExamples?.length > 0 || item.backExamples?.length > 0) ? (
+              {item.frontExamples?.length > 0 || item.backExamples?.length > 0 ? (
                 <View className="mt-1.5 gap-1 border-t border-slate-100 pt-1.5">
-                  {Array.from({ length: Math.max(item.frontExamples?.length ?? 0, item.backExamples?.length ?? 0) }).map((_, i) => (
+                  {Array.from({
+                    length: Math.max(
+                      item.frontExamples?.length ?? 0,
+                      item.backExamples?.length ?? 0,
+                    ),
+                  }).map((_, i) => (
                     <View key={i} className="flex-row gap-2">
-                      <Text className="flex-1 text-xs font-semibold text-slate-800" numberOfLines={2}>
+                      <Text
+                        className="flex-1 text-xs font-semibold text-slate-800"
+                        numberOfLines={2}
+                      >
                         {item.frontExamples?.[i] ?? ''}
                       </Text>
                       <Text className="flex-1 text-xs text-slate-400" numberOfLines={2}>
@@ -174,14 +182,14 @@ export default function DeckDetailScreen() {
                 hitSlop={8}
                 className="px-2 py-1"
               >
-                <Text className="text-sm font-medium text-primary">Edit</Text>
+                <Text className="text-primary text-sm font-medium">Edit</Text>
               </Pressable>
               <Pressable
                 onPress={() => confirmDeleteCard(item.id)}
                 hitSlop={8}
                 className="px-2 py-1"
               >
-                <Text className="text-sm font-medium text-destructive">Delete</Text>
+                <Text className="text-destructive text-sm font-medium">Delete</Text>
               </Pressable>
             </View>
           </Card>
@@ -205,7 +213,7 @@ export default function DeckDetailScreen() {
               onPress={confirmDeleteDeck}
               className="mt-8 items-center py-3 active:opacity-70"
             >
-              <Text className="text-sm font-medium text-destructive">Delete deck</Text>
+              <Text className="text-destructive text-sm font-medium">Delete deck</Text>
             </Pressable>
           ) : null
         }
@@ -224,21 +232,11 @@ export default function DeckDetailScreen() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
+function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <Card className="flex-1 p-3">
       <Text className="text-xs uppercase tracking-wide text-slate-500">{label}</Text>
-      <Text
-        className={`mt-1 text-2xl font-bold ${highlight ? 'text-primary' : 'text-slate-900'}`}
-      >
+      <Text className={`mt-1 text-2xl font-bold ${highlight ? 'text-primary' : 'text-slate-900'}`}>
         {value}
       </Text>
     </Card>
@@ -275,9 +273,7 @@ function DeckAudioLanguage({
 
   return (
     <Card className="gap-2 p-4">
-      <Text className="text-sm font-medium text-slate-700">
-        Audio language (back of card)
-      </Text>
+      <Text className="text-sm font-medium text-slate-700">Audio language (back of card)</Text>
       <LanguagePicker
         value={backLanguage}
         disabled={update.isPending}

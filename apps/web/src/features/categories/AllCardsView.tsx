@@ -76,13 +76,13 @@ export function AllCardsView() {
           <div className="flex items-center gap-3">
             <div
               aria-hidden
-              className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary"
+              className="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md"
             >
               <Library className="h-5 w-5" />
             </div>
             <h1 className="text-3xl font-semibold tracking-tight">All decks</h1>
           </div>
-          <p className="pl-12 text-sm text-muted-foreground">
+          <p className="text-muted-foreground pl-12 text-sm">
             Every card you've created, including uncategorized ones.
           </p>
         </div>
@@ -103,7 +103,7 @@ export function AllCardsView() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl border bg-muted/50" />
+            <div key={i} className="bg-muted/50 h-20 animate-pulse rounded-xl border" />
           ))}
         </div>
       ) : cards && cards.length > 0 ? (
@@ -115,21 +115,21 @@ export function AllCardsView() {
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="line-clamp-2 font-medium">{card.front}</div>
-                    <div className="line-clamp-2 text-sm text-muted-foreground">{card.back}</div>
-                    {(card.frontExamples.length > 0 || card.backExamples.length > 0) ? (
-                      <div className="divide-y divide-border/50 rounded-md border bg-muted/30 px-3 py-1 mt-2">
+                    <div className="text-muted-foreground line-clamp-2 text-sm">{card.back}</div>
+                    {card.frontExamples.length > 0 || card.backExamples.length > 0 ? (
+                      <div className="divide-border/50 bg-muted/30 mt-2 divide-y rounded-md border px-3 py-1">
                         {Array.from({
                           length: Math.max(card.frontExamples.length, card.backExamples.length),
                         }).map((_, i) => (
                           <div key={i} className="flex items-baseline gap-3 py-1 text-xs">
                             <span className="flex min-w-0 flex-1 items-baseline gap-1">
-                              <AlignLeft className="mt-0.5 h-3 w-3 shrink-0 text-foreground/50" />
-                              <span className="font-semibold text-foreground">
+                              <AlignLeft className="text-foreground/50 mt-0.5 h-3 w-3 shrink-0" />
+                              <span className="text-foreground font-semibold">
                                 {card.frontExamples[i] ?? ''}
                               </span>
                             </span>
                             <span className="flex min-w-0 flex-1 items-baseline gap-1">
-                              <AlignRight className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+                              <AlignRight className="text-muted-foreground mt-0.5 h-3 w-3 shrink-0" />
                               <span className="text-muted-foreground">
                                 {card.backExamples[i] ?? ''}
                               </span>
@@ -138,7 +138,7 @@ export function AllCardsView() {
                         ))}
                       </div>
                     ) : null}
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs">
                       {card.class ? <ClassBadge value={card.class} /> : null}
                       {deck ? (
                         <span className="inline-flex items-center gap-1.5">
@@ -150,7 +150,7 @@ export function AllCardsView() {
                           {deck.name}
                         </span>
                       ) : (
-                        <span className="rounded-sm bg-muted px-1.5 py-0.5">No deck</span>
+                        <span className="bg-muted rounded-sm px-1.5 py-0.5">No deck</span>
                       )}
                       <span>·</span>
                       <span>Next review: {formatRelative(card.nextReview)}</span>
@@ -187,7 +187,7 @@ export function AllCardsView() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
             <div className="text-lg font-semibold">No cards yet</div>
-            <p className="max-w-sm text-sm text-muted-foreground">
+            <p className="text-muted-foreground max-w-sm text-sm">
               Add your first card here, or create one inside a specific deck.
             </p>
             <Button onClick={() => setCreateOpen(true)}>
@@ -229,7 +229,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <Card>
       <CardHeader className="pb-1">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-muted-foreground text-xs uppercase tracking-wide">{label}</div>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-semibold">{value}</div>
@@ -274,7 +274,7 @@ function EditCardDialog({
       setBackExamples(card.backExamples);
       setWordClass(card.class ?? null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card?.id]);
 
   const form = useForm<FlashcardUpdateInput>({
@@ -346,7 +346,7 @@ function EditCardDialog({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="-ml-1 h-7 text-xs text-muted-foreground"
+                className="text-muted-foreground -ml-1 h-7 text-xs"
                 onClick={() => {
                   setFrontExamples((prev) => [...prev, '']);
                   setBackExamples((prev) => [...prev, '']);
@@ -399,9 +399,9 @@ function EditCardDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Move this card into one of your decks. You can&#39;t move it back to
-                uncategorized once assigned.
+              <p className="text-muted-foreground text-xs">
+                Move this card into one of your decks. You can&#39;t move it back to uncategorized
+                once assigned.
               </p>
             </div>
           ) : null}

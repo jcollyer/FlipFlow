@@ -107,8 +107,7 @@ export default function NewDeckScreen() {
               </Text>
               <LanguagePicker value={backLanguage} onChange={setBackLanguage} />
               <Text className="text-xs text-slate-500">
-                Pick a language to enable a speaker button on the back of cards
-                during practice.
+                Pick a language to enable a speaker button on the back of cards during practice.
               </Text>
             </View>
           ) : null}

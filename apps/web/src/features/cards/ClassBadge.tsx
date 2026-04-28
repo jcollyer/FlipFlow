@@ -33,7 +33,7 @@ export function ClassBadge({ value, size = 'sm', className }: ClassBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm bg-muted text-muted-foreground',
+        'bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-sm',
         size === 'sm' ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-0.5 text-sm',
         className,
       )}
