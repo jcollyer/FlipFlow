@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MARKDOWN_INPUT_HINT } from '@/components/ui/markdown-text';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc/client';
@@ -444,12 +445,13 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="front">Front</Label>
             <Textarea id="front" rows={2} {...form.register('front')} />
+            <p className="text-muted-foreground text-xs">{MARKDOWN_INPUT_HINT}</p>
             {frontExamples.length > 0 ? (
               <div className="space-y-2">
                 {frontExamples.map((val, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <Input
-                      placeholder="Example sentence…"
+                      placeholder="Example sentence (Markdown supported)…"
                       value={val}
                       onChange={(e) =>
                         setFrontExamples((prev) => {
@@ -503,12 +505,13 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
               ) : null}
             </div>
             <Textarea id="back" rows={3} {...form.register('back')} />
+            <p className="text-muted-foreground text-xs">{MARKDOWN_INPUT_HINT}</p>
             {backExamples.length > 0 ? (
               <div className="space-y-2">
                 {backExamples.map((val, i) => (
                   <Input
                     key={i}
-                    placeholder="Example sentence…"
+                    placeholder="Example sentence (Markdown supported)…"
                     value={val}
                     onChange={(e) =>
                       setBackExamples((prev) => {

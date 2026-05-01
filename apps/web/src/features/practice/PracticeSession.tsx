@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, Loader2, RotateCcw, Volume2 } from 'lucide-rea
 
 import type { BackLanguageValue } from '@flipflow/types';
 
+import { MarkdownText, markdownToPlainText } from '@/components/ui/markdown-text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -212,15 +213,15 @@ function FlipCard({
                 <ClassBadge value={cardClass} size="md" />
               </div>
             ) : null}
-            <p className="text-2xl font-bold leading-snug">{front}</p>
+            <MarkdownText markdown={front} className="text-2xl font-bold leading-snug" />
             {frontExamples.length > 0 ? (
-              <ul className="space-y-1 text-left">
+              <div className="space-y-2 text-left">
                 {frontExamples.map((ex, i) => (
-                  <li key={i} className="text-muted-foreground pl-4 text-base italic">
-                    {ex}
-                  </li>
+                  <div key={i} className="border-border/50 border-l pl-4">
+                    <MarkdownText markdown={ex} className="text-muted-foreground text-base italic" />
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : null}
           </CardContent>
         </Card>
@@ -231,15 +232,15 @@ function FlipCard({
                 <ClassBadge value={cardClass} size="md" />
               </div>
             ) : null}
-            <p className="text-xl font-bold leading-snug">{back}</p>
+            <MarkdownText markdown={back} className="text-xl font-bold leading-snug" />
             {backExamples.length > 0 ? (
-              <ul className="space-y-1 text-left">
+              <div className="space-y-2 text-left">
                 {backExamples.map((ex, i) => (
-                  <li key={i} className="text-muted-foreground pl-4 text-base italic">
-                    {ex}
-                  </li>
+                  <div key={i} className="border-border/50 border-l pl-4">
+                    <MarkdownText markdown={ex} className="text-muted-foreground text-base italic" />
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : null}
           </CardContent>
           {/* Only render the audio button if the deck has a configured language. */}
@@ -342,7 +343,9 @@ function AudioButton({
       runTokenRef.current = token;
       const isActive = () => runTokenRef.current === token;
 
-      const texts = examples.length > 0 ? [text, ...examples] : [text];
+      const texts = (examples.length > 0 ? [text, ...examples] : [text])
+        .map((value) => markdownToPlainText(value))
+        .filter(Boolean);
 
       setLoading(true);
       setPlaying(false);
