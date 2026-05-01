@@ -457,15 +457,8 @@ function EditCardDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const utils = trpc.useUtils();
   const { data: card } = trpc.flashcards.byId.useQuery({ id: cardId });
-  const update = trpc.flashcards.update.useMutation({
-    onSuccess: (updatedCard) => {
-      utils.flashcards.byId.setData({ id: updatedCard.id }, updatedCard);
-      void utils.flashcards.byId.invalidate({ id: updatedCard.id });
-      onSaved();
-    },
-  });
+  const update = trpc.flashcards.update.useMutation({ onSuccess: onSaved });
 
   // Tracked separately from the form: we need a tri-state (no card loaded
   // yet / explicitly uncategorized / specific deck) for the dropdown.
@@ -491,7 +484,7 @@ function EditCardDialog({
       setVerbType(((card as { verb_type?: string | null }).verb_type as VerbTypeValue | null) ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card]);
+  }, [card?.id]);
 
   const form = useForm<FlashcardUpdateInput>({
     resolver: zodResolver(FlashcardUpdateInput),
