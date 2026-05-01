@@ -94,6 +94,8 @@ export default function EditCardScreen() {
   // Gender and verb type — optional.
   const [gender, setGender] = useState<string | null>(null);
   const [verbType, setVerbType] = useState<string | null>(null);
+  // Optional pronunciation hint.
+  const [pronunciation, setPronunciation] = useState('');
   const [hydrated, setHydrated] = useState(false);
 
   // Translation state
@@ -123,6 +125,9 @@ export default function EditCardScreen() {
       setBackExamples(card.backExamples ?? []);
       setGender(card.gender ?? null);
       setVerbType(card.verb_type ?? null);
+      setPronunciation(
+        (card as { pronunciation?: string | null }).pronunciation ?? '',
+      );
       setHydrated(true);
     }
   }, [card, hydrated]);
@@ -264,6 +269,7 @@ export default function EditCardScreen() {
       backExamples,
       gender,
       verb_type: verbType,
+      pronunciation: pronunciation.trim() ? pronunciation.trim() : null,
     });
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -497,6 +503,14 @@ export default function EditCardScreen() {
               })}
             </View>
           </View>
+
+          {/* Pronunciation hint (optional) — IPA, romanization, etc. */}
+          <TextField
+            label="Pronunciation (optional)"
+            placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+            value={pronunciation}
+            onChangeText={setPronunciation}
+          />
 
           {showAssign ? (
             <View className="gap-2">

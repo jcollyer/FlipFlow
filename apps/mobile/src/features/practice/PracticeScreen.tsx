@@ -157,6 +157,15 @@ export function PracticeScreen({ categoryId, categoryIds, classes, practiceLimit
                 >
                   {flipped ? current?.back : current?.front}
                 </Text>
+                {flipped &&
+                (current as { pronunciation?: string | null } | undefined)?.pronunciation ? (
+                  <Text className="mt-2 text-center text-base italic text-slate-500">
+                    {
+                      (current as { pronunciation?: string | null } | undefined)
+                        ?.pronunciation
+                    }
+                  </Text>
+                ) : null}
                 {flipped && (current?.backExamples?.length ?? 0) > 0 ? (
                   <View className="mt-3 w-full gap-1 self-start pl-2">
                     {current!.backExamples.map((ex, i) => (

@@ -103,6 +103,8 @@ export default function NewCardScreen() {
   // Gender and verb type — optional.
   const [gender, setGender] = useState<string | null>(null);
   const [verbType, setVerbType] = useState<string | null>(null);
+  // Optional pronunciation hint (e.g. IPA or romanization).
+  const [pronunciation, setPronunciation] = useState('');
 
   // Translation state. `hydrated` gates the persist effect so the initial
   // defaults don't clobber stored prefs before the read completes.
@@ -130,6 +132,7 @@ export default function NewCardScreen() {
       setBack('');
       setFrontExamples([]);
       setBackExamples([]);
+      setPronunciation('');
       lastTranslatedRef.current = null;
       lastTranslatedExamplesRef.current.clear();
       router.back();
@@ -257,6 +260,7 @@ export default function NewCardScreen() {
       backExamples,
       gender: gender ?? undefined,
       verb_type: verbType ?? undefined,
+      pronunciation: pronunciation.trim() ? pronunciation.trim() : null,
     });
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -529,6 +533,14 @@ export default function NewCardScreen() {
               })}
             </View>
           </View>
+
+          {/* Pronunciation hint (optional) — IPA, romanization, etc. */}
+          <TextField
+            label="Pronunciation (optional)"
+            placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+            value={pronunciation}
+            onChangeText={setPronunciation}
+          />
         </View>
 
         <View className="mt-8 flex-row gap-3">
