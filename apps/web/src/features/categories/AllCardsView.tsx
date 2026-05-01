@@ -528,7 +528,7 @@ function EditCardDialog({
                 {frontExamples.map((val, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <Input
-                      placeholder="Example sentence…"
+                      placeholder="Example…"
                       value={val}
                       onChange={(e) =>
                         setFrontExamples((prev) => {
@@ -629,7 +629,7 @@ function EditCardDialog({
                 {backExamples.map((val, i) => (
                   <Input
                     key={i}
-                    placeholder="Example sentence…"
+                    placeholder="Example…"
                     value={val}
                     onChange={(e) =>
                       setBackExamples((prev) => {
