@@ -367,8 +367,15 @@ function EditCardDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const utils = trpc.useUtils();
   const { data: card } = trpc.flashcards.byId.useQuery({ id: cardId });
-  const update = trpc.flashcards.update.useMutation({ onSuccess: onSaved });
+  const update = trpc.flashcards.update.useMutation({
+    onSuccess: (updatedCard) => {
+      utils.flashcards.byId.setData({ id: updatedCard.id }, updatedCard);
+      void utils.flashcards.byId.invalidate({ id: updatedCard.id });
+      onSaved();
+    },
+  });
 
   const { data: availability } = trpc.translate.isAvailable.useQuery(undefined, {
     staleTime: Infinity,
@@ -416,7 +423,7 @@ function EditCardDialog({
       setVerbType(((card as { verb_type?: string | null }).verb_type as VerbTypeValue | null) ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card?.id]);
+  }, [card]);
 
   const form = useForm<FlashcardUpdateInput>({
     resolver: zodResolver(FlashcardUpdateInput),
