@@ -74,6 +74,24 @@ export function PracticeScreen({ categoryId, categoryIds, classes, practiceLimit
     setIndex((i) => i + 1);
   }
 
+  // Skip controls. These intentionally do NOT touch SM-2 state — no
+  // submitReview is fired, so confidence / easeFactor / interval / nextReview
+  // remain unchanged. We also reset the flip so the next card always lands
+  // on its front side. Pressing "next" on the last card advances past the
+  // end of the queue, which triggers the session-complete screen.
+  const canGoPrev = !done && index > 0;
+  const canGoNext = !done && cards.length > 0;
+
+  const handlePrev = useCallback(() => {
+    setFlipped(false);
+    setIndex((i) => (i > 0 ? i - 1 : i));
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setFlipped(false);
+    setIndex((i) => Math.min(i + 1, cards.length));
+  }, [cards.length]);
+
   // Refresh counts when the session wraps up.
   useEffect(() => {
     if (done) {
@@ -137,7 +155,16 @@ export function PracticeScreen({ categoryId, categoryIds, classes, practiceLimit
               {Math.min(index + 1, cards.length)} of {cards.length}
             </Text>
 
-            <Pressable onPress={() => setFlipped((f) => !f)} className="mt-6 active:opacity-90">
+            <View className="mt-6 flex-row items-stretch gap-2">
+              <NavButton
+                direction="prev"
+                onPress={handlePrev}
+                disabled={!canGoPrev}
+              />
+              <Pressable
+                onPress={() => setFlipped((f) => !f)}
+                className="flex-1 active:opacity-90"
+              >
               <Card
                 className={`relative min-h-[280px] items-center justify-center p-6 ${
                   flipped ? 'border-primary bg-blue-50' : ''
@@ -198,7 +225,13 @@ export function PracticeScreen({ categoryId, categoryIds, classes, practiceLimit
                   </View>
                 ) : null}
               </Card>
-            </Pressable>
+              </Pressable>
+              <NavButton
+                direction="next"
+                onPress={handleNext}
+                disabled={!canGoNext}
+              />
+            </View>
 
             {flipped ? (
               <RatingButtons onRate={handleRate} />
@@ -221,6 +254,33 @@ function ProgressBar({ value }: { value: number }) {
     <View className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
       <View className="bg-primary h-full" style={{ width: `${Math.round(value * 100)}%` }} />
     </View>
+  );
+}
+
+function NavButton({
+  direction,
+  onPress,
+  disabled,
+}: {
+  direction: 'prev' | 'next';
+  onPress: () => void;
+  disabled: boolean;
+}) {
+  const isPrev = direction === 'prev';
+  const label = isPrev ? 'Previous card' : 'Next card';
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={6}
+      className={`border-border w-12 items-center justify-center rounded-md border bg-white active:opacity-70 ${
+        disabled ? 'opacity-30' : ''
+      }`}
+    >
+      <Feather name={isPrev ? 'chevron-left' : 'chevron-right'} size={22} color="#0f172a" />
+    </Pressable>
   );
 }
 

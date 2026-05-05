@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, CheckCircle2, Loader2, RotateCcw, Volume2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  RotateCcw,
+  Volume2,
+} from 'lucide-react';
 
 import type { BackLanguageValue } from '@ensemble/types';
 
@@ -34,9 +42,6 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
   const utils = trpc.useUtils();
   const isAllCards = !categoryId;
   const backHref = isAllCards ? '/app/all-categories' : `/app/categories/${categoryId}`;
-  const practiceHref = isAllCards
-    ? '/app/all-categories/practice'
-    : `/app/categories/${categoryId}/practice`;
   const backLabel = isAllCards ? 'Back to all cards' : 'Back to deck';
 
   // When `practiceAll` is true we ignore the SM-2 schedule and pull every
@@ -65,17 +70,42 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
   const current = cards[index];
   const done = !isLoading && cards.length > 0 && index >= cards.length;
 
-  // Spacebar = flip.
+  // Skip controls. These intentionally do NOT touch SM-2 state — no
+  // submitReview is fired, so confidence / easeFactor / interval / nextReview
+  // remain unchanged. We also reset the flip so the next card always lands
+  // on its front side. Pressing "next" on the last card advances past the
+  // end of the queue, which triggers the session-complete screen.
+  const canGoPrev = !done && index > 0;
+  const canGoNext = !done && cards.length > 0;
+
+  const handlePrev = useCallback(() => {
+    setFlipped(false);
+    setIndex((i) => (i > 0 ? i - 1 : i));
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setFlipped(false);
+    setIndex((i) => Math.min(i + 1, cards.length));
+  }, [cards.length]);
+
+  // Hotkeys: Space = flip, ArrowLeft = prev, ArrowRight = next.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && current && !done) {
+      if (!current || done) return;
+      if (e.code === 'Space') {
         e.preventDefault();
         setFlipped((f) => !f);
+      } else if (e.code === 'ArrowLeft' && canGoPrev) {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.code === 'ArrowRight' && canGoNext) {
+        e.preventDefault();
+        handleNext();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [current, done]);
+  }, [current, done, canGoPrev, canGoNext, handlePrev, handleNext]);
 
   function handleRate(quality: number) {
     if (!current) return;
@@ -84,6 +114,23 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
     setFlipped(false);
     setIndex((i) => i + 1);
   }
+
+  // "Practice again" stays on the same route, so a Link wouldn't remount the
+  // component and `index`/`reviewed`/`flipped` would still be at their
+  // session-complete values. Reset locally and re-fetch the queue so the SM-2
+  // schedule (and any reviews submitted this session) is reflected.
+  const handlePracticeAgain = useCallback(() => {
+    setIndex(0);
+    setReviewed(0);
+    setFlipped(false);
+    utils.practice.queue.invalidate({
+      categoryId,
+      categoryIds: categoryIds?.length ? categoryIds : undefined,
+      classes: classes?.length ? classes : undefined,
+      limit: practiceLimit ?? 20,
+      includeAll: practiceAll,
+    });
+  }, [utils, categoryId, categoryIds, classes, practiceLimit, practiceAll]);
 
   // When the session ends, refresh anything that shows due/mastered counts.
   useEffect(() => {
@@ -127,8 +174,8 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
         <SessionSummary
           backHref={backHref}
           backLabel={backLabel}
-          practiceHref={practiceHref}
           reviewed={reviewed}
+          onPracticeAgain={handlePracticeAgain}
         />
       ) : (
         <>
@@ -137,26 +184,40 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
             {Math.min(index + 1, cards.length)} of {cards.length}
           </div>
 
-          <FlipCard
-            front={current?.front ?? ''}
-            back={current?.back ?? ''}
-            frontExamples={current?.frontExamples ?? []}
-            backExamples={current?.backExamples ?? []}
-            cardClass={current?.class ?? null}
-            pronunciation={
-              (current as { pronunciation?: string | null } | undefined)?.pronunciation ?? null
-            }
-            flipped={flipped}
-            onClick={() => setFlipped((f) => !f)}
-            cardId={current?.id}
-            // Cast: backLanguage is widened to `string | null` from the wire,
-            // but on the server we only ever store BackLanguageValue values.
-            backLanguage={
-              ((current?.category?.backLanguage ?? data?.category?.backLanguage ?? null) as
-                | BackLanguageValue
-                | null)
-            }
-          />
+          <div className="flex items-stretch gap-2 sm:gap-3">
+            <NavButton
+              direction="prev"
+              onClick={handlePrev}
+              disabled={!canGoPrev}
+            />
+            <div className="min-w-0 flex-1">
+              <FlipCard
+                front={current?.front ?? ''}
+                back={current?.back ?? ''}
+                frontExamples={current?.frontExamples ?? []}
+                backExamples={current?.backExamples ?? []}
+                cardClass={current?.class ?? null}
+                pronunciation={
+                  (current as { pronunciation?: string | null } | undefined)?.pronunciation ?? null
+                }
+                flipped={flipped}
+                onClick={() => setFlipped((f) => !f)}
+                cardId={current?.id}
+                // Cast: backLanguage is widened to `string | null` from the wire,
+                // but on the server we only ever store BackLanguageValue values.
+                backLanguage={
+                  ((current?.category?.backLanguage ?? data?.category?.backLanguage ?? null) as
+                    | BackLanguageValue
+                    | null)
+                }
+              />
+            </div>
+            <NavButton
+              direction="next"
+              onClick={handleNext}
+              disabled={!canGoNext}
+            />
+          </div>
 
           {flipped ? (
             <RatingButtons onRate={handleRate} disabled={submit.isPending} />
@@ -173,6 +234,37 @@ export function PracticeSession({ categoryId, categoryIds, classes, practiceLimi
         </>
       )}
     </div>
+  );
+}
+
+function NavButton({
+  direction,
+  onClick,
+  disabled,
+}: {
+  direction: 'prev' | 'next';
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  const isPrev = direction === 'prev';
+  const Icon = isPrev ? ChevronLeft : ChevronRight;
+  const label = isPrev ? 'Previous card' : 'Next card';
+  const hint = isPrev ? 'Left arrow' : 'Right arrow';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`${label} (${hint})`}
+      title={`${label} (${hint})`}
+      className={cn(
+        'bg-background hover:bg-muted focus:ring-ring inline-flex w-10 shrink-0 items-center justify-center self-stretch rounded-md border transition sm:w-12',
+        'focus:outline-none focus:ring-2 focus:ring-offset-1',
+        'disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-background',
+      )}
+    >
+      <Icon className="h-5 w-5" />
+    </button>
   );
 }
 
@@ -488,13 +580,13 @@ function EmptyQueue({
 function SessionSummary({
   backHref,
   backLabel,
-  practiceHref,
   reviewed,
+  onPracticeAgain,
 }: {
   backHref: string;
   backLabel: string;
-  practiceHref: string;
   reviewed: number;
+  onPracticeAgain: () => void;
 }) {
   return (
     <Card>
@@ -510,11 +602,9 @@ function SessionSummary({
           <Button asChild variant="outline">
             <Link href={backHref}>{backLabel}</Link>
           </Button>
-          <Button asChild>
-            <Link href={practiceHref}>
-              <RotateCcw className="h-4 w-4" />
-              Practice again
-            </Link>
+          <Button onClick={onPracticeAgain}>
+            <RotateCcw className="h-4 w-4" />
+            Practice again
           </Button>
         </div>
       </CardContent>
