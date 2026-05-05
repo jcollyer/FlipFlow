@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -30,6 +31,9 @@ export default function NewDeckScreen() {
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
+  // The toggle is "Deck public" and starts off, which corresponds to
+  // `private = true` on the model.
+  const [isPrivate, setIsPrivate] = useState(true);
   const [nameError, setNameError] = useState<string | undefined>();
 
   // Only surface the audio-language picker if the server can actually call
@@ -47,7 +51,12 @@ export default function NewDeckScreen() {
 
   function handleSubmit() {
     setNameError(undefined);
-    const parsed = CategoryCreateInput.safeParse({ name, color, backLanguage });
+    const parsed = CategoryCreateInput.safeParse({
+      name,
+      color,
+      backLanguage,
+      private: isPrivate,
+    });
     if (!parsed.success) {
       const msg = parsed.error.issues.find((i) => i.path[0] === 'name')?.message ?? 'Invalid input';
       setNameError(msg);
@@ -111,6 +120,20 @@ export default function NewDeckScreen() {
               </Text>
             </View>
           ) : null}
+
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="shrink gap-1">
+              <Text className="text-sm font-medium text-slate-700">Deck public</Text>
+              <Text className="text-xs text-slate-500">
+                Off keeps the deck private to you. On makes it public.
+              </Text>
+            </View>
+            <Switch
+              // The control is "Deck public" — checked means not private.
+              value={!isPrivate}
+              onValueChange={(checked) => setIsPrivate(!checked)}
+            />
+          </View>
         </View>
 
         <View className="mt-8 flex-row gap-3">

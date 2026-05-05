@@ -7,6 +7,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -43,6 +44,8 @@ export default function EditDeckScreen() {
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
+  // Privacy flag — "Deck public" toggle is the inverse of this.
+  const [isPrivate, setIsPrivate] = useState(true);
   const [nameError, setNameError] = useState<string | undefined>();
   const [hydrated, setHydrated] = useState(false);
 
@@ -55,6 +58,7 @@ export default function EditDeckScreen() {
       // so the swatch UI always has a selected option.
       setColor(category.color ?? PALETTE[0]!);
       setBackLanguage((category.backLanguage as BackLanguageValue | null) ?? null);
+      setIsPrivate((category as { private?: boolean }).private ?? true);
       setHydrated(true);
     }
   }, [category, hydrated]);
@@ -75,6 +79,7 @@ export default function EditDeckScreen() {
       name,
       color,
       backLanguage,
+      private: isPrivate,
     });
     if (!parsed.success) {
       const msg = parsed.error.issues.find((i) => i.path[0] === 'name')?.message ?? 'Invalid input';
@@ -146,6 +151,19 @@ export default function EditDeckScreen() {
               </Text>
             </View>
           ) : null}
+
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="shrink gap-1">
+              <Text className="text-sm font-medium text-slate-700">Deck public</Text>
+              <Text className="text-xs text-slate-500">
+                Off keeps the deck private to you. On makes it public.
+              </Text>
+            </View>
+            <Switch
+              value={!isPrivate}
+              onValueChange={(checked) => setIsPrivate(!checked)}
+            />
+          </View>
         </View>
 
         <View className="mt-8 flex-row gap-3">

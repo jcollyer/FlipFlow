@@ -25,6 +25,12 @@ export const CategoryCreateInput = z.object({
   name: z.string().trim().min(1, 'Name is required').max(80),
   color: CategoryColorSchema,
   backLanguage: CategoryBackLanguageSchema,
+  /**
+   * Whether the deck is private to its owner. Defaults to true so newly
+   * created decks aren't accidentally exposed — the UI flips this with a
+   * "Deck public" toggle (off by default → private=true).
+   */
+  private: z.boolean().optional(),
 });
 export type CategoryCreateInput = z.infer<typeof CategoryCreateInput>;
 
@@ -33,6 +39,10 @@ export const CategoryUpdateInput = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   color: CategoryColorSchema,
   backLanguage: CategoryBackLanguageSchema,
+  /**
+   * Toggle the deck's privacy. `undefined` leaves it unchanged.
+   */
+  private: z.boolean().optional(),
 });
 export type CategoryUpdateInput = z.infer<typeof CategoryUpdateInput>;
 

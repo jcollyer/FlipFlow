@@ -88,6 +88,10 @@ model Category {
   // the user clicks the audio button on the back of a card. Null means no
   // language has been configured yet — the audio button is hidden.
   backLanguage String?
+  // Whether this deck is private to the owner. Defaults to true so newly
+  // created decks aren't accidentally exposed. The new/edit deck modals
+  // surface this as a "Deck public" toggle (off by default → private=true).
+  private   Boolean     @default(true)
   userId    String
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   cards     Flashcard[]

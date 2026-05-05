@@ -294,6 +294,7 @@ export function CategoryDetail({ categoryId }: Props) {
             name: category.name,
             color: category.color ?? null,
             backLanguage: (category.backLanguage as BackLanguageValue | null) ?? null,
+            private: (category as { private?: boolean }).private ?? true,
           }}
           onClose={() => setEditDeckOpen(false)}
         />
@@ -754,6 +755,7 @@ function EditCategoryDialog({
     name: string;
     color: string | null;
     backLanguage: BackLanguageValue | null;
+    private: boolean;
   };
   onClose: () => void;
 }) {
@@ -816,11 +818,13 @@ function EditCategoryDialog({
       // so the swatch UI always has a selected option to render.
       color: category.color ?? DECK_COLOR_PALETTE[0],
       backLanguage: category.backLanguage,
+      private: category.private,
     },
   });
 
   const selectedColor = form.watch('color') ?? DECK_COLOR_PALETTE[0];
   const selectedBackLanguage = form.watch('backLanguage');
+  const isPrivate = form.watch('private') ?? true;
   const hasFolders = (folders?.length ?? 0) > 0;
 
   return (
@@ -863,6 +867,26 @@ function EditCategoryDialog({
                 );
               })}
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="edit-deck-public" className="cursor-pointer">
+                Deck public
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Off keeps the deck private to you. On makes it public.
+              </p>
+            </div>
+            <Switch
+              id="edit-deck-public"
+              // Form stores `private`. Toggle shows the opposite — "Deck
+              // public" is on when private is false.
+              checked={isPrivate === false}
+              onCheckedChange={(checked) =>
+                form.setValue('private', !checked, { shouldDirty: true })
+              }
+            />
           </div>
 
           {hasFolders ? (

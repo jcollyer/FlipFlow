@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { trpc } from '@/lib/trpc/client';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { FolderModal } from '@/features/folders/FolderModal';
@@ -82,7 +83,9 @@ export function CategoriesDashboard() {
 
   const form = useForm<CategoryCreateInput>({
     resolver: zodResolver(CategoryCreateInput),
-    defaultValues: { name: '', color: PALETTE[0], backLanguage: null },
+    // The toggle is labeled "Deck public" and is off by default — that maps
+    // to `private = true` on the model.
+    defaultValues: { name: '', color: PALETTE[0], backLanguage: null, private: true },
   });
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
@@ -162,7 +165,7 @@ export function CategoriesDashboard() {
           setDeckOpen(o);
           if (!o) {
             // Reset modal-local state on close so the next open is clean.
-            form.reset({ name: '', color: PALETTE[0], backLanguage: null });
+            form.reset({ name: '', color: PALETTE[0], backLanguage: null, private: true });
             setPendingFolderIds([]);
           }
         }}
@@ -214,6 +217,26 @@ export function CategoriesDashboard() {
                   );
                 })}
               </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="new-deck-public" className="cursor-pointer">
+                  Deck public
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  Off keeps the deck private to you. On makes it public.
+                </p>
+              </div>
+              <Switch
+                id="new-deck-public"
+                // The form stores `private`. The toggle shows the opposite —
+                // "Deck public" is on when private is false. Off by default
+                // because `private` defaults to true.
+                checked={form.watch('private') === false}
+                onCheckedChange={(checked) =>
+                  form.setValue('private', !checked, { shouldDirty: true })
+                }
+              />
             </div>
             {hasFolders ? (
               <FoldersChecklist

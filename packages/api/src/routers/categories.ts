@@ -33,6 +33,7 @@ export const categoriesRouter = router({
       name: c.name,
       color: c.color,
       backLanguage: c.backLanguage,
+      private: c.private,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       cardCount: c._count.cards,
@@ -57,6 +58,9 @@ export const categoriesRouter = router({
         name: input.name,
         color: input.color ?? null,
         backLanguage: input.backLanguage ?? null,
+        // Default to private when the client doesn't specify; the schema
+        // also defaults to true at the DB level so this is belt-and-braces.
+        private: input.private ?? true,
         userId: ctx.userId,
       },
     }),
@@ -76,6 +80,7 @@ export const categoriesRouter = router({
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.color !== undefined ? { color: input.color ?? null } : {}),
         ...(input.backLanguage !== undefined ? { backLanguage: input.backLanguage ?? null } : {}),
+        ...(input.private !== undefined ? { private: input.private } : {}),
       },
     });
   }),
