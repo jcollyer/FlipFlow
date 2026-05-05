@@ -35,6 +35,7 @@ import { useDebouncedValue } from '@/lib/hooks';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
+import { FoldersChecklist } from '@/features/folders/FoldersChecklist';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -763,10 +764,45 @@ function EditCategoryDialog({
   });
   const ttsAvailable = !!ttsAvailability?.available;
 
+  // Folder pick-list. We hide it entirely if the user has no folders so the
+  // modal stays as compact as it was before folders existed.
+  const { data: folders } = trpc.folders.list.useQuery();
+  const { data: folderIdsForDeck } = trpc.folders.forDeck.useQuery({ categoryId: category.id });
+  const [selectedFolderIds, setSelectedFolderIds] = useState<string[] | null>(null);
+
+  // Hydrate selection once the server returns the deck's current folder
+  // membership; track null until then so we can detect "user hasn't touched
+  // it" vs. "user explicitly cleared all".
+  useEffect(() => {
+    if (selectedFolderIds === null && folderIdsForDeck) {
+      setSelectedFolderIds(folderIdsForDeck);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folderIdsForDeck]);
+
+  const setDeckFolders = trpc.folders.setDeckFolders.useMutation({
+    onSuccess: () => {
+      utils.folders.list.invalidate();
+      utils.folders.forDeck.invalidate({ categoryId: category.id });
+    },
+  });
+
   const update = trpc.categories.update.useMutation({
     onSuccess: () => {
       utils.categories.byId.invalidate({ id: category.id });
       utils.categories.list.invalidate();
+      // If the user changed the folder selection, sync it now.
+      if (selectedFolderIds !== null && folderIdsForDeck) {
+        const next = [...selectedFolderIds].sort().join(',');
+        const prev = [...folderIdsForDeck].sort().join(',');
+        if (next !== prev) {
+          setDeckFolders.mutate(
+            { categoryId: category.id, folderIds: selectedFolderIds },
+            { onSettled: () => onClose() },
+          );
+          return;
+        }
+      }
       onClose();
     },
   });
@@ -785,6 +821,7 @@ function EditCategoryDialog({
 
   const selectedColor = form.watch('color') ?? DECK_COLOR_PALETTE[0];
   const selectedBackLanguage = form.watch('backLanguage');
+  const hasFolders = (folders?.length ?? 0) > 0;
 
   return (
     <Dialog open onOpenChange={(o) => (o ? null : onClose())}>
@@ -827,6 +864,14 @@ function EditCategoryDialog({
               })}
             </div>
           </div>
+
+          {hasFolders ? (
+            <FoldersChecklist
+              folders={folders ?? []}
+              selected={selectedFolderIds ?? folderIdsForDeck ?? []}
+              onChange={setSelectedFolderIds}
+            />
+          ) : null}
 
           {ttsAvailable ? (
             <div className="space-y-2">

@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Layers, Clock, Library } from 'lucide-react';
+import { Plus, Layers, Clock, Library, FolderTree } from 'lucide-react';
 
 import { BACK_LANGUAGES, CategoryCreateInput } from '@ensemble/types';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc/client';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
+import { FolderModal } from '@/features/folders/FolderModal';
+import { FoldersChecklist } from '@/features/folders/FoldersChecklist';
 
 // Sentinel because the Radix Select doesn't allow an empty-string value.
 // We translate this back to `null` before submitting.
@@ -36,15 +39,37 @@ const NO_LANGUAGE = '__none__';
 const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export function CategoriesDashboard() {
+  const router = useRouter();
   const [deckOpen, setDeckOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
+  const [folderOpen, setFolderOpen] = useState(false);
   const utils = trpc.useUtils();
   const { data: categories, isLoading } = trpc.categories.list.useQuery();
+  const { data: folders } = trpc.folders.list.useQuery();
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
       utils.categories.list.invalidate();
       setDeckOpen(false);
+    },
+  });
+
+  // After the deck is created we may also need to attach it to one or more
+  // folders. We track the desired set in modal-local state and call
+  // setDeckFolders once the deck mutation returns its id.
+  const setDeckFolders = trpc.folders.setDeckFolders.useMutation({
+    onSuccess: () => {
+      utils.folders.list.invalidate();
+    },
+  });
+  const [pendingFolderIds, setPendingFolderIds] = useState<string[]>([]);
+
+  const createFolder = trpc.folders.create.useMutation({
+    onSuccess: (folder) => {
+      utils.folders.list.invalidate();
+      setFolderOpen(false);
+      // Match the spec: creating a folder takes you to its detail page.
+      router.push(`/app/folders/${folder.id}`);
     },
   });
 
@@ -62,6 +87,7 @@ export function CategoriesDashboard() {
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
   const hasDecks = (categories?.length ?? 0) > 0;
+  const hasFolders = (folders?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -81,6 +107,15 @@ export function CategoriesDashboard() {
             <Plus className="h-4 w-4" />
             New deck
           </Button>
+          <Button
+            onClick={() => {
+              setPendingFolderIds([]);
+              setFolderOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            New folder
+          </Button>
         </div>
       </div>
 
@@ -88,6 +123,7 @@ export function CategoriesDashboard() {
         <SkeletonGrid />
       ) : hasDecks ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AllFoldersCard count={folders?.length ?? 0} />
           <AllDecksCard />
           {(categories ?? []).map((c) => (
             <Link key={c.id} href={`/app/categories/${c.id}`} className="group">
@@ -120,14 +156,38 @@ export function CategoriesDashboard() {
         </div>
       )}
 
-      <Dialog open={deckOpen} onOpenChange={setDeckOpen}>
+      <Dialog
+        open={deckOpen}
+        onOpenChange={(o) => {
+          setDeckOpen(o);
+          if (!o) {
+            // Reset modal-local state on close so the next open is clean.
+            form.reset({ name: '', color: PALETTE[0], backLanguage: null });
+            setPendingFolderIds([]);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create a deck</DialogTitle>
             <DialogDescription>Group related flashcards together.</DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={form.handleSubmit((values) => create.mutate(values))}
+            onSubmit={form.handleSubmit((values) =>
+              create.mutate(values, {
+                onSuccess: (deck) => {
+                  // Apply the folder picks (if any) to the freshly-created deck.
+                  if (pendingFolderIds.length > 0) {
+                    setDeckFolders.mutate(
+                      { categoryId: deck.id, folderIds: pendingFolderIds },
+                      { onSettled: () => setPendingFolderIds([]) },
+                    );
+                  } else {
+                    setPendingFolderIds([]);
+                  }
+                },
+              }),
+            )}
             className="space-y-4"
           >
             <div className="space-y-2">
@@ -155,6 +215,13 @@ export function CategoriesDashboard() {
                 })}
               </div>
             </div>
+            {hasFolders ? (
+              <FoldersChecklist
+                folders={folders ?? []}
+                selected={pendingFolderIds}
+                onChange={setPendingFolderIds}
+              />
+            ) : null}
             {ttsAvailable ? (
               <div className="space-y-2">
                 <Label htmlFor="back-language">Audio language (back of card)</Label>
@@ -204,6 +271,17 @@ export function CategoriesDashboard() {
         open={cardOpen}
         onOpenChange={setCardOpen}
       />
+
+      {/* New folder dialog. Saving navigates to the folder's detail page. */}
+      <FolderModal
+        open={folderOpen}
+        onOpenChange={setFolderOpen}
+        mode={{
+          kind: 'create',
+          isPending: createFolder.isPending,
+          onSubmit: (values) => createFolder.mutate(values),
+        }}
+      />
     </div>
   );
 }
@@ -235,6 +313,35 @@ function AllDecksCard() {
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
             {stats?.due ?? 0} due
+          </span>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+/**
+ * Sister tile that sits to the left of "All decks" and links to the folders
+ * list view. We keep it visually consistent with AllDecksCard (dashed border,
+ * bold title) so users read both as meta-entries.
+ */
+function AllFoldersCard({ count }: { count: number }) {
+  return (
+    <Link href="/app/folders" className="group">
+      <Card className="hover:border-primary/60 border-dashed transition hover:shadow-md">
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div
+            aria-hidden
+            className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-md"
+          >
+            <FolderTree className="h-5 w-5" />
+          </div>
+          <CardTitle className="group-hover:text-primary truncate font-bold">All folders</CardTitle>
+        </CardHeader>
+        <CardContent className="text-muted-foreground flex items-center gap-4 text-sm">
+          <span className="inline-flex items-center gap-1.5">
+            <FolderTree className="h-4 w-4" />
+            {count} {count === 1 ? 'folder' : 'folders'}
           </span>
         </CardContent>
       </Card>

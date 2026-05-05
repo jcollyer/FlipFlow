@@ -31,6 +31,7 @@ model User {
   sessions      Session[]
   categories    Category[]
   flashcards    Flashcard[]
+  folders       Folder[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -92,6 +93,27 @@ model Category {
   cards     Flashcard[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+// A user-defined grouping of decks (Categories). The relationship is stored
+// as an array of Category ids on the Folder rather than a true relation —
+// keeps the model simple and matches the explicit shape the UI works with.
+// Decks aren't deleted when a folder is, and vice-versa; deletes just leave
+// the corresponding ids dangling and are filtered out at read time.
+model Folder {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?  @db.Text
+  color               String?
+  // Postgres text[] holding the ids of Categories included in this folder.
+  // Defaults to an empty array so we never have to null-check at the edges.
+  includedCategoryIds String[] @default([]) @map("included_category_ids")
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([userId])
 }

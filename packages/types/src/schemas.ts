@@ -37,6 +37,49 @@ export const CategoryUpdateInput = z.object({
 export type CategoryUpdateInput = z.infer<typeof CategoryUpdateInput>;
 
 // ----------------------------------------------------------------------------
+// Folder
+// ----------------------------------------------------------------------------
+
+/**
+ * A user-defined grouping of decks. Same hex-color rule as Category so the
+ * two share a palette. `description` is free-form text capped at a sensible
+ * length so the modal stays a single textarea.
+ */
+export const FolderColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a 6-digit hex value like #3b82f6')
+  .nullish();
+
+export const FolderDescriptionSchema = z.string().trim().max(2000).nullish();
+
+const IncludedCategoryIds = z.array(z.string().cuid()).max(500);
+
+export const FolderCreateInput = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(80),
+  color: FolderColorSchema,
+  description: FolderDescriptionSchema,
+  /**
+   * Pre-populate the folder with these deck ids. Optional — usually omitted
+   * at create time and filled in via the folder detail page.
+   */
+  includedCategoryIds: IncludedCategoryIds.optional(),
+});
+export type FolderCreateInput = z.infer<typeof FolderCreateInput>;
+
+export const FolderUpdateInput = z.object({
+  id: z.string().cuid(),
+  name: z.string().trim().min(1).max(80).optional(),
+  color: FolderColorSchema,
+  description: FolderDescriptionSchema,
+  /**
+   * Replaces the entire array when provided. `undefined` leaves it unchanged.
+   * (We keep it as a full replace because the UI always knows the desired set.)
+   */
+  includedCategoryIds: IncludedCategoryIds.optional(),
+});
+export type FolderUpdateInput = z.infer<typeof FolderUpdateInput>;
+
+// ----------------------------------------------------------------------------
 // Flashcard
 // ----------------------------------------------------------------------------
 
