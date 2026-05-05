@@ -100,24 +100,24 @@ function writeTranslatePrefs(scope: string, prefs: TranslatePrefs) {
  */
 export type CreateCardDialogProps =
   | {
-      mode: 'fixed';
-      categoryId: string;
-      open: boolean;
-      onOpenChange: (next: boolean) => void;
-      /** Called after the card is successfully created. */
-      onCreated?: () => void;
-    }
+    mode: 'fixed';
+    categoryId: string;
+    open: boolean;
+    onOpenChange: (next: boolean) => void;
+    /** Called after the card is successfully created. */
+    onCreated?: () => void;
+  }
   | {
-      mode: 'selectable';
-      open: boolean;
-      onOpenChange: (next: boolean) => void;
-      /** Decks the user can choose between. Empty array hides the selector. */
-      decks: Array<{ id: string; name: string }>;
-      /** Optional pre-selected deck. Defaults to "No deck". */
-      defaultCategoryId?: string | null;
-      /** Called after the card is successfully created. */
-      onCreated?: () => void;
-    };
+    mode: 'selectable';
+    open: boolean;
+    onOpenChange: (next: boolean) => void;
+    /** Decks the user can choose between. Empty array hides the selector. */
+    decks: Array<{ id: string; name: string }>;
+    /** Optional pre-selected deck. Defaults to "No deck". */
+    defaultCategoryId?: string | null;
+    /** Called after the card is successfully created. */
+    onCreated?: () => void;
+  };
 
 export function CreateCardDialog(props: CreateCardDialogProps) {
   const utils = trpc.useUtils();
@@ -351,10 +351,10 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
                   <SelectItem value={NO_DECK}>No deck</SelectItem>
                   {props.mode === 'selectable'
                     ? props.decks.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.name}
-                        </SelectItem>
-                      ))
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))
                     : null}
                 </SelectContent>
               </Select>
@@ -446,15 +446,6 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="card-pronunciation">Pronunciation (optional)</Label>
-            <Input
-              id="card-pronunciation"
-              value={pronunciation}
-              onChange={(e) => setPronunciation(e.target.value)}
-              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="front">Front</Label>
             <Textarea id="front" rows={2} {...form.register('front')} />
             {frontExamples.length > 0 ? (
@@ -537,6 +528,15 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
             {translate.error ? (
               <p className="text-destructive text-xs">{translate.error.message}</p>
             ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="card-pronunciation">Pronunciation (optional)</Label>
+            <Input
+              id="card-pronunciation"
+              value={pronunciation}
+              onChange={(e) => setPronunciation(e.target.value)}
+              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => props.onOpenChange(false)}>

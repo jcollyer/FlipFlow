@@ -634,16 +634,6 @@ function EditCardDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-card-pronunciation">Pronunciation (optional)</Label>
-            <Input
-              id="edit-card-pronunciation"
-              value={pronunciation}
-              onChange={(e) => setPronunciation(e.target.value)}
-              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="front">Front</Label>
             <Textarea id="front" rows={2} {...form.register('front')} />
             {frontExamples.length > 0 ? (
@@ -724,6 +714,16 @@ function EditCardDialog({
                 ))}
               </div>
             ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-card-pronunciation">Pronunciation (optional)</Label>
+            <Input
+              id="edit-card-pronunciation"
+              value={pronunciation}
+              onChange={(e) => setPronunciation(e.target.value)}
+              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+            />
           </div>
 
           <DialogFooter>
