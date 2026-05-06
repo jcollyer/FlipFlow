@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Loader2, Pencil, Play, Plus, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Play, Plus, Sparkles, Trash2, X } from 'lucide-react';
 
 import {
   BACK_LANGUAGES,
@@ -481,6 +481,19 @@ function EditCardDialog({
   // Optional pronunciation hint.
   const [pronunciation, setPronunciation] = useState('');
 
+  // Free Dictionary lookups. Mirrors CreateCardDialog so each button has its
+  // own independent message slot.
+  const [genderLookupMsg, setGenderLookupMsg] = useState<{
+    tone: 'error' | 'info';
+    text: string;
+  } | null>(null);
+  const [pronLookupMsg, setPronLookupMsg] = useState<{
+    tone: 'error' | 'info';
+    text: string;
+  } | null>(null);
+  const lookupGender = trpc.dictionary.getGender.useMutation();
+  const lookupPronunciation = trpc.dictionary.getPronunciation.useMutation();
+
   // Sync form + example state when the card data loads.
   useEffect(() => {
     if (card) {
@@ -565,6 +578,57 @@ function EditCardDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFrontExamples, target, translateOn, translateAvailable]);
 
+  // Watched once for the dictionary lookup buttons so they enable/disable in
+  // real time as the user edits the back field.
+  const back = useWatch({ control: form.control, name: 'back' }) ?? '';
+  const trimmedBack = back.trim();
+  const canLookup = trimmedBack.length > 0;
+  const dictionaryTarget = translateOn ? target : 'en';
+
+  function describeMiss(kind: 'no_value' | 'not_in_dictionary' | 'multiple_words') {
+    if (kind === 'multiple_words') return 'Cannot access multiple words';
+    if (kind === 'not_in_dictionary') return 'Word not found in dictionary';
+    return 'No value returned';
+  }
+
+  function handleGetGender() {
+    if (!canLookup) return;
+    setGenderLookupMsg(null);
+    lookupGender.mutate(
+      { word: trimmedBack, target: dictionaryTarget },
+      {
+        onSuccess: (res) => {
+          if (res.kind === 'ok') {
+            setGender(res.gender);
+            setGenderLookupMsg(null);
+          } else {
+            setGenderLookupMsg({ tone: 'info', text: describeMiss(res.kind) });
+          }
+        },
+        onError: (err) => setGenderLookupMsg({ tone: 'error', text: err.message }),
+      },
+    );
+  }
+
+  function handleGetPronunciation() {
+    if (!canLookup) return;
+    setPronLookupMsg(null);
+    lookupPronunciation.mutate(
+      { word: trimmedBack, target: dictionaryTarget },
+      {
+        onSuccess: (res) => {
+          if (res.kind === 'ok') {
+            setPronunciation(res.pronunciation);
+            setPronLookupMsg(null);
+          } else {
+            setPronLookupMsg({ tone: 'info', text: describeMiss(res.kind) });
+          }
+        },
+        onError: (err) => setPronLookupMsg({ tone: 'error', text: err.message }),
+      },
+    );
+  }
+
   return (
     <Dialog open onOpenChange={(o) => (o ? null : onClose())}>
       <DialogContent className="max-h-[80dvh] overflow-auto">
@@ -632,22 +696,52 @@ function EditCardDialog({
 
           <div className="space-y-2">
             <Label htmlFor="edit-card-gender">Gender (optional)</Label>
-            <Select
-              value={gender ?? NO_GENDER}
-              onValueChange={(v) => setGender(v === NO_GENDER ? null : (v as GenderValue))}
-            >
-              <SelectTrigger id="edit-card-gender">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_GENDER}>None</SelectItem>
-                {GENDER_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select
+                  value={gender ?? NO_GENDER}
+                  onValueChange={(v) => setGender(v === NO_GENDER ? null : (v as GenderValue))}
+                >
+                  <SelectTrigger id="edit-card-gender">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_GENDER}>None</SelectItem>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGetGender}
+                disabled={!canLookup || lookupGender.isPending}
+                title="Look up gender from the dictionary using the Back word"
+              >
+                {lookupGender.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Get gender
+              </Button>
+            </div>
+            {genderLookupMsg ? (
+              <p
+                className={
+                  genderLookupMsg.tone === 'error'
+                    ? 'text-destructive text-xs'
+                    : 'text-muted-foreground text-xs'
+                }
+              >
+                {genderLookupMsg.text}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -755,12 +849,41 @@ function EditCardDialog({
 
           <div className="space-y-2">
             <Label htmlFor="edit-card-pronunciation">Pronunciation (optional)</Label>
-            <Input
-              id="edit-card-pronunciation"
-              value={pronunciation}
-              onChange={(e) => setPronunciation(e.target.value)}
-              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="edit-card-pronunciation"
+                value={pronunciation}
+                onChange={(e) => setPronunciation(e.target.value)}
+                placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGetPronunciation}
+                disabled={!canLookup || lookupPronunciation.isPending}
+                title="Look up IPA from the dictionary using the Back word"
+              >
+                {lookupPronunciation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Get pronunciation
+              </Button>
+            </div>
+            {pronLookupMsg ? (
+              <p
+                className={
+                  pronLookupMsg.tone === 'error'
+                    ? 'text-destructive text-xs'
+                    : 'text-muted-foreground text-xs'
+                }
+              >
+                {pronLookupMsg.text}
+              </p>
+            ) : null}
           </div>
 
           <DialogFooter>

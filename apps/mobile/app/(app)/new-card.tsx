@@ -106,6 +106,19 @@ export default function NewCardScreen() {
   // Optional pronunciation hint (e.g. IPA or romanization).
   const [pronunciation, setPronunciation] = useState('');
 
+  // Free Dictionary lookups. Each button keeps its own message slot so they
+  // never clobber each other.
+  const [genderLookupMsg, setGenderLookupMsg] = useState<{
+    tone: 'error' | 'info';
+    text: string;
+  } | null>(null);
+  const [pronLookupMsg, setPronLookupMsg] = useState<{
+    tone: 'error' | 'info';
+    text: string;
+  } | null>(null);
+  const lookupGender = trpc.dictionary.getGender.useMutation();
+  const lookupPronunciation = trpc.dictionary.getPronunciation.useMutation();
+
   // Translation state. `hydrated` gates the persist effect so the initial
   // defaults don't clobber stored prefs before the read completes.
   const [translateOn, setTranslateOn] = useState(false);
@@ -239,6 +252,57 @@ export default function NewCardScreen() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFrontExamples, target, translateOn, translateAvailable]);
+
+  // Source language for dictionary lookups: tied to the translation target
+  // when translation is on, otherwise English so the buttons still work for
+  // plain English vocab cards.
+  const trimmedBack = back.trim();
+  const canLookup = trimmedBack.length > 0;
+  const dictionaryTarget: 'en' | 'fr' | 'es' | 'de' = translateOn ? target : 'en';
+
+  function describeMiss(kind: 'no_value' | 'not_in_dictionary' | 'multiple_words') {
+    if (kind === 'multiple_words') return 'Cannot access multiple words';
+    if (kind === 'not_in_dictionary') return 'Word not found in dictionary';
+    return 'No value returned';
+  }
+
+  function handleGetGender() {
+    if (!canLookup) return;
+    setGenderLookupMsg(null);
+    lookupGender.mutate(
+      { word: trimmedBack, target: dictionaryTarget },
+      {
+        onSuccess: (res) => {
+          if (res.kind === 'ok') {
+            setGender(res.gender);
+            setGenderLookupMsg(null);
+          } else {
+            setGenderLookupMsg({ tone: 'info', text: describeMiss(res.kind) });
+          }
+        },
+        onError: (err) => setGenderLookupMsg({ tone: 'error', text: err.message }),
+      },
+    );
+  }
+
+  function handleGetPronunciation() {
+    if (!canLookup) return;
+    setPronLookupMsg(null);
+    lookupPronunciation.mutate(
+      { word: trimmedBack, target: dictionaryTarget },
+      {
+        onSuccess: (res) => {
+          if (res.kind === 'ok') {
+            setPronunciation(res.pronunciation);
+            setPronLookupMsg(null);
+          } else {
+            setPronLookupMsg({ tone: 'info', text: describeMiss(res.kind) });
+          }
+        },
+        onError: (err) => setPronLookupMsg({ tone: 'error', text: err.message }),
+      },
+    );
+  }
 
   // Sorted decks for the picker. Stable order = predictable UI.
   const decks = useMemo(
@@ -446,7 +510,27 @@ export default function NewCardScreen() {
 
           {/* Gender picker */}
           <View className="gap-2">
-            <Text className="text-sm font-medium text-slate-700">Gender (optional)</Text>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-sm font-medium text-slate-700">Gender (optional)</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={handleGetGender}
+                disabled={!canLookup || lookupGender.isPending}
+                loading={lookupGender.isPending}
+              >
+                Get gender
+              </Button>
+            </View>
+            {genderLookupMsg ? (
+              <Text
+                className={`text-xs ${
+                  genderLookupMsg.tone === 'error' ? 'text-destructive' : 'text-slate-500'
+                }`}
+              >
+                {genderLookupMsg.text}
+              </Text>
+            ) : null}
             <View className="flex-row gap-2">
               <Pressable
                 onPress={() => setGender(null)}
@@ -535,12 +619,34 @@ export default function NewCardScreen() {
           </View>
 
           {/* Pronunciation hint (optional) — IPA, romanization, etc. */}
-          <TextField
-            label="Pronunciation (optional)"
-            placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
-            value={pronunciation}
-            onChangeText={setPronunciation}
-          />
+          <View className="gap-1.5">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-sm font-medium text-slate-700">Pronunciation (optional)</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={handleGetPronunciation}
+                disabled={!canLookup || lookupPronunciation.isPending}
+                loading={lookupPronunciation.isPending}
+              >
+                Get pronunciation
+              </Button>
+            </View>
+            <TextField
+              placeholder="e.g. /bɔ̃.ʒuʁ/ or bohn-zhoor"
+              value={pronunciation}
+              onChangeText={setPronunciation}
+            />
+            {pronLookupMsg ? (
+              <Text
+                className={`text-xs ${
+                  pronLookupMsg.tone === 'error' ? 'text-destructive' : 'text-slate-500'
+                }`}
+              >
+                {pronLookupMsg.text}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
         <View className="mt-8 flex-row gap-3">
