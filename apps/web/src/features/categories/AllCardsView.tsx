@@ -52,6 +52,7 @@ import { cn, formatRelative } from '@/lib/utils';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
+import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 
 /**
  * Full list of every card the user owns — across all decks plus
@@ -69,6 +70,7 @@ export function AllCardsView() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -107,9 +109,9 @@ export function AllCardsView() {
     },
   });
 
-  // Quick lookup so each card row can show "from <deck>" without N+1 queries.
+  // Quick lookup so each card row can show "from <deck>" and resolve backLanguage.
   const decksById = new Map(
-    (categories ?? []).map((c) => [c.id, { name: c.name, color: c.color }]),
+    (categories ?? []).map((c) => [c.id, { name: c.name, color: c.color, backLanguage: c.backLanguage }]),
   );
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
@@ -132,6 +134,21 @@ export function AllCardsView() {
     : stats?.due
       ? ` (${stats.due})`
       : '';
+
+  // Build the card array for the preview modal, including backLanguage from
+  // the card's deck (null for uncategorized cards).
+  const previewCards: PreviewCard[] = filteredCards.map((card) => ({
+    id: card.id,
+    front: card.front,
+    back: card.back,
+    frontExamples: card.frontExamples,
+    backExamples: card.backExamples,
+    class: card.class ?? null,
+    pronunciation: (card as { pronunciation?: string | null }).pronunciation ?? null,
+    backLanguage: (card.categoryId
+      ? (decksById.get(card.categoryId)?.backLanguage ?? null)
+      : null) as import('@ensemble/types').BackLanguageValue | null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -306,10 +323,14 @@ export function AllCardsView() {
         </div>
       ) : filteredCards.length > 0 ? (
         <div className="space-y-3">
-          {filteredCards.map((card) => {
+          {filteredCards.map((card, cardIdx) => {
             const deck = card.categoryId ? decksById.get(card.categoryId) : null;
             return (
-              <Card key={card.id}>
+              <Card
+                key={card.id}
+                className="cursor-pointer transition-shadow hover:shadow-md"
+                onClick={() => setPreviewIndex(cardIdx)}
+              >
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="line-clamp-2 font-medium">{card.front}</div>
@@ -354,7 +375,8 @@ export function AllCardsView() {
                       <span>{card.repetitions} reps</span>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  {/* Stop propagation so edit/delete don't also open the preview */}
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -426,6 +448,19 @@ export function AllCardsView() {
           }}
         />
       ) : null}
+
+      {/* Flashcard preview modal — opens when a card row is clicked */}
+      <FlashcardPreviewModal
+        cards={previewCards}
+        initialIndex={previewIndex ?? 0}
+        open={previewIndex !== null}
+        onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}
+        canRate
+        onRated={() => {
+          utils.flashcards.listAll.invalidate();
+          utils.practice.stats.invalidate({});
+        }}
+      />
     </div>
   );
 }

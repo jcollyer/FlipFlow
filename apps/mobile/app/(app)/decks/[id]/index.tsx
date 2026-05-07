@@ -1,4 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +18,10 @@ import { ClassBadge } from '../../../../src/components/ClassBadge';
 import { LanguagePicker } from '../../../../src/components/LanguagePicker';
 import { formatRelative } from '../../../../src/lib/format';
 import { trpc } from '../../../../src/lib/trpc';
+import {
+  FlashcardPreviewModal,
+  type PreviewCard,
+} from '../../../../src/features/practice/FlashcardPreviewModal';
 
 /**
  * Deck detail. Shows the deck's cards, stats, and the entry points
@@ -36,6 +41,8 @@ export default function DeckDetailScreen() {
     { categoryId },
     { enabled: category?.isOwner === true },
   );
+
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const remove = trpc.flashcards.delete.useMutation({
     onSuccess: () => {
@@ -90,6 +97,19 @@ export default function DeckDetailScreen() {
 
   const cards = cardsQuery.data ?? [];
   const stats = statsQuery.data;
+
+  // Build the card array for the preview modal. All cards in this deck share
+  // the same backLanguage from the deck-level category.
+  const previewCards: PreviewCard[] = cards.map((card) => ({
+    id: card.id,
+    front: card.front,
+    back: card.back,
+    frontExamples: card.frontExamples ?? [],
+    backExamples: card.backExamples ?? [],
+    class: card.class ?? null,
+    pronunciation: (card as { pronunciation?: string | null }).pronunciation ?? null,
+    backLanguage: (category?.backLanguage ?? null) as BackLanguageValue | null,
+  }));
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -152,69 +172,72 @@ export default function DeckDetailScreen() {
             ) : null}
           </View>
         }
-        renderItem={({ item }) => (
-          <Card className="flex-row items-start gap-3 p-4">
-            <View className="flex-1 gap-1">
-              <Text className="font-semibold text-slate-900" numberOfLines={2}>
-                {item.front}
-              </Text>
-              <Text className="text-sm text-slate-500" numberOfLines={2}>
-                {item.back}
-              </Text>
-              {item.frontExamples?.length > 0 || item.backExamples?.length > 0 ? (
-                <View className="mt-1.5 gap-1 border-t border-slate-100 pt-1.5">
-                  {Array.from({
-                    length: Math.max(
-                      item.frontExamples?.length ?? 0,
-                      item.backExamples?.length ?? 0,
-                    ),
-                  }).map((_, i) => (
-                    <View key={i} className="flex-row gap-2">
-                      <Text
-                        className="flex-1 text-xs font-semibold text-slate-800"
-                        numberOfLines={2}
-                      >
-                        {item.frontExamples?.[i] ?? ''}
+        renderItem={({ item, index: itemIndex }) => (
+          <Pressable onPress={() => setPreviewIndex(itemIndex)} className="active:opacity-80">
+            <Card className="flex-row items-start gap-3 p-4">
+              <View className="flex-1 gap-1">
+                <Text className="font-semibold text-slate-900" numberOfLines={2}>
+                  {item.front}
+                </Text>
+                <Text className="text-sm text-slate-500" numberOfLines={2}>
+                  {item.back}
+                </Text>
+                {item.frontExamples?.length > 0 || item.backExamples?.length > 0 ? (
+                  <View className="mt-1.5 gap-1 border-t border-slate-100 pt-1.5">
+                    {Array.from({
+                      length: Math.max(
+                        item.frontExamples?.length ?? 0,
+                        item.backExamples?.length ?? 0,
+                      ),
+                    }).map((_, i) => (
+                      <View key={i} className="flex-row gap-2">
+                        <Text
+                          className="flex-1 text-xs font-semibold text-slate-800"
+                          numberOfLines={2}
+                        >
+                          {item.frontExamples?.[i] ?? ''}
+                        </Text>
+                        <Text className="flex-1 text-xs text-slate-400" numberOfLines={2}>
+                          {item.backExamples?.[i] ?? ''}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                <View className="mt-1 flex-row flex-wrap items-center gap-x-2 gap-y-1">
+                  {item.class ? <ClassBadge value={item.class} /> : null}
+                  {isOwner ? (
+                    <>
+                      <Text className="text-xs text-slate-400">
+                        Next: {formatRelative(item.nextReview)}
                       </Text>
-                      <Text className="flex-1 text-xs text-slate-400" numberOfLines={2}>
-                        {item.backExamples?.[i] ?? ''}
-                      </Text>
-                    </View>
-                  ))}
+                      <Text className="text-xs text-slate-400">•</Text>
+                      <Text className="text-xs text-slate-400">{item.repetitions} reps</Text>
+                    </>
+                  ) : null}
+                </View>
+              </View>
+              {/* Inner Pressables win over the outer tap — edit/delete still work */}
+              {isOwner ? (
+                <View className="flex-row">
+                  <Pressable
+                    onPress={() => router.push(`/cards/${item.id}/edit`)}
+                    hitSlop={8}
+                    className="px-2 py-1"
+                  >
+                    <Text className="text-primary text-sm font-medium">Edit</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => confirmDeleteCard(item.id)}
+                    hitSlop={8}
+                    className="px-2 py-1"
+                  >
+                    <Text className="text-destructive text-sm font-medium">Delete</Text>
+                  </Pressable>
                 </View>
               ) : null}
-              <View className="mt-1 flex-row flex-wrap items-center gap-x-2 gap-y-1">
-                {item.class ? <ClassBadge value={item.class} /> : null}
-                {isOwner ? (
-                  <>
-                    <Text className="text-xs text-slate-400">
-                      Next: {formatRelative(item.nextReview)}
-                    </Text>
-                    <Text className="text-xs text-slate-400">•</Text>
-                    <Text className="text-xs text-slate-400">{item.repetitions} reps</Text>
-                  </>
-                ) : null}
-              </View>
-            </View>
-            {isOwner ? (
-              <View className="flex-row">
-                <Pressable
-                  onPress={() => router.push(`/cards/${item.id}/edit`)}
-                  hitSlop={8}
-                  className="px-2 py-1"
-                >
-                  <Text className="text-primary text-sm font-medium">Edit</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => confirmDeleteCard(item.id)}
-                  hitSlop={8}
-                  className="px-2 py-1"
-                >
-                  <Text className="text-destructive text-sm font-medium">Delete</Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </Card>
+            </Card>
+          </Pressable>
         )}
         ListEmptyComponent={
           <Card className="items-center gap-3 border-dashed p-8">
@@ -259,6 +282,19 @@ export default function DeckDetailScreen() {
             tintColor="#3b82f6"
           />
         }
+      />
+
+      {/* Flashcard preview modal — opens when a card row is tapped */}
+      <FlashcardPreviewModal
+        cards={previewCards}
+        initialIndex={previewIndex ?? 0}
+        visible={previewIndex !== null}
+        onClose={() => setPreviewIndex(null)}
+        canRate={isOwner}
+        onRated={() => {
+          utils.flashcards.listByCategory.invalidate({ categoryId });
+          utils.practice.stats.invalidate({ categoryId });
+        }}
       />
     </View>
   );

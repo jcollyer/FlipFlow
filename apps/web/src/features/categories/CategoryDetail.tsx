@@ -45,6 +45,7 @@ import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { FoldersChecklist } from '@/features/folders/FoldersChecklist';
+import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -116,6 +117,7 @@ export function CategoryDetail({ categoryId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDeckOpen, setEditDeckOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const remove = trpc.flashcards.delete.useMutation({
     onSuccess: () => {
@@ -131,6 +133,19 @@ export function CategoryDetail({ categoryId }: Props) {
       router.push('/app');
     },
   });
+
+  // Build the ordered card array for the preview modal. backLanguage comes
+  // from the deck-level category (same for every card in this view).
+  const previewCards: PreviewCard[] = (cards ?? []).map((card) => ({
+    id: card.id,
+    front: card.front,
+    back: card.back,
+    frontExamples: card.frontExamples,
+    backExamples: card.backExamples,
+    class: card.class ?? null,
+    pronunciation: (card as { pronunciation?: string | null }).pronunciation ?? null,
+    backLanguage: (category?.backLanguage ?? null) as BackLanguageValue | null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -189,8 +204,12 @@ export function CategoryDetail({ categoryId }: Props) {
         </div>
       ) : cards && cards.length > 0 ? (
         <div className="space-y-3">
-          {cards.map((card) => (
-            <Card key={card.id}>
+          {cards.map((card, cardIdx) => (
+            <Card
+              key={card.id}
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={() => setPreviewIndex(cardIdx)}
+            >
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="line-clamp-2 font-medium">{card.front}</div>
@@ -226,8 +245,9 @@ export function CategoryDetail({ categoryId }: Props) {
                     ) : null}
                   </div>
                 </div>
+                {/* Stop propagation so edit/delete don't also open the preview */}
                 {isOwner ? (
-                  <div className="flex gap-1">
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -328,6 +348,19 @@ export function CategoryDetail({ categoryId }: Props) {
           onClose={() => setEditDeckOpen(false)}
         />
       ) : null}
+
+      {/* Flashcard preview modal — opens when a card row is clicked */}
+      <FlashcardPreviewModal
+        cards={previewCards}
+        initialIndex={previewIndex ?? 0}
+        open={previewIndex !== null}
+        onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}
+        canRate={isOwner}
+        onRated={() => {
+          utils.flashcards.listByCategory.invalidate({ categoryId });
+          utils.practice.stats.invalidate({ categoryId });
+        }}
+      />
     </div>
   );
 }
