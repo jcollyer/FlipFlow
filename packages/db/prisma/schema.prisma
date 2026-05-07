@@ -83,6 +83,9 @@ model VerificationToken {
 model Category {
   id        String      @id @default(cuid())
   name      String
+  // Optional free-form description for the deck. Shown beneath the name in
+  // the new/edit deck modals and (when present) on the deck detail page.
+  description String?   @db.Text
   color     String?
   // BCP-47 language tag for the back of cards in this deck (e.g. "fr-FR",
   // "es-ES", "ja-JP"). Drives the Google Cloud Text-to-Speech voice when

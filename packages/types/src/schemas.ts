@@ -21,8 +21,15 @@ export const CategoryColorSchema = z
  */
 export const CategoryBackLanguageSchema = BackLanguageSchema.nullish();
 
+/**
+ * Optional free-form description for a deck. `null` clears a previously
+ * saved value; `undefined` leaves it unchanged on update.
+ */
+export const CategoryDescriptionSchema = z.string().trim().max(2000).nullish();
+
 export const CategoryCreateInput = z.object({
   name: z.string().trim().min(1, 'Name is required').max(80),
+  description: CategoryDescriptionSchema,
   color: CategoryColorSchema,
   backLanguage: CategoryBackLanguageSchema,
   /**
@@ -37,6 +44,7 @@ export type CategoryCreateInput = z.infer<typeof CategoryCreateInput>;
 export const CategoryUpdateInput = z.object({
   id: z.string().cuid(),
   name: z.string().trim().min(1).max(80).optional(),
+  description: CategoryDescriptionSchema,
   color: CategoryColorSchema,
   backLanguage: CategoryBackLanguageSchema,
   /**

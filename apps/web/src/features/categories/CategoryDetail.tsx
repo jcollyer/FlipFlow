@@ -167,6 +167,11 @@ export function CategoryDetail({ categoryId }: Props) {
               {category?.name ?? 'Loading…'}
             </h1>
           </div>
+          {(category as { description?: string | null } | undefined)?.description ? (
+            <p className="text-muted-foreground mt-1 text-sm">
+              {(category as { description?: string | null }).description}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
@@ -341,6 +346,7 @@ export function CategoryDetail({ categoryId }: Props) {
           category={{
             id: category.id,
             name: category.name,
+            description: (category as { description?: string | null }).description ?? null,
             color: category.color ?? null,
             backLanguage: (category.backLanguage as BackLanguageValue | null) ?? null,
             private: (category as { private?: boolean }).private ?? true,
@@ -1004,6 +1010,7 @@ function EditCategoryDialog({
   category: {
     id: string;
     name: string;
+    description: string | null;
     color: string | null;
     backLanguage: BackLanguageValue | null;
     private: boolean;
@@ -1065,6 +1072,7 @@ function EditCategoryDialog({
     defaultValues: {
       id: category.id,
       name: category.name,
+      description: category.description,
       // Fall back to the first palette color if the deck has no color set,
       // so the swatch UI always has a selected option to render.
       color: category.color ?? DECK_COLOR_PALETTE[0],
@@ -1096,6 +1104,16 @@ function EditCategoryDialog({
             {form.formState.errors.name ? (
               <p className="text-destructive text-sm">{form.formState.errors.name.message}</p>
             ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-deck-description">Description (optional)</Label>
+            <Textarea
+              id="edit-deck-description"
+              placeholder="What is this deck about?"
+              rows={3}
+              {...form.register('description')}
+            />
           </div>
 
           <div className="space-y-2">

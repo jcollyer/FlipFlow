@@ -29,6 +29,7 @@ export default function NewDeckScreen() {
   const utils = trpc.useUtils();
 
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
   // The toggle is "Deck public" and starts off, which corresponds to
@@ -53,6 +54,7 @@ export default function NewDeckScreen() {
     setNameError(undefined);
     const parsed = CategoryCreateInput.safeParse({
       name,
+      description: description.trim() || null,
       color,
       backLanguage,
       private: isPrivate,
@@ -83,6 +85,15 @@ export default function NewDeckScreen() {
             onChangeText={setName}
             error={nameError}
             autoFocus
+            returnKeyType="next"
+          />
+
+          <TextField
+            label="Description (optional)"
+            placeholder="What is this deck about?"
+            value={description}
+            onChangeText={setDescription}
+            multiline
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
           />

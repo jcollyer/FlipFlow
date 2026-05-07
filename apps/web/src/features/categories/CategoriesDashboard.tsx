@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Layers, Clock, Library, FolderTree, Users } from 'lucide-react';
 
 import { BACK_LANGUAGES, CategoryCreateInput } from '@ensemble/types';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -86,7 +87,7 @@ export function CategoriesDashboard() {
     resolver: zodResolver(CategoryCreateInput),
     // The toggle is labeled "Deck public" and is off by default — that maps
     // to `private = true` on the model.
-    defaultValues: { name: '', color: PALETTE[0], backLanguage: null, private: true },
+    defaultValues: { name: '', description: null, color: PALETTE[0], backLanguage: null, private: true },
   });
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
@@ -193,7 +194,7 @@ export function CategoriesDashboard() {
           setDeckOpen(o);
           if (!o) {
             // Reset modal-local state on close so the next open is clean.
-            form.reset({ name: '', color: PALETTE[0], backLanguage: null, private: true });
+            form.reset({ name: '', description: null, color: PALETTE[0], backLanguage: null, private: true });
             setPendingFolderIds([]);
           }
         }}
@@ -227,6 +228,15 @@ export function CategoriesDashboard() {
               {form.formState.errors.name ? (
                 <p className="text-destructive text-sm">{form.formState.errors.name.message}</p>
               ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-deck-description">Description (optional)</Label>
+              <Textarea
+                id="new-deck-description"
+                placeholder="What is this deck about?"
+                rows={3}
+                {...form.register('description')}
+              />
             </div>
             <div className="space-y-2">
               <Label>Color</Label>

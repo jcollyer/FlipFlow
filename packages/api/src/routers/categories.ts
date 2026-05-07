@@ -31,6 +31,7 @@ export const categoriesRouter = router({
     return categories.map((c) => ({
       id: c.id,
       name: c.name,
+      description: c.description,
       color: c.color,
       backLanguage: c.backLanguage,
       private: c.private,
@@ -94,6 +95,7 @@ export const categoriesRouter = router({
         select: {
           id: true,
           name: true,
+          description: true,
           color: true,
           backLanguage: true,
           private: true,
@@ -112,6 +114,7 @@ export const categoriesRouter = router({
       return {
         id: category.id,
         name: category.name,
+        description: category.description,
         color: category.color,
         backLanguage: category.backLanguage,
         private: category.private,
@@ -125,6 +128,7 @@ export const categoriesRouter = router({
     ctx.prisma.category.create({
       data: {
         name: input.name,
+        description: input.description ?? null,
         color: input.color ?? null,
         backLanguage: input.backLanguage ?? null,
         // Default to private when the client doesn't specify; the schema
@@ -147,6 +151,7 @@ export const categoriesRouter = router({
       where: { id: input.id },
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.description !== undefined ? { description: input.description ?? null } : {}),
         ...(input.color !== undefined ? { color: input.color ?? null } : {}),
         ...(input.backLanguage !== undefined ? { backLanguage: input.backLanguage ?? null } : {}),
         ...(input.private !== undefined ? { private: input.private } : {}),

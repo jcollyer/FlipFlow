@@ -50,6 +50,7 @@ export default function EditDeckScreen() {
   const ttsAvailable = !!ttsAvailability?.available;
 
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
   // Privacy flag — "Deck public" toggle is the inverse of this.
@@ -62,6 +63,7 @@ export default function EditDeckScreen() {
   useEffect(() => {
     if (category && !hydrated) {
       setName(category.name);
+      setDescription((category as { description?: string | null }).description ?? '');
       // Fall back to the first palette swatch if the deck has no color set,
       // so the swatch UI always has a selected option.
       setColor(category.color ?? PALETTE[0]!);
@@ -85,6 +87,7 @@ export default function EditDeckScreen() {
     const parsed = CategoryUpdateInput.safeParse({
       id: categoryId,
       name,
+      description: description.trim() || null,
       color,
       backLanguage,
       private: isPrivate,
@@ -122,6 +125,15 @@ export default function EditDeckScreen() {
             value={name}
             onChangeText={setName}
             error={nameError}
+            returnKeyType="next"
+          />
+
+          <TextField
+            label="Description (optional)"
+            placeholder="What is this deck about?"
+            value={description}
+            onChangeText={setDescription}
+            multiline
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
           />
