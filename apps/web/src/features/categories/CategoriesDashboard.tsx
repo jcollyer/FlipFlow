@@ -87,7 +87,13 @@ export function CategoriesDashboard() {
     resolver: zodResolver(CategoryCreateInput),
     // The toggle is labeled "Deck public" and is off by default — that maps
     // to `private = true` on the model.
-    defaultValues: { name: '', description: null, color: PALETTE[0], backLanguage: null, private: true },
+    defaultValues: {
+      name: '',
+      description: null,
+      color: PALETTE[0],
+      backLanguage: null,
+      private: true,
+    },
   });
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
@@ -125,11 +131,7 @@ export function CategoriesDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ProgressSnapshotCard
-          label="Total cards"
-          value={stats?.total ?? 0}
-          tone="slate"
-        />
+        <ProgressSnapshotCard label="Total cards" value={stats?.total ?? 0} tone="slate" />
         <ProgressSnapshotCard
           label="Challenging cards"
           value={stats?.confidenceBreakdown.challenging ?? 0}
@@ -201,7 +203,13 @@ export function CategoriesDashboard() {
           setDeckOpen(o);
           if (!o) {
             // Reset modal-local state on close so the next open is clean.
-            form.reset({ name: '', description: null, color: PALETTE[0], backLanguage: null, private: true });
+            form.reset({
+              name: '',
+              description: null,
+              color: PALETTE[0],
+              backLanguage: null,
+              private: true,
+            });
             setPendingFolderIds([]);
           }
         }}

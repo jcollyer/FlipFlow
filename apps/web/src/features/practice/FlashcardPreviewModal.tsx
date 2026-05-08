@@ -23,11 +23,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { BackLanguageValue } from '@ensemble/types';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc/client';
 import { FlipCard, NavButton, RatingButtons } from './FlashcardViewer';

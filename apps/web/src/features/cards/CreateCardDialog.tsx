@@ -718,9 +718,7 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
               <Label htmlFor="card-verb-type">Verb type (optional)</Label>
               <Select
                 value={verbType ?? NO_VERB_TYPE}
-                onValueChange={(v) =>
-                  setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))
-                }
+                onValueChange={(v) => setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))}
               >
                 <SelectTrigger id="card-verb-type">
                   <SelectValue />

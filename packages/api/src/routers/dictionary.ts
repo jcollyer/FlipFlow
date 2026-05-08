@@ -144,9 +144,7 @@ function isMultipleWords(word: string): boolean {
  * gives us the same first-of-line behavior without that footgun.
  */
 function extractLanguageSection(wikitext: string, heading: string): string | null {
-  const re = new RegExp(
-    `(?:^|\\n)==\\s*${heading}\\s*==[ \\t]*\\n([\\s\\S]*?)(?=\\n==[^=]|$)`,
-  );
+  const re = new RegExp(`(?:^|\\n)==\\s*${heading}\\s*==[ \\t]*\\n([\\s\\S]*?)(?=\\n==[^=]|$)`);
   const m = wikitext.match(re);
   return m?.[1] ?? null;
 }
@@ -165,10 +163,7 @@ function extractLanguageSection(wikitext: string, heading: string): string | nul
  * this as "no value returned".
  */
 function extractGender(section: string, lang: DictionaryLang): 'male' | 'female' | null {
-  const langNounRe = new RegExp(
-    `\\{\\{${lang}-(?:noun|proper noun|proper-noun)\\|([^}|]+)`,
-    'i',
-  );
+  const langNounRe = new RegExp(`\\{\\{${lang}-(?:noun|proper noun|proper-noun)\\|([^}|]+)`, 'i');
   const nounMatch = section.match(langNounRe);
   if (nounMatch?.[1]) {
     // First positional arg, stripped of any sub-form suffix like "f-p".

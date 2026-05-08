@@ -14,10 +14,12 @@ export default async function HomePage() {
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="size-10 rounded-full bg-primary/10 text-primary inline-flex items-center justify-center">
-              <p className="text-primary font-brand text-4xl leading-none font-semibold">e</p>
+            <div className="bg-primary/10 text-primary inline-flex size-10 items-center justify-center rounded-full">
+              <p className="text-primary font-brand text-4xl font-semibold leading-none">e</p>
             </div>
-            <span className="font-brand text-2xl leading-none text-gray-600 font-semibold">ensemble</span>
+            <span className="font-brand text-2xl font-semibold leading-none text-gray-600">
+              ensemble
+            </span>
           </div>
           <Button asChild variant="ghost" size="sm">
             <Link href="/signin">Sign in</Link>
@@ -30,13 +32,15 @@ export default async function HomePage() {
           <Sparkles className="h-3 w-3" />
           Learn on your own, or together
         </div>
-        <h1 className="font-brand max-w-3xl font-semibold text-primary text-balance text-6xl sm:text-8xl leading-[0.8]">
+        <h1 className="font-brand text-primary max-w-3xl text-balance text-6xl font-semibold leading-[0.8] sm:text-8xl">
           ensemble
         </h1>
-        <h2 className="text-xl text-gray-700">Language brings people <span className="italic font-semibold">together</span></h2>
-        <p className="text-muted-foreground mt-6 max-w-xl text-balance text-md">
-          Create flashcards, building vocabulary for ensemble
-          to act as your personal conversation tutor.
+        <h2 className="text-xl text-gray-700">
+          Language brings people <span className="font-semibold italic">together</span>
+        </h2>
+        <p className="text-muted-foreground text-md mt-6 max-w-xl text-balance">
+          Create flashcards, building vocabulary for ensemble to act as your personal conversation
+          tutor.
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">

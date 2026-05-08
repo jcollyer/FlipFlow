@@ -143,11 +143,7 @@ export default function DeckDetailScreen() {
               {isOwner ? (
                 <>
                   <Stat label="Total" value={stats?.total ?? cards.length} />
-                  <Stat
-                    label="Due now"
-                    value={stats?.due ?? 0}
-                    highlight={(stats?.due ?? 0) > 0}
-                  />
+                  <Stat label="Due now" value={stats?.due ?? 0} highlight={(stats?.due ?? 0) > 0} />
                   <Stat label="Mastered" value={stats?.mastered ?? 0} />
                 </>
               ) : null}

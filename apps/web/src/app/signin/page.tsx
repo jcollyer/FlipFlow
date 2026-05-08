@@ -30,14 +30,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     <main className="flex min-h-dvh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link
-            href="/"
-            className="mx-auto mb-2 inline-flex items-center gap-2"
-          >
-            <div className="size-10 rounded-full bg-primary/10 text-primary inline-flex items-center justify-center">
-              <p className="text-primary font-brand text-4xl leading-none font-semibold">e</p>
+          <Link href="/" className="mx-auto mb-2 inline-flex items-center gap-2">
+            <div className="bg-primary/10 text-primary inline-flex size-10 items-center justify-center rounded-full">
+              <p className="text-primary font-brand text-4xl font-semibold leading-none">e</p>
             </div>
-            <span className="font-brand text-3xl font-semibold text-gray-700 leading-none">ensemble</span>
+            <span className="font-brand text-3xl font-semibold leading-none text-gray-700">
+              ensemble
+            </span>
           </Link>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>Sign in to keep your streak alive.</CardDescription>

@@ -71,7 +71,10 @@ export default function AllCardsScreen() {
   // Build a deck lookup so each row can show its source deck without an
   // N+1 query. Categories.list is already in the cache from the home view.
   const decksById = useMemo(() => {
-    const map = new Map<string, { name: string; color: string | null; backLanguage: string | null }>();
+    const map = new Map<
+      string,
+      { name: string; color: string | null; backLanguage: string | null }
+    >();
     for (const c of categoriesQuery.data ?? []) {
       map.set(c.id, { name: c.name, color: c.color, backLanguage: c.backLanguage ?? null });
     }

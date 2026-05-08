@@ -360,7 +360,9 @@ export function CategoryDetail({ categoryId }: Props) {
         cards={previewCards}
         initialIndex={previewIndex ?? 0}
         open={previewIndex !== null}
-        onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}
+        onOpenChange={(open) => {
+          if (!open) setPreviewIndex(null);
+        }}
         canRate={isOwner}
         onRated={() => {
           utils.flashcards.listByCategory.invalidate({ categoryId });
@@ -964,9 +966,7 @@ function EditCardDialog({
               <Label htmlFor="edit-card-verb-type">Verb type (optional)</Label>
               <Select
                 value={verbType ?? NO_VERB_TYPE}
-                onValueChange={(v) =>
-                  setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))
-                }
+                onValueChange={(v) => setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))}
               >
                 <SelectTrigger id="edit-card-verb-type">
                   <SelectValue />

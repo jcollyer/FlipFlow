@@ -47,8 +47,9 @@ export const practiceRouter = router({
       if (input.categoryId && !category) throw new TRPCError({ code: 'NOT_FOUND' });
 
       const categoryIsOwner = category ? category.userId === ctx.userId : false;
-      const categoryIsPublic =
-        category ? category.private === false && category.user.private === false : false;
+      const categoryIsPublic = category
+        ? category.private === false && category.user.private === false
+        : false;
       if (input.categoryId && !categoryIsOwner && !categoryIsPublic) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }

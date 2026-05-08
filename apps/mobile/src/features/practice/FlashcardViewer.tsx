@@ -108,9 +108,7 @@ export function FlipCard({
         </Text>
 
         {flipped && pronunciation ? (
-          <Text className="mt-2 text-center text-base italic text-slate-500">
-            {pronunciation}
-          </Text>
+          <Text className="mt-2 text-center text-base italic text-slate-500">{pronunciation}</Text>
         ) : null}
 
         {flipped && backExamples.length > 0 ? (

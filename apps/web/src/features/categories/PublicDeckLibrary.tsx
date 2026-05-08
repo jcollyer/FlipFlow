@@ -56,7 +56,11 @@ export function PublicDeckLibrary() {
                       </div>
                     </div>
                     <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
-                      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {isOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                       {isOpen ? 'Hide decks' : 'Show decks'}
                     </span>
                   </CardHeader>

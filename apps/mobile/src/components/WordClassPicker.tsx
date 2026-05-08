@@ -83,8 +83,7 @@ export function WordClassPicker({ value, onChange, disabled, accessibilityLabel 
             keyExtractor={(o) => o.value}
             ItemSeparatorComponent={() => <View className="bg-border ml-4 h-px" />}
             renderItem={({ item }) => {
-              const selected =
-                (item.value === NO_CLASS && value === null) || item.value === value;
+              const selected = (item.value === NO_CLASS && value === null) || item.value === value;
               return (
                 <Pressable
                   onPress={() => {

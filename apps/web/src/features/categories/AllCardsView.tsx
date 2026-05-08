@@ -111,7 +111,10 @@ export function AllCardsView() {
 
   // Quick lookup so each card row can show "from <deck>" and resolve backLanguage.
   const decksById = new Map(
-    (categories ?? []).map((c) => [c.id, { name: c.name, color: c.color, backLanguage: c.backLanguage }]),
+    (categories ?? []).map((c) => [
+      c.id,
+      { name: c.name, color: c.color, backLanguage: c.backLanguage },
+    ]),
   );
 
   const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
@@ -454,7 +457,9 @@ export function AllCardsView() {
         cards={previewCards}
         initialIndex={previewIndex ?? 0}
         open={previewIndex !== null}
-        onOpenChange={(open) => { if (!open) setPreviewIndex(null); }}
+        onOpenChange={(open) => {
+          if (!open) setPreviewIndex(null);
+        }}
         canRate
         onRated={() => {
           utils.flashcards.listAll.invalidate();
@@ -877,9 +882,7 @@ function EditCardDialog({
               <Label htmlFor="edit-card-verb-type">Verb type (optional)</Label>
               <Select
                 value={verbType ?? NO_VERB_TYPE}
-                onValueChange={(v) =>
-                  setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))
-                }
+                onValueChange={(v) => setVerbType(v === NO_VERB_TYPE ? null : (v as VerbTypeValue))}
               >
                 <SelectTrigger id="edit-card-verb-type">
                   <SelectValue />

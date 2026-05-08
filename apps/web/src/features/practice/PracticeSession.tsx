@@ -2,11 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  RotateCcw,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RotateCcw } from 'lucide-react';
 
 import type { BackLanguageValue } from '@ensemble/types';
 
