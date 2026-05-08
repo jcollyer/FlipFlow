@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowRight, Sparkles, Zap, RefreshCw, Languages, Volume2, Wand2, Star, Tags, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, Zap, Volume2, Wand2, Star, Tags, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { auth } from '@/server/auth';
@@ -13,9 +13,11 @@ export default async function HomePage() {
     <main className="flex min-h-dvh flex-col">
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2 font-semibold text-primary">
-            <RefreshCw className="text-primary h-5 w-5" />
-            ensemble
+          <div className="flex items-center gap-2">
+            <div className="size-10 rounded-full bg-primary/10 text-primary inline-flex items-center justify-center">
+              <p className="text-primary font-brand text-4xl leading-none font-semibold">e</p>
+            </div>
+            <span className="font-brand text-2xl leading-none text-gray-600 font-semibold">ensemble</span>
           </div>
           <Button asChild variant="ghost" size="sm">
             <Link href="/signin">Sign in</Link>
@@ -24,11 +26,11 @@ export default async function HomePage() {
       </header>
 
       <section className="container flex flex-1 flex-col items-center justify-center py-24 text-center">
-        <div className="bg-muted/50 text-muted-foreground mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+        <div className="bg-muted/50 text-muted-foreground mb-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
           <Sparkles className="h-3 w-3" />
           Learn on your own, or together
         </div>
-        <h1 className="max-w-3xl text-primary text-balance text-4xl font-bold tracking-tight sm:text-6xl">
+        <h1 className="font-brand max-w-3xl font-semibold text-primary text-balance text-6xl sm:text-8xl leading-[0.8]">
           ensemble
         </h1>
         <h2 className="text-xl text-gray-700">Language brings people <span className="italic font-semibold">together</span></h2>

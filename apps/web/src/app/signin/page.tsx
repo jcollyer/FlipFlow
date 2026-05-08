@@ -32,10 +32,12 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <CardHeader className="text-center">
           <Link
             href="/"
-            className="text-muted-foreground mx-auto mb-2 inline-flex items-center gap-2 text-sm"
+            className="mx-auto mb-2 inline-flex items-center gap-2"
           >
-            <RefreshCw className="text-primary h-4 w-4" />
-            ensemble
+            <div className="size-10 rounded-full bg-primary/10 text-primary inline-flex items-center justify-center">
+              <p className="text-primary font-brand text-4xl leading-none font-semibold">e</p>
+            </div>
+            <span className="font-brand text-3xl font-semibold text-gray-700 leading-none">ensemble</span>
           </Link>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>Sign in to keep your streak alive.</CardDescription>
