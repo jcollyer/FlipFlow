@@ -16,9 +16,10 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "postinstall": "prisma generate --schema=packages/db/prisma/schema.prisma",
-    "db:generate": "dotenv -e .env -- prisma generate --schema=packages/db/prisma/schema.prisma",
-    "db:push": "dotenv -e .env -- prisma db push --schema=packages/db/prisma/schema.prisma",
-    "db:migrate": "dotenv -e .env -- prisma migrate dev --schema=packages/db/prisma/schema.prisma",
+    "db:migrate:status": "dotenv -e .env -- prisma migrate status --schema=packages/db/prisma/schema.prisma",
+    "db:migrate:deploy:prod": "dotenv -e .env -- prisma migrate deploy --schema=packages/db/prisma/schema.prisma",
+    "db:migrate:status:prod": "dotenv -e .env -- prisma migrate status --schema=packages/db/prisma/schema.prisma",
+    "db:migrate:resolve:prod": "dotenv -e .env -- prisma migrate resolve --schema=packages/db/prisma/schema.prisma",
     "db:studio": "dotenv -e .env -- prisma studio --schema=packages/db/prisma/schema.prisma",
     "db:seed": "dotenv -e .env -- tsx packages/db/prisma/seed.ts"
   },
