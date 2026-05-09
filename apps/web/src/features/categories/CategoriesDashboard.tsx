@@ -32,11 +32,11 @@ import { Switch } from '@/components/ui/switch';
 import { trpc } from '@/lib/trpc/client';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { FolderModal } from '@/features/folders/FolderModal';
-import { FoldersChecklist } from '@/features/folders/FoldersChecklist';
 
-// Sentinel because the Radix Select doesn't allow an empty-string value.
-// We translate this back to `null` before submitting.
+// Sentinels because the Radix Select doesn't allow an empty-string value.
+// We translate these back to `null` before submitting.
 const NO_LANGUAGE = '__none__';
+const NO_FOLDER = '__no_folder__';
 
 const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -66,7 +66,8 @@ export function CategoriesDashboard() {
       utils.folders.list.invalidate();
     },
   });
-  const [pendingFolderIds, setPendingFolderIds] = useState<string[]>([]);
+  const [pendingFolderId, setPendingFolderId] = useState<string | null>(null);
+  const [folderError, setFolderError] = useState(false);
 
   const createFolder = trpc.folders.create.useMutation({
     onSuccess: (folder) => {
@@ -252,7 +253,8 @@ export function CategoriesDashboard() {
               // Restore the user's global default so the next open is correct.
               private: me?.defaultDeckPrivate ?? true,
             });
-            setPendingFolderIds([]);
+            setPendingFolderId(null);
+            setFolderError(false);
           }
         }}
       >
@@ -262,23 +264,61 @@ export function CategoriesDashboard() {
             <DialogDescription>Group related flashcards together.</DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={form.handleSubmit((values) =>
+            onSubmit={form.handleSubmit((values) => {
+              if (!pendingFolderId) {
+                setFolderError(true);
+                return;
+              }
+              setFolderError(false);
               create.mutate(values, {
                 onSuccess: (deck) => {
-                  // Apply the folder picks (if any) to the freshly-created deck.
-                  if (pendingFolderIds.length > 0) {
-                    setDeckFolders.mutate(
-                      { categoryId: deck.id, folderIds: pendingFolderIds },
-                      { onSettled: () => setPendingFolderIds([]) },
-                    );
-                  } else {
-                    setPendingFolderIds([]);
-                  }
+                  setDeckFolders.mutate(
+                    { categoryId: deck.id, folderIds: [pendingFolderId] },
+                    { onSettled: () => setPendingFolderId(null) },
+                  );
                 },
-              }),
-            )}
+              });
+            })}
             className="space-y-4"
           >
+            {/* Folder — required, shown first */}
+            <div className="space-y-2">
+              <Label htmlFor="new-deck-folder">Folder <span className="text-destructive">*</span></Label>
+              {!hasFolders ? (
+                <p className="text-muted-foreground text-sm">
+                  No folders yet —{' '}
+                  <button
+                    type="button"
+                    className="text-primary underline"
+                    onClick={() => { setDeckOpen(false); setFolderOpen(true); }}
+                  >
+                    create a folder first
+                  </button>
+                  .
+                </p>
+              ) : (
+                <Select
+                  value={pendingFolderId ?? NO_FOLDER}
+                  onValueChange={(v) => {
+                    setPendingFolderId(v === NO_FOLDER ? null : v);
+                    if (v !== NO_FOLDER) setFolderError(false);
+                  }}
+                >
+                  <SelectTrigger id="new-deck-folder">
+                    <SelectValue placeholder="Select a folder…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_FOLDER} disabled>Select a folder…</SelectItem>
+                    {(folders ?? []).map((f) => (
+                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {folderError ? (
+                <p className="text-destructive text-sm">Please select a folder.</p>
+              ) : null}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="e.g. Spanish verbs" {...form.register('name')} />
@@ -333,13 +373,6 @@ export function CategoriesDashboard() {
                 }
               />
             </div>
-            {hasFolders ? (
-              <FoldersChecklist
-                folders={folders ?? []}
-                selected={pendingFolderIds}
-                onChange={setPendingFolderIds}
-              />
-            ) : null}
             {ttsAvailable ? (
               <div className="space-y-2">
                 <Label htmlFor="back-language">Audio language (back of card)</Label>

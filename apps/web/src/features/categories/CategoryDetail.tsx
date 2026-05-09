@@ -44,7 +44,6 @@ import { useDebouncedValue } from '@/lib/hooks';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
-import { FoldersChecklist } from '@/features/folders/FoldersChecklist';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 
 const TRANSLATE_TARGETS = [
@@ -60,9 +59,10 @@ const NO_VERB_TYPE = '__no_verb_type__';
 // Same palette as the create-deck dialog so editing matches creating.
 const DECK_COLOR_PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-// Sentinel because the Radix Select doesn't allow an empty-string value;
-// we translate this back to `null` before submitting.
+// Sentinels because the Radix Select doesn't allow an empty-string value;
+// we translate these back to `null` before submitting.
 const NO_LANGUAGE = '__none__';
+const NO_FOLDER = '__no_folder__';
 
 interface TranslatePrefs {
   v: 1;
@@ -1024,18 +1024,17 @@ function EditCategoryDialog({
   });
   const ttsAvailable = !!ttsAvailability?.available;
 
-  // Folder pick-list. We hide it entirely if the user has no folders so the
-  // modal stays as compact as it was before folders existed.
+  // Folder pick-list — required single selection.
   const { data: folders } = trpc.folders.list.useQuery();
   const { data: folderIdsForDeck } = trpc.folders.forDeck.useQuery({ categoryId: category.id });
-  const [selectedFolderIds, setSelectedFolderIds] = useState<string[] | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [folderError, setFolderError] = useState(false);
 
   // Hydrate selection once the server returns the deck's current folder
-  // membership; track null until then so we can detect "user hasn't touched
-  // it" vs. "user explicitly cleared all".
+  // membership; take the first folder if the deck is in multiple.
   useEffect(() => {
-    if (selectedFolderIds === null && folderIdsForDeck) {
-      setSelectedFolderIds(folderIdsForDeck);
+    if (selectedFolderId === null && folderIdsForDeck) {
+      setSelectedFolderId(folderIdsForDeck[0] ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderIdsForDeck]);
@@ -1051,17 +1050,17 @@ function EditCategoryDialog({
     onSuccess: () => {
       utils.categories.byId.invalidate({ id: category.id });
       utils.categories.list.invalidate();
-      // If the user changed the folder selection, sync it now.
-      if (selectedFolderIds !== null && folderIdsForDeck) {
-        const next = [...selectedFolderIds].sort().join(',');
-        const prev = [...folderIdsForDeck].sort().join(',');
-        if (next !== prev) {
-          setDeckFolders.mutate(
-            { categoryId: category.id, folderIds: selectedFolderIds },
-            { onSettled: () => onClose() },
-          );
-          return;
-        }
+      // Sync folder membership — always call so removals are captured too.
+      const folderIds = selectedFolderId ? [selectedFolderId] : [];
+      const prevIds = folderIdsForDeck ?? [];
+      const changed =
+        [...folderIds].sort().join(',') !== [...prevIds].sort().join(',');
+      if (changed) {
+        setDeckFolders.mutate(
+          { categoryId: category.id, folderIds },
+          { onSettled: () => onClose() },
+        );
+        return;
       }
       onClose();
     },
@@ -1086,6 +1085,15 @@ function EditCategoryDialog({
   const isPrivate = form.watch('private') ?? true;
   const hasFolders = (folders?.length ?? 0) > 0;
 
+  function handleSubmit(values: CategoryUpdateInput) {
+    if (!selectedFolderId) {
+      setFolderError(true);
+      return;
+    }
+    setFolderError(false);
+    update.mutate(values);
+  }
+
   return (
     <Dialog open onOpenChange={(o) => (o ? null : onClose())}>
       <DialogContent>
@@ -1093,7 +1101,35 @@ function EditCategoryDialog({
           <DialogTitle>Edit deck</DialogTitle>
           <DialogDescription>Update the deck name, color, and audio language.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit((values) => update.mutate(values))} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          {/* Folder — required, shown first */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-deck-folder">Folder <span className="text-destructive">*</span></Label>
+            {!hasFolders ? (
+              <p className="text-muted-foreground text-sm">No folders yet — create a folder first.</p>
+            ) : (
+              <Select
+                value={selectedFolderId ?? NO_FOLDER}
+                onValueChange={(v) => {
+                  setSelectedFolderId(v === NO_FOLDER ? null : v);
+                  if (v !== NO_FOLDER) setFolderError(false);
+                }}
+              >
+                <SelectTrigger id="edit-deck-folder">
+                  <SelectValue placeholder="Select a folder…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_FOLDER} disabled>Select a folder…</SelectItem>
+                  {(folders ?? []).map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {folderError ? (
+              <p className="text-destructive text-sm">Please select a folder.</p>
+            ) : null}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="edit-deck-name">Name</Label>
             <Input
@@ -1154,14 +1190,6 @@ function EditCategoryDialog({
               }
             />
           </div>
-
-          {hasFolders ? (
-            <FoldersChecklist
-              folders={folders ?? []}
-              selected={selectedFolderIds ?? folderIdsForDeck ?? []}
-              onChange={setSelectedFolderIds}
-            />
-          ) : null}
 
           {ttsAvailable ? (
             <div className="space-y-2">
