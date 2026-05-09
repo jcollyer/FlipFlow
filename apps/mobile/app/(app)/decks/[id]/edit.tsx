@@ -15,6 +15,7 @@ import {
 import { type BackLanguageValue, CategoryUpdateInput } from '@ensemble/types';
 
 import { Button } from '../../../../src/components/Button';
+import { FolderPicker } from '../../../../src/components/FolderPicker';
 import { LanguagePicker } from '../../../../src/components/LanguagePicker';
 import { TextField } from '../../../../src/components/TextField';
 import { trpc } from '../../../../src/lib/trpc';
@@ -49,6 +50,21 @@ export default function EditDeckScreen() {
   const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
   const ttsAvailable = !!ttsAvailability?.available;
 
+  // Folder — required.
+  const { data: folders } = trpc.folders.list.useQuery();
+  const { data: folderIdsForDeck } = trpc.folders.forDeck.useQuery({ categoryId });
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderHydrated, setFolderHydrated] = useState(false);
+  const [folderError, setFolderError] = useState(false);
+
+  // Hydrate folder from current membership once the query returns.
+  useEffect(() => {
+    if (!folderHydrated && folderIdsForDeck) {
+      setFolderId(folderIdsForDeck[0] ?? null);
+      setFolderHydrated(true);
+    }
+  }, [folderIdsForDeck, folderHydrated]);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState<string>(PALETTE[0]!);
@@ -73,16 +89,40 @@ export default function EditDeckScreen() {
     }
   }, [category, hydrated]);
 
+  const setDeckFolders = trpc.folders.setDeckFolders.useMutation({
+    onSuccess: () => {
+      utils.folders.list.invalidate();
+      utils.folders.forDeck.invalidate({ categoryId });
+      router.back();
+    },
+    onError: (err) => Alert.alert('Could not assign folder', err.message),
+  });
+
   const update = trpc.categories.update.useMutation({
     onSuccess: () => {
       utils.categories.byId.invalidate({ id: categoryId });
       utils.categories.list.invalidate();
-      router.back();
+      // Sync folder membership if it changed.
+      const newFolderIds = folderId ? [folderId] : [];
+      const prevFolderIds = folderIdsForDeck ?? [];
+      const changed =
+        [...newFolderIds].sort().join(',') !== [...prevFolderIds].sort().join(',');
+      if (changed) {
+        setDeckFolders.mutate({ categoryId, folderIds: newFolderIds });
+      } else {
+        router.back();
+      }
     },
     onError: (err) => Alert.alert('Could not save deck', err.message),
   });
 
   function handleSubmit() {
+    // Validate folder first.
+    if (!folderId) {
+      setFolderError(true);
+      return;
+    }
+    setFolderError(false);
     setNameError(undefined);
     const parsed = CategoryUpdateInput.safeParse({
       id: categoryId,
@@ -99,6 +139,8 @@ export default function EditDeckScreen() {
     }
     update.mutate(parsed.data);
   }
+
+  const isBusy = update.isPending || setDeckFolders.isPending;
 
   if (isLoading || !category || category.isOwner === false) {
     return (
@@ -119,6 +161,25 @@ export default function EditDeckScreen() {
         </Text>
 
         <View className="gap-5">
+          {/* Folder — required, shown first */}
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-slate-700">
+              Folder <Text className="text-red-500">*</Text>
+            </Text>
+            <FolderPicker
+              folders={folders ?? []}
+              value={folderId}
+              onChange={(newId) => {
+                setFolderId(newId);
+                setFolderError(false);
+              }}
+              disabled={isBusy}
+            />
+            {folderError ? (
+              <Text className="text-sm text-red-500">Please select a folder.</Text>
+            ) : null}
+          </View>
+
           <TextField
             label="Name"
             placeholder="e.g. Spanish verbs"
@@ -190,7 +251,7 @@ export default function EditDeckScreen() {
             </Button>
           </View>
           <View className="flex-1">
-            <Button onPress={handleSubmit} loading={update.isPending}>
+            <Button onPress={handleSubmit} loading={isBusy}>
               Save
             </Button>
           </View>

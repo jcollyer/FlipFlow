@@ -14,6 +14,7 @@ import {
 import { type BackLanguageValue, CategoryCreateInput } from '@ensemble/types';
 
 import { Button } from '../../src/components/Button';
+import { FolderPicker } from '../../src/components/FolderPicker';
 import { LanguagePicker } from '../../src/components/LanguagePicker';
 import { TextField } from '../../src/components/TextField';
 import { trpc } from '../../src/lib/trpc';
@@ -27,6 +28,11 @@ const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899
 export default function NewDeckScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
+
+  // Folder — required.
+  const { data: folders } = trpc.folders.list.useQuery();
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderError, setFolderError] = useState(false);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -42,15 +48,34 @@ export default function NewDeckScreen() {
   const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
   const ttsAvailable = !!ttsAvailability?.available;
 
-  const create = trpc.categories.create.useMutation({
+  const setDeckFolders = trpc.folders.setDeckFolders.useMutation({
     onSuccess: () => {
-      utils.categories.list.invalidate();
+      utils.folders.list.invalidate();
       router.back();
+    },
+    onError: (err) => Alert.alert('Could not assign folder', err.message),
+  });
+
+  const create = trpc.categories.create.useMutation({
+    onSuccess: (deck) => {
+      utils.categories.list.invalidate();
+      // Always assign the required folder.
+      if (folderId) {
+        setDeckFolders.mutate({ categoryId: deck.id, folderIds: [folderId] });
+      } else {
+        router.back();
+      }
     },
     onError: (err) => Alert.alert('Could not create deck', err.message),
   });
 
   function handleSubmit() {
+    // Validate folder first.
+    if (!folderId) {
+      setFolderError(true);
+      return;
+    }
+    setFolderError(false);
     setNameError(undefined);
     const parsed = CategoryCreateInput.safeParse({
       name,
@@ -67,6 +92,8 @@ export default function NewDeckScreen() {
     create.mutate(parsed.data);
   }
 
+  const isBusy = create.isPending || setDeckFolders.isPending;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -78,6 +105,25 @@ export default function NewDeckScreen() {
         </Text>
 
         <View className="gap-5">
+          {/* Folder — required, shown first */}
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-slate-700">
+              Folder <Text className="text-red-500">*</Text>
+            </Text>
+            <FolderPicker
+              folders={folders ?? []}
+              value={folderId}
+              onChange={(id) => {
+                setFolderId(id);
+                setFolderError(false);
+              }}
+              disabled={isBusy}
+            />
+            {folderError ? (
+              <Text className="text-sm text-red-500">Please select a folder.</Text>
+            ) : null}
+          </View>
+
           <TextField
             label="Name"
             placeholder="e.g. Spanish verbs"
@@ -154,7 +200,7 @@ export default function NewDeckScreen() {
             </Button>
           </View>
           <View className="flex-1">
-            <Button onPress={handleSubmit} loading={create.isPending}>
+            <Button onPress={handleSubmit} loading={isBusy}>
               Create deck
             </Button>
           </View>
