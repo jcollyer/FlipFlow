@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Loader2, User } from 'lucide-react';
+import { ArrowLeft, Camera, Download, Globe, Loader2, User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -373,6 +373,53 @@ export function SettingsView() {
               </div>
             </form>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ── Coming-soon actions card ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Data &amp; Account</CardTitle>
+          <CardDescription>Manage your public presence and export your data.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* View public decks */}
+          <div className="bg-muted/30 flex items-start justify-between gap-4 rounded-md border p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">Public decks</p>
+              <p className="text-muted-foreground text-sm">
+                View your profile to see which of your decks are public.
+              </p>
+            </div>
+            <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+              <Button variant="outline" size="sm" disabled className="gap-2 opacity-60">
+                <Globe className="h-4 w-4" />
+                View profile
+              </Button>
+              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                Coming soon
+              </span>
+            </div>
+          </div>
+
+          {/* Export CSV */}
+          <div className="bg-muted/30 flex items-start justify-between gap-4 rounded-md border p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">Export cards</p>
+              <p className="text-muted-foreground text-sm">
+                Download all your cards as a CSV file if you want to use a different platform.
+              </p>
+            </div>
+            <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+              <Button variant="outline" size="sm" disabled className="gap-2 opacity-60">
+                <Download className="h-4 w-4" />
+                Download CSV
+              </Button>
+              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                Coming soon
+              </span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
