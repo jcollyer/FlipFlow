@@ -105,8 +105,7 @@ export default function EditDeckScreen() {
       // Sync folder membership if it changed.
       const newFolderIds = folderId ? [folderId] : [];
       const prevFolderIds = folderIdsForDeck ?? [];
-      const changed =
-        [...newFolderIds].sort().join(',') !== [...prevFolderIds].sort().join(',');
+      const changed = [...newFolderIds].sort().join(',') !== [...prevFolderIds].sort().join(',');
       if (changed) {
         setDeckFolders.mutate({ categoryId, folderIds: newFolderIds });
       } else {

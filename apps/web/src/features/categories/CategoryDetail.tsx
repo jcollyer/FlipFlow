@@ -1053,8 +1053,7 @@ function EditCategoryDialog({
       // Sync folder membership — always call so removals are captured too.
       const folderIds = selectedFolderId ? [selectedFolderId] : [];
       const prevIds = folderIdsForDeck ?? [];
-      const changed =
-        [...folderIds].sort().join(',') !== [...prevIds].sort().join(',');
+      const changed = [...folderIds].sort().join(',') !== [...prevIds].sort().join(',');
       if (changed) {
         setDeckFolders.mutate(
           { categoryId: category.id, folderIds },
@@ -1104,9 +1103,13 @@ function EditCategoryDialog({
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Folder — required, shown first */}
           <div className="space-y-2">
-            <Label htmlFor="edit-deck-folder">Folder <span className="text-destructive">*</span></Label>
+            <Label htmlFor="edit-deck-folder">
+              Folder <span className="text-destructive">*</span>
+            </Label>
             {!hasFolders ? (
-              <p className="text-muted-foreground text-sm">No folders yet — create a folder first.</p>
+              <p className="text-muted-foreground text-sm">
+                No folders yet — create a folder first.
+              </p>
             ) : (
               <Select
                 value={selectedFolderId ?? NO_FOLDER}
@@ -1119,9 +1122,13 @@ function EditCategoryDialog({
                   <SelectValue placeholder="Select a folder…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_FOLDER} disabled>Select a folder…</SelectItem>
+                  <SelectItem value={NO_FOLDER} disabled>
+                    Select a folder…
+                  </SelectItem>
                   {(folders ?? []).map((f) => (
-                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

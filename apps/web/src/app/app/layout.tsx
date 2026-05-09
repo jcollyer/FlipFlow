@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="container flex h-14 items-center justify-between">
           <Link href="/app" className="flex items-center gap-2">
             <div className="bg-primary/10 inline-flex size-10 items-center justify-center rounded-full">
-              <p className="h-11 text-primary font-brand text-4xl font-semibold leading-none">e</p>
+              <p className="text-primary font-brand h-11 text-4xl font-semibold leading-none">e</p>
             </div>
             <span className="font-brand text-2xl font-semibold leading-none text-gray-700">
               ensemble
@@ -79,18 +79,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       <main className="container flex-1 py-8">{children}</main>
 
-      <footer className="border-t bg-gray-50 mt-16">
-        <div className="container py-10 max-w-2xl mx-auto text-center">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Bonjour! We&apos;re Jeremy and Hilary, an American couple with a toddler, learning French
-            in the two years ahead of a move to the South of France in 2028. We wanted an app more
-            specific than we found so we&apos;re creating it for ourselves and happy to share. We will
-            email periodically to let you know new features are available to use as we add them.
-            Notes of bugs and suggestions are welcome.
+      <footer className="mt-16 border-t bg-gray-50">
+        <div className="container mx-auto max-w-2xl py-10 text-center">
+          <p className="text-sm leading-relaxed text-gray-600">
+            Bonjour! We&apos;re Jeremy and Hilary, an American couple with a toddler, learning
+            French in the two years ahead of a move to the South of France in 2028. We wanted an app
+            more specific than we found so we&apos;re creating it for ourselves and happy to share.
+            We will email periodically to let you know new features are available to use as we add
+            them. Notes of bugs and suggestions are welcome.
           </p>
           <a
             href="mailto:ensemblelanguage@gmail.com"
-            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+            className="text-primary mt-4 inline-block text-sm font-medium hover:underline"
           >
             ensemblelanguage@gmail.com
           </a>

@@ -40,9 +40,7 @@ export function FolderPicker({ folders, value, onChange, disabled }: Props) {
         className="border-border flex-row items-center justify-between rounded-lg border bg-white px-4 py-3 active:opacity-80"
         style={{ opacity: disabled || folders.length === 0 ? 0.5 : 1 }}
       >
-        <Text
-          className={`text-base ${value ? 'text-slate-900' : 'text-slate-400'}`}
-        >
+        <Text className={`text-base ${value ? 'text-slate-900' : 'text-slate-400'}`}>
           {folders.length === 0 ? 'No folders yet — create one first' : labelFor(folders, value)}
         </Text>
         <Text className="text-base text-slate-400">▾</Text>

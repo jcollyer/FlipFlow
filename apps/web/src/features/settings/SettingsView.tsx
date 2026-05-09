@@ -296,7 +296,7 @@ export function SettingsView() {
                   maxLength={300}
                   rows={3}
                 />
-                <p className="text-muted-foreground text-xs text-right">
+                <p className="text-muted-foreground text-right text-xs">
                   {bio.trim().length} / 300
                 </p>
               </div>

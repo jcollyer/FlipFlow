@@ -148,7 +148,12 @@ export const authRouter = router({
     .input(
       z.object({
         name: z.string().trim().min(1, 'Name cannot be empty').max(80, 'Name is too long'),
-        bio: z.string().trim().max(300, 'Bio must be 300 characters or fewer').optional().nullable(),
+        bio: z
+          .string()
+          .trim()
+          .max(300, 'Bio must be 300 characters or fewer')
+          .optional()
+          .nullable(),
         private: z.boolean(),
         /** Whether new decks should default to private. Defaults to true when omitted. */
         defaultDeckPrivate: z.boolean().optional(),
