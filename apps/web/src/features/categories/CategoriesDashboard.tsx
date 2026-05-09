@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Layers, Clock, Library, FolderTree, Users } from 'lucide-react';
+import { Plus, Layers, Clock, Library, FolderTree, Users, Play, FolderPlus, ListPlus, MessageSquarePlus, ArrowRight } from 'lucide-react';
 
 import { BACK_LANGUAGES, CategoryCreateInput } from '@ensemble/types';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,38 +105,45 @@ export function CategoriesDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Your decks</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Willkommen, bienvenue, welcome!</h1>
           <p className="text-muted-foreground text-sm">
-            Organize cards into decks and practice them with spaced repetition.
+            Play/practice cards by your rating of difficulty, type (nouns), or deck (level 2, week 2)
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setCardOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New card
-          </Button>
           <Button
-            onClick={() => {
-              form.setValue('private', me?.defaultDeckPrivate ?? true);
-              setDeckOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            New deck
-          </Button>
-          <Button
+            variant="outline"
             onClick={() => {
               setPendingFolderIds([]);
               setFolderOpen(true);
             }}
           >
-            <Plus className="h-4 w-4" />
+            <FolderPlus className="h-4 w-4" />
             New folder
           </Button>
+          <Button
+          variant="outline"
+            onClick={() => {
+              form.setValue('private', me?.defaultDeckPrivate ?? true);
+              setDeckOpen(true);
+            }}
+          >
+            <ListPlus className="h-4 w-4" />
+            New deck
+          </Button>
+          <Button variant="outline" onClick={() => setCardOpen(true)}>
+            <MessageSquarePlus className="h-4 w-4" />
+            New card
+          </Button>
+          <Button onClick={() => router.push('/app/all-categories')}>
+            <Play className="h-4 w-4" />
+            Play
+          </Button>
+
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <ProgressSnapshotCard label="Total cards" value={stats?.total ?? 0} tone="slate" />
         <ProgressSnapshotCard
           label="Challenging cards"
@@ -164,7 +171,6 @@ export function CategoriesDashboard() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AllFoldersCard count={folders?.length ?? 0} />
           <AllDecksCard />
-          <MoreDecksCard />
           {(categories ?? []).map((c) => (
             <Link key={c.id} href={`/app/categories/${c.id}`} className="group">
               <Card className="hover:border-primary/40 transition hover:shadow-md">
@@ -200,13 +206,15 @@ export function CategoriesDashboard() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <EmptyState
-          onCreate={() => {
-            form.setValue('private', me?.defaultDeckPrivate ?? true);
-            setDeckOpen(true);
-          }}
-        />
+            onCreate={() => {
+              form.setValue('private', me?.defaultDeckPrivate ?? true);
+              setDeckOpen(true);
+            }}
+          />
         </div>
       )}
+
+      <LearningTogetherSection />
 
       <Dialog
         open={deckOpen}
@@ -483,27 +491,72 @@ function AllFoldersCard({ count }: { count: number }) {
   );
 }
 
-function MoreDecksCard() {
+function LearningTogetherSection() {
   return (
-    <Link href="/app/more" className="group">
-      <Card className="hover:border-primary/60 border-dashed transition hover:shadow-md">
-        <CardHeader className="flex flex-row items-center gap-3">
-          <div
-            aria-hidden
-            className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-md"
-          >
-            <Users className="h-5 w-5" />
-          </div>
-          <CardTitle className="group-hover:text-primary truncate font-bold">More decks</CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground flex items-center gap-4 text-sm">
-          <span className="inline-flex items-center gap-1.5">
-            <Users className="h-4 w-4" />
-            Explore public decks
-          </span>
-        </CardContent>
-      </Card>
-    </Link>
+    <section className="from-primary/5 to-card rounded-2xl border border-primary/20 bg-gradient-to-br p-0 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="bg-primary/8 border-primary/15 flex items-center gap-3 border-b px-6 py-4">
+        <div className="bg-primary/15 text-primary flex h-8 w-8 items-center justify-center rounded-lg">
+          <Users className="h-4 w-4" />
+        </div>
+        <h2 className="text-base font-semibold tracking-tight">Learning together / ensemble</h2>
+      </div>
+
+      {/* Stacked sections separated by borders */}
+      <div className="divide-border/60 divide-y">
+        {/* Section 1 */}
+        <div className="px-6 py-4">
+          <ul className="text-muted-foreground space-y-1.5 text-sm">
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">•</span>
+              <span>See the Ensemble pinned deck for inspiration on how to create cards</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Section 2 */}
+        <div className="px-6 py-4">
+          <ul className="text-muted-foreground space-y-1.5 text-sm">
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">•</span>
+              <span>Duplicate a public deck to springboard off of and edit to make it your own</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">•</span>
+              <span>Play a public deck to practice sample sentences new to you</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Section 3 */}
+        <div className="px-6 py-4">
+          <ul className="text-muted-foreground space-y-1.5 text-sm">
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">•</span>
+              <span>Make your decks public or private under your profile in the upper right hand corner</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">•</span>
+              <span>
+                Share permission with another user to collaborate on a deck together{' '}
+                <span className="text-muted-foreground/50 text-xs">[coming soon]</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Footer link */}
+      <div className="border-primary/15 bg-primary/5 border-t px-6 py-4">
+        <Link
+          href="/app/more"
+          className="text-primary hover:text-primary/80 group inline-flex items-center gap-2 text-base font-semibold transition-colors"
+        >
+          Explore public decks
+          <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </section>
   );
 }
 
