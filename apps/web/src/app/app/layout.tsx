@@ -78,6 +78,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
 
       <main className="container flex-1 py-8">{children}</main>
+
+      <footer className="border-t bg-gray-50 mt-16">
+        <div className="container py-10 max-w-2xl mx-auto text-center">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Bonjour! We&apos;re Jeremy and Hilary, an American couple with a toddler, learning French
+            in the two years ahead of a move to the South of France in 2028. We wanted an app more
+            specific than we found so we&apos;re creating it for ourselves and happy to share. We will
+            email periodically to let you know new features are available to use as we add them.
+            Notes of bugs and suggestions are welcome.
+          </p>
+          <a
+            href="mailto:ensemblelanguage@gmail.com"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
+            ensemblelanguage@gmail.com
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
