@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowRight, Sparkles, Zap, Volume2, Wand2, Star, Tags, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, Zap, Volume2, Wand2, Star, Tags, Users, Crown, Globe, HeartHandshake, Martini, ListStart } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { auth } from '@/server/auth';
@@ -17,7 +17,7 @@ export default async function HomePage() {
             <div className="bg-primary/10 inline-flex size-10 items-center justify-center rounded-full">
               <p className="text-primary font-brand h-12 text-4xl font-semibold">e</p>
             </div>
-            <span className="font-brand text-2xl font-semibold leading-none text-gray-600">
+            <span className="font-brand text-xl font-semibold leading-none text-gray-600">
               ensemble
             </span>
           </div>
@@ -30,7 +30,7 @@ export default async function HomePage() {
       <section className="container flex flex-1 flex-col items-center justify-center py-24 text-center">
         <div className="bg-muted/50 text-muted-foreground mb-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
           <Sparkles className="h-3 w-3" />
-          Learn on your own, or together
+          Language learning made easy and efficient.
         </div>
         <h1 className="font-brand text-primary max-w-3xl text-balance text-6xl font-semibold leading-tight sm:text-8xl sm:leading-[0.9]">
           ensemble
@@ -39,8 +39,10 @@ export default async function HomePage() {
           LANGUAGE BRINGS PEOPLE <span className="font-semibold italic">TOGETHER</span>
         </h2>
         <p className="text-muted-foreground text-md mt-6 max-w-xl text-balance">
-          Create flashcards, building vocabulary for ensemble to act as your personal conversation
-          tutor.
+          Create flashcards. Play your decks. Track your progress.
+        </p>
+        <p className="text-muted-foreground text-md max-w-xl text-balance">
+          Build vocabulary for ensemble to act as your personalized conversation partner.
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
@@ -52,36 +54,43 @@ export default async function HomePage() {
 
         <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           <FeatureCard
-            icon={<Zap className="h-5 w-5" />}
+            icon={<Globe className="h-5 w-5" />}
             title="Quick creation"
-            body="Add cards in seconds."
+            body="Turn on translation to both see + hear it"
+          />
+          <FeatureCard
+            icon={<ListStart className="h-5 w-5" />}
+            title="Organization"
+            body="Group cards by course, by week"
           />
           <FeatureCard
             icon={<Star className="h-5 w-5" />}
             title="Rating"
-            body="Learn more by rating flashards."
+            body="Track progress as you learn"
           />
           <FeatureCard
-            icon={<Tags className="h-5 w-5" />}
-            title="Play by tags"
-            body="Focus on what you want to practice."
-          />
-          <FeatureCard
-            icon={<Volume2 className="h-5 w-5" />}
-            title="Hear translation"
-            body="Tap the back of any card to hear it spoken aloud."
-          />
-          <FeatureCard
-            icon={<Users className="h-5 w-5" />}
-            title="Collaboration"
-            body="Share decks with friends, or let ensemble combine your decks for group practice."
-          />
-          <FeatureCard
-            icon={<Wand2 className="h-5 w-5" />}
-            title="Let ensemble test you"
-            body="Turn your deck into reading passages on the fly."
+            icon={<HeartHandshake className="h-5 w-5" />}
+            title="Collaborate"
+            body="Create together or duplicate classmates’ decks"
             badge="Coming soon"
           />
+          <FeatureCard
+            icon={<Crown className="h-5 w-5" />}
+            title="Personalized convos"
+            body="Chat with ensemble using only your known vocabulary"
+            badge="Coming soon"
+          />
+          <FeatureCard
+            icon={<Martini className="h-5 w-5" />}
+            title="On the go"
+            body="Play on the app in easy 5 or 10 minute pockets of time"
+            badge="Coming soon"
+          />
+        </div>
+        <div className="mt-14 text-center">
+          <a href="mailto:ensemblelanguage@gmail.com" className="text-primary hover:underline">
+            ensemblelanguage@gmail.com
+          </a>
         </div>
       </section>
     </main>
