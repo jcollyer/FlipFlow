@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, Layers, Library, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  BadgeCheck,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  Library,
+  Users,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +47,10 @@ export function PublicDeckLibrary() {
             const isOpen = openUserId === user.id;
 
             return (
-              <Card key={user.id}>
+              <Card
+                key={user.id}
+                className={user.isAdmin ? 'border-primary/40 bg-primary/[0.02]' : ''}
+              >
                 <button
                   type="button"
                   onClick={() => setOpenUserId((current) => (current === user.id ? null : user.id))}
@@ -51,7 +62,7 @@ export function PublicDeckLibrary() {
                         <img
                           src={user.image}
                           alt={user.name}
-                          className="h-10 w-10 shrink-0 rounded-full object-cover"
+                          className={`h-10 w-10 shrink-0 rounded-full object-cover${user.isAdmin ? 'ring-primary/50 ring-2 ring-offset-1' : ''}`}
                         />
                       ) : (
                         <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
@@ -63,7 +74,15 @@ export function PublicDeckLibrary() {
                         </div>
                       )}
                       <div className="min-w-0 space-y-1">
-                        <CardTitle className="truncate">{user.name}</CardTitle>
+                        <CardTitle className="flex items-center gap-2 truncate">
+                          {user.name}
+                          {user.isAdmin && (
+                            <span className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
+                              <BadgeCheck className="h-3 w-3" />
+                              Official
+                            </span>
+                          )}
+                        </CardTitle>
                         <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                           <span className="inline-flex items-center gap-1.5">
                             <Library className="h-4 w-4" />

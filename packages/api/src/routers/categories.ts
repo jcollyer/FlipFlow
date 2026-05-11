@@ -44,6 +44,8 @@ export const categoriesRouter = router({
 
   /** Public users and their public decks for the "Public decks" explorer. */
   publicLibrary: protectedProcedure.query(async ({ ctx }) => {
+    const adminUserId = process.env.ADMIN_USER_ID;
+
     const users = await ctx.prisma.user.findMany({
       where: {
         private: false,
@@ -74,10 +76,11 @@ export const categoriesRouter = router({
       },
     });
 
-    return users.map((user) => ({
+    const mapped = users.map((user) => ({
       id: user.id,
       name: user.name?.trim() || 'Unnamed user',
       image: user.image ?? null,
+      isAdmin: adminUserId ? user.id === adminUserId : false,
       deckCount: user._count.categories,
       decks: user.categories.map((deck) => ({
         id: deck.id,
@@ -86,6 +89,13 @@ export const categoriesRouter = router({
         cardCount: deck._count.cards,
       })),
     }));
+
+    // Admin user always appears first, rest remain alphabetically sorted
+    return mapped.sort((a, b) => {
+      if (a.isAdmin) return -1;
+      if (b.isAdmin) return 1;
+      return 0;
+    });
   }),
 
   /** Single category (with ownership check). */

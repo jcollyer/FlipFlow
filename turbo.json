@@ -14,6 +14,7 @@
     "AUTH_TRUST_HOST",
     "EMAIL_FROM",
     "GOOGLE_TRANSLATE_API_KEY",
+    "ADMIN_USER_ID",
     "NODE_ENV"
   ],
   "tasks": {
