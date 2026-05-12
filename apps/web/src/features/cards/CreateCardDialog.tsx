@@ -162,13 +162,8 @@ export function CreateCardDialog(props: CreateCardDialogProps) {
   // Hydrate prefs on mount / scope change.
   useEffect(() => {
     const stored = readTranslatePrefs(translateScope);
-    if (stored) {
-      setTranslateOn(stored.enabled);
-      setTarget(stored.target);
-    } else {
-      setTranslateOn(false);
-      setTarget('fr');
-    }
+    setTranslateOn(false);
+    setTarget(stored?.target ?? 'fr');
   }, [translateScope]);
 
   // Persist whenever they change.

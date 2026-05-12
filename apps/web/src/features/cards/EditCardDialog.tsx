@@ -138,13 +138,8 @@ export function EditCardDialog({
 
   useEffect(() => {
     const stored = readTranslatePrefs(translateScope);
-    if (stored) {
-      setTranslateOn(stored.enabled);
-      setTarget(stored.target);
-    } else {
-      setTranslateOn(false);
-      setTarget('fr');
-    }
+    setTranslateOn(false);
+    setTarget(stored?.target ?? 'fr');
   }, [translateScope]);
 
   useEffect(() => {
