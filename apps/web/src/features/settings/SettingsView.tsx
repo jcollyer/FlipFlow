@@ -5,13 +5,24 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Download, Globe, Loader2, User } from 'lucide-react';
 
+import { BACK_LANGUAGES } from '@ensemble/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc/client';
+
+// Sentinel because Radix Select doesn't allow an empty-string value.
+const NO_LANGUAGE = '__none__';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — must match the server-side cap
@@ -32,6 +43,10 @@ export function SettingsView() {
   const [bio, setBio] = useState('');
   const [allowPublicUser, setAllowPublicUser] = useState(false);
   const [defaultDeckPrivate, setDefaultDeckPrivate] = useState(true);
+  // `undefined`  = user hasn't changed this yet; fall back to the server value
+  // `null`       = user explicitly cleared the language
+  // `string`     = user explicitly selected a language
+  const [pendingLanguage, setPendingLanguage] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -71,6 +86,7 @@ export function SettingsView() {
       setSavedAt(Date.now());
       setPendingFile(null);
       setAvatarPreview(null);
+      setPendingLanguage(undefined);
       // Refresh the server component layout so the header dropdown picks up
       // the new name / avatar without a full page reload.
       router.refresh();
@@ -83,12 +99,17 @@ export function SettingsView() {
   const trimmed = name.trim();
   const trimmedBio = bio.trim();
   const avatarDirty = pendingFile !== null;
+  // Derive the value to show/save: fall back to the server value until the
+  // user explicitly touches the dropdown (pendingLanguage !== undefined).
+  const effectiveLanguage =
+    pendingLanguage !== undefined ? pendingLanguage : (me?.defaultLanguage ?? null);
   const dirty =
     trimmed.length > 0 &&
     (trimmed !== (me?.name ?? '') ||
       trimmedBio !== (me?.bio ?? '') ||
       allowPublicUser !== (me?.private === false) ||
       defaultDeckPrivate !== (me?.defaultDeckPrivate ?? true) ||
+      (pendingLanguage !== undefined && pendingLanguage !== (me?.defaultLanguage ?? null)) ||
       avatarDirty);
 
   // ── File picker handler ──────────────────────────────────────────────────
@@ -160,12 +181,13 @@ export function SettingsView() {
       }
     }
 
-    // 3. Persist name, bio, privacy, default deck privacy, and (optionally) the new avatar URL
+    // 3. Persist name, bio, privacy, default deck privacy, default language, and (optionally) the new avatar URL
     updateSettings.mutate({
       name: trimmed,
       bio: trimmedBio || null,
       private: !allowPublicUser,
       defaultDeckPrivate,
+      defaultLanguage: effectiveLanguage,
       ...(newImageUrl !== undefined ? { image: newImageUrl } : {}),
     });
   }
@@ -314,6 +336,37 @@ export function SettingsView() {
                 <p className="text-muted-foreground text-xs">
                   Your email is tied to your sign-in and can&apos;t be changed here.
                 </p>
+              </div>
+
+              {/* ── Default language ── */}
+              <div className="bg-muted/30 space-y-3 rounded-md border p-4">
+                <div className="space-y-1">
+                  <Label htmlFor="settings-default-language">Default language</Label>
+                  <p className="text-muted-foreground text-sm">
+                    New decks will use this as their default language for audio playback. You can
+                    still change it per deck.
+                  </p>
+                </div>
+                <Select
+                  value={effectiveLanguage ?? NO_LANGUAGE}
+                  onValueChange={(v) => {
+                    setPendingLanguage(v === NO_LANGUAGE ? null : v);
+                    setError(null);
+                    setSavedAt(null);
+                  }}
+                >
+                  <SelectTrigger id="settings-default-language">
+                    <SelectValue placeholder="No default language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_LANGUAGE}>No default language</SelectItem>
+                    {BACK_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* ── Public profile toggle ── */}

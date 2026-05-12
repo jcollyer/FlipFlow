@@ -30,6 +30,10 @@ model User {
   // true  = new decks start private  (the factory default)
   // false = new decks start public
   defaultDeckPrivate Boolean     @default(true)
+  // BCP-47 language tag used as the default `backLanguage` for newly created
+  // decks. When set, the New Deck modal pre-selects this language so the user
+  // doesn't have to pick it every time. Null means no default is configured.
+  defaultLanguage    String?
   email              String?     @unique
   emailVerified DateTime?
   image         String?

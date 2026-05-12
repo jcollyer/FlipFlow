@@ -216,6 +216,7 @@ export function CategoriesDashboard() {
             variant="outline"
             onClick={() => {
               form.setValue('private', me?.defaultDeckPrivate ?? true);
+              form.setValue('backLanguage', (me?.defaultLanguage as never) ?? null);
               setDeckOpen(true);
             }}
           >
@@ -335,6 +336,7 @@ export function CategoriesDashboard() {
                 decks={folderDecks}
                 onCreateDeck={() => {
                   form.setValue('private', me?.defaultDeckPrivate ?? true);
+                  form.setValue('backLanguage', (me?.defaultLanguage as never) ?? null);
                   setPendingFolderId(folder.id);
                   setDeckOpen(true);
                 }}
@@ -501,8 +503,8 @@ export function CategoriesDashboard() {
               name: '',
               description: null,
               color: PALETTE[0],
-              backLanguage: null,
-              // Restore the user's global default so the next open is correct.
+              // Restore the user's global defaults so the next open is correct.
+              backLanguage: (me?.defaultLanguage as never) ?? null,
               private: me?.defaultDeckPrivate ?? true,
             });
             setPendingFolderId(null);

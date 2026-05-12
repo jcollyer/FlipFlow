@@ -123,20 +123,31 @@ export const categoriesRouter = router({
       };
     }),
 
-  create: protectedProcedure.input(CategoryCreateInput).mutation(async ({ ctx, input }) =>
-    ctx.prisma.category.create({
+  create: protectedProcedure.input(CategoryCreateInput).mutation(async ({ ctx, input }) => {
+    // If the caller didn't specify a backLanguage, fall back to the user's
+    // configured default language so new decks inherit it automatically.
+    let resolvedBackLanguage = input.backLanguage ?? null;
+    if (resolvedBackLanguage === null || resolvedBackLanguage === undefined) {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.userId },
+        select: { defaultLanguage: true },
+      });
+      resolvedBackLanguage = user?.defaultLanguage ?? null;
+    }
+
+    return ctx.prisma.category.create({
       data: {
         name: input.name,
         description: input.description ?? null,
         color: input.color ?? null,
-        backLanguage: input.backLanguage ?? null,
+        backLanguage: resolvedBackLanguage,
         // Default to private when the client doesn't specify; the schema
         // also defaults to true at the DB level so this is belt-and-braces.
         private: input.private ?? true,
         userId: ctx.userId,
       },
-    }),
-  ),
+    });
+  }),
 
   update: protectedProcedure.input(CategoryUpdateInput).mutation(async ({ ctx, input }) => {
     // Ensure the category belongs to the caller before we touch it.

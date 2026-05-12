@@ -63,6 +63,7 @@ export const authRouter = router({
         bio: true,
         private: true,
         defaultDeckPrivate: true,
+        defaultLanguage: true,
         email: true,
         image: true,
         createdAt: true,
@@ -157,6 +158,12 @@ export const authRouter = router({
         private: z.boolean(),
         /** Whether new decks should default to private. Defaults to true when omitted. */
         defaultDeckPrivate: z.boolean().optional(),
+        /**
+         * BCP-47 language tag to use as the default backLanguage for newly
+         * created decks. Pass null to clear the preference; omit to leave
+         * it unchanged.
+         */
+        defaultLanguage: z.string().optional().nullable(),
         /** Pass the public S3 URL after a successful avatar upload, or null to clear. */
         image: z.string().url().optional().nullable(),
       }),
@@ -167,11 +174,14 @@ export const authRouter = router({
         data: {
           name: input.name,
           private: input.private,
-          // Only touch bio/image/defaultDeckPrivate when the caller explicitly passes a value
+          // Only touch bio/image/defaultDeckPrivate/defaultLanguage when the caller explicitly passes a value
           ...(input.bio !== undefined ? { bio: input.bio } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.defaultDeckPrivate !== undefined
             ? { defaultDeckPrivate: input.defaultDeckPrivate }
+            : {}),
+          ...(input.defaultLanguage !== undefined
+            ? { defaultLanguage: input.defaultLanguage ?? null }
             : {}),
         },
         select: {
@@ -180,6 +190,7 @@ export const authRouter = router({
           bio: true,
           private: true,
           defaultDeckPrivate: true,
+          defaultLanguage: true,
           email: true,
           image: true,
           createdAt: true,
