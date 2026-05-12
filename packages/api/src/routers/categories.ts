@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { CategoryCreateInput, CategoryUpdateInput } from '@ensemble/types';
+import { BackLanguageValue, CategoryCreateInput, CategoryUpdateInput } from '@ensemble/types';
 
 import { protectedProcedure, router } from '../trpc';
 
@@ -132,7 +132,7 @@ export const categoriesRouter = router({
         where: { id: ctx.userId },
         select: { defaultLanguage: true },
       });
-      resolvedBackLanguage = user?.defaultLanguage ?? null;
+      resolvedBackLanguage = (user?.defaultLanguage ?? null) as BackLanguageValue | null;
     }
 
     return ctx.prisma.category.create({
