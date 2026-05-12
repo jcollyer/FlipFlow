@@ -44,6 +44,7 @@ export function AllCardsView() {
   // ── Filter state ──────────────────────────────────────────────────────────
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(true);
 
   function toggleCategory(id: string) {
@@ -58,12 +59,20 @@ export function AllCardsView() {
     );
   }
 
-  const hasActiveFilters = selectedCategoryIds.length > 0 || selectedClasses.length > 0;
+  function toggleRating(value: string) {
+    setSelectedRatings((prev) =>
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
+    );
+  }
+
+  const hasActiveFilters =
+    selectedCategoryIds.length > 0 || selectedClasses.length > 0 || selectedRatings.length > 0;
 
   function buildPracticeHref() {
     const params = new URLSearchParams();
     if (selectedCategoryIds.length > 0) params.set('categoryIds', selectedCategoryIds.join(','));
     if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
+    if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
   }
@@ -95,8 +104,15 @@ export function AllCardsView() {
     if (selectedClasses.length > 0) {
       result = result.filter((c) => c.class && selectedClasses.includes(c.class));
     }
+    if (selectedRatings.length > 0) {
+      result = result.filter((c) => {
+        const level = (c as { difficultyLevel?: string | null }).difficultyLevel ?? null;
+        if (selectedRatings.includes('no_rating') && level === null) return true;
+        return level !== null && selectedRatings.includes(level);
+      });
+    }
     return result;
-  }, [allCards, selectedCategoryIds, selectedClasses]);
+  }, [allCards, selectedCategoryIds, selectedClasses, selectedRatings]);
 
   // The Play button shows the size of the upcoming session: filtered card
   // count when filters are active, otherwise the total across all decks.
@@ -156,7 +172,10 @@ export function AllCardsView() {
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {hasActiveFilters
-              ? ` (${selectedCategoryIds.length + selectedClasses.length || ''})`.replace(' ()', '')
+              ? ` (${selectedCategoryIds.length + selectedClasses.length + selectedRatings.length || ''})`.replace(
+                  ' ()',
+                  '',
+                )
               : ''}
           </Button>
           <Button onClick={() => router.push(buildPracticeHref())}>
@@ -164,10 +183,6 @@ export function AllCardsView() {
             Play{practiceCountLabel}
           </Button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3">
-        <Stat label="Total cards" value={allCards.length} />
       </div>
 
       {/* ── Play filter panel ──────────────────────────────────────────── */}
@@ -183,6 +198,7 @@ export function AllCardsView() {
                     onClick={() => {
                       setSelectedCategoryIds([]);
                       setSelectedClasses([]);
+                      setSelectedRatings([]);
                     }}
                     className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
                   >
@@ -251,6 +267,38 @@ export function AllCardsView() {
                       )}
                     >
                       {cls.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Rating */}
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">Rating</p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    { value: 'easy', label: 'Easy' },
+                    { value: 'good', label: 'Good' },
+                    { value: 'challenging', label: 'Challenging' },
+                    { value: 'no_rating', label: 'No rating' },
+                  ] as const
+                ).map((opt) => {
+                  const selected = selectedRatings.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => toggleRating(opt.value)}
+                      className={cn(
+                        'rounded-full px-3 py-1 text-sm font-medium transition',
+                        selected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                      )}
+                    >
+                      {opt.label}
                     </button>
                   );
                 })}

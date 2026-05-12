@@ -19,6 +19,11 @@ interface Props {
   categoryIds?: string[];
   /** Filter by word classes (e.g. ['noun', 'verb']). Empty = all classes. */
   classes?: string[];
+  /**
+   * Filter by difficulty level. Values are 'easy', 'good', 'challenging', or
+   * 'no_rating' (for cards with a null difficultyLevel). Empty = all ratings.
+   */
+  difficultyLevels?: string[];
 }
 
 /**
@@ -32,7 +37,7 @@ interface Props {
  *      card list (no refetch) so the user gets a true restart from card 0
  *      with the same set of cards, in the same order.
  */
-export function PracticeSession({ categoryId, categoryIds, classes }: Props) {
+export function PracticeSession({ categoryId, categoryIds, classes, difficultyLevels }: Props) {
   const utils = trpc.useUtils();
   const isAllCards = !categoryId;
   const backHref = isAllCards ? '/app/all-categories' : `/app/categories/${categoryId}`;
@@ -73,7 +78,15 @@ export function PracticeSession({ categoryId, categoryIds, classes }: Props) {
   const [reviewed, setReviewed] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const cards = data?.cards ?? [];
+  const rawCards = data?.cards ?? [];
+  const cards = useMemo(() => {
+    if (!difficultyLevels?.length) return rawCards;
+    return rawCards.filter((c) => {
+      const level = (c as { difficultyLevel?: string | null }).difficultyLevel ?? null;
+      if (difficultyLevels.includes('no_rating') && level === null) return true;
+      return level !== null && difficultyLevels.includes(level);
+    });
+  }, [rawCards, difficultyLevels]);
   const isReadOnlyPublicDeck = Boolean(categoryId && data?.category && !data.category.isOwner);
   const canRate = !isReadOnlyPublicDeck;
   const current = cards[index];
