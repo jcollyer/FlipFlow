@@ -40,8 +40,8 @@ interface Props {
 export function PracticeSession({ categoryId, categoryIds, classes, difficultyLevels }: Props) {
   const utils = trpc.useUtils();
   const isAllCards = !categoryId;
-  const backHref = isAllCards ? '/app/all-categories' : `/app/categories/${categoryId}`;
-  const backLabel = isAllCards ? 'Back to all cards' : 'Back to deck';
+  const backHref = isAllCards ? '/app' : `/app/categories/${categoryId}`;
+  const backLabel = isAllCards ? 'Back to home' : 'Back to deck';
 
   const { data, isLoading } = trpc.practice.queue.useQuery(
     {
