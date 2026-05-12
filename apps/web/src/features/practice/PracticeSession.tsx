@@ -188,7 +188,7 @@ export function PracticeSession({ categoryId, categoryIds, classes }: Props) {
               {Math.min(index + 1, cards.length)} of {cards.length}
             </div>
             {canEdit ? (
-              <Button variant="outline" size="sm" onClick={() => setEditingId(current?.id)}>
+              <Button variant="outline" size="sm" onClick={() => setEditingId(current?.id ?? null)}>
                 <Pencil className="h-4 w-4" />
                 Edit card
               </Button>
