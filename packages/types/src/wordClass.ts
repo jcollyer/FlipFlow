@@ -20,6 +20,12 @@ export interface WordClassOption {
 
 export const WORD_CLASS_OPTIONS: readonly WordClassOption[] = [
   {
+    value: 'phrase',
+    label: 'Expression or Phrase',
+    description:
+      'A group of words that function as a single unit (e.g., "in the morning", "on the other hand").',
+  },
+  {
     value: 'note',
     label: 'Teaching Note',
     description: 'A note for teaching purposes (e.g., tips, explanations).',
