@@ -305,7 +305,7 @@ export default function AllCardsScreen() {
                     {item.difficultyLevel ? (
                       <>
                         <Text className="text-xs text-slate-400">•</Text>
-                        <Text className="text-xs text-slate-400 capitalize">
+                        <Text className="text-xs capitalize text-slate-400">
                           {item.difficultyLevel}
                         </Text>
                       </>

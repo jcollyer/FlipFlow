@@ -1,6 +1,20 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowRight, Sparkles, Zap, Volume2, Wand2, Star, Tags, Users, Crown, Globe, HeartHandshake, Martini, ListStart } from 'lucide-react';
+import {
+  ArrowRight,
+  Sparkles,
+  Zap,
+  Volume2,
+  Wand2,
+  Star,
+  Tags,
+  Users,
+  Crown,
+  Globe,
+  HeartHandshake,
+  Martini,
+  ListStart,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { auth } from '@/server/auth';

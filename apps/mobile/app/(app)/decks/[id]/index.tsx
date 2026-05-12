@@ -141,10 +141,7 @@ export default function DeckDetailScreen() {
               {isOwner ? (
                 <>
                   <Stat label="Total" value={stats?.total ?? cards.length} />
-                  <Stat
-                    label="Challenging"
-                    value={stats?.difficultyBreakdown?.challenging ?? 0}
-                  />
+                  <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0} />
                   <Stat label="Good" value={stats?.difficultyBreakdown?.good ?? 0} />
                   <Stat label="Easy" value={stats?.difficultyBreakdown?.easy ?? 0} />
                 </>
@@ -212,7 +209,7 @@ export default function DeckDetailScreen() {
                 <View className="mt-1 flex-row flex-wrap items-center gap-x-2 gap-y-1">
                   {item.class ? <ClassBadge value={item.class} /> : null}
                   {isOwner && item.difficultyLevel ? (
-                    <Text className="text-xs text-slate-400 capitalize">
+                    <Text className="text-xs capitalize text-slate-400">
                       {item.difficultyLevel}
                     </Text>
                   ) : null}

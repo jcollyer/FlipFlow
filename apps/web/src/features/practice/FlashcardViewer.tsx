@@ -159,7 +159,9 @@ export function FlipCard({
             />
           ) : null}
           {pronunciation && (
-            <p className="text-muted-foreground mt-auto max-w-full self-end overflow-hidden text-ellipsis whitespace-nowrap text-right italic">[{pronunciation}]</p>
+            <p className="text-muted-foreground mt-auto max-w-full self-end overflow-hidden text-ellipsis whitespace-nowrap text-right italic">
+              [{pronunciation}]
+            </p>
           )}
         </Card>
       </div>

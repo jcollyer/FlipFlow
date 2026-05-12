@@ -5,7 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, LayersPlus, Loader2, Pencil, Play, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  LayersPlus,
+  Loader2,
+  Pencil,
+  Play,
+  Plus,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import {
   BACK_LANGUAGES,
@@ -176,7 +186,7 @@ export function CategoryDetail({ categoryId }: Props) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-            {isOwner ? (
+          {isOwner ? (
             <Button variant="outline" onClick={() => setCreateOpen(true)}>
               <LayersPlus className="h-4 w-4" />
               New card
