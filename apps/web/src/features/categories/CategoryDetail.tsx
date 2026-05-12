@@ -987,6 +987,9 @@ function EditCardDialog({
 
   const [frontExamples, setFrontExamples] = useState<string[]>([]);
   const [backExamples, setBackExamples] = useState<string[]>([]);
+  // Tracks which example indices have a validation error (empty input on submit).
+  const [invalidFrontIndices, setInvalidFrontIndices] = useState<Set<number>>(new Set());
+  const [invalidBackIndices, setInvalidBackIndices] = useState<Set<number>>(new Set());
   // Word class — optional. `null` = clear it on save.
   const [wordClass, setWordClass] = useState<string | null>(null);
   // Gender and verb type — optional.
@@ -1174,7 +1177,20 @@ function EditCardDialog({
           <DialogTitle>Edit card</DialogTitle>
         </DialogHeader>
         <form
-          onSubmit={form.handleSubmit((values) =>
+          onSubmit={form.handleSubmit((values) => {
+            // Validate examples client-side so the user gets clear feedback
+            // instead of a silent 400 from the server's Zod check.
+            const badFront = new Set<number>();
+            const badBack = new Set<number>();
+            frontExamples.forEach((v, i) => { if (!v.trim()) badFront.add(i); });
+            backExamples.forEach((v, i) => { if (!v.trim()) badBack.add(i); });
+            if (badFront.size > 0 || badBack.size > 0) {
+              setInvalidFrontIndices(badFront);
+              setInvalidBackIndices(badBack);
+              return;
+            }
+            setInvalidFrontIndices(new Set());
+            setInvalidBackIndices(new Set());
             update.mutate({
               ...values,
               frontExamples,
@@ -1183,8 +1199,8 @@ function EditCardDialog({
               gender,
               verb_type: wordClass === 'verb' ? verbType : null,
               pronunciation: pronunciation.trim() ? pronunciation.trim() : null,
-            }),
-          )}
+            });
+          })}
           className="space-y-3"
         >
           {translateAvailable ? (
@@ -1233,31 +1249,48 @@ function EditCardDialog({
             {frontExamples.length > 0 ? (
               <div className="space-y-2">
                 {frontExamples.map((val, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Input
-                      placeholder="Example…"
-                      value={val}
-                      onChange={(e) =>
-                        setFrontExamples((prev) => {
-                          const next = [...prev];
-                          next[i] = e.target.value;
-                          return next;
-                        })
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setFrontExamples((prev) => prev.filter((_, j) => j !== i));
-                        setBackExamples((prev) => prev.filter((_, j) => j !== i));
-                        lastTranslatedExamplesRef.current.clear();
-                      }}
-                      aria-label="Remove example"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Example…"
+                        value={val}
+                        className={invalidFrontIndices.has(i) ? 'border-destructive focus-visible:ring-destructive' : ''}
+                        aria-invalid={invalidFrontIndices.has(i)}
+                        onChange={(e) => {
+                          setFrontExamples((prev) => {
+                            const next = [...prev];
+                            next[i] = e.target.value;
+                            return next;
+                          });
+                          if (e.target.value.trim()) {
+                            setInvalidFrontIndices((prev) => {
+                              const next = new Set(prev);
+                              next.delete(i);
+                              return next;
+                            });
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setFrontExamples((prev) => prev.filter((_, j) => j !== i));
+                          setBackExamples((prev) => prev.filter((_, j) => j !== i));
+                          lastTranslatedExamplesRef.current.clear();
+                          // Clear all example errors since indices have shifted.
+                          setInvalidFrontIndices(new Set());
+                          setInvalidBackIndices(new Set());
+                        }}
+                        aria-label="Remove example"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {invalidFrontIndices.has(i) ? (
+                      <p className="text-destructive text-xs">Fill in or remove this example.</p>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -1293,18 +1326,31 @@ function EditCardDialog({
             {backExamples.length > 0 ? (
               <div className="space-y-2">
                 {backExamples.map((val, i) => (
-                  <Input
-                    key={i}
-                    placeholder="Example…"
-                    value={val}
-                    onChange={(e) =>
-                      setBackExamples((prev) => {
-                        const next = [...prev];
-                        next[i] = e.target.value;
-                        return next;
-                      })
-                    }
-                  />
+                  <div key={i} className="space-y-1">
+                    <Input
+                      placeholder="Example…"
+                      value={val}
+                      className={invalidBackIndices.has(i) ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      aria-invalid={invalidBackIndices.has(i)}
+                      onChange={(e) => {
+                        setBackExamples((prev) => {
+                          const next = [...prev];
+                          next[i] = e.target.value;
+                          return next;
+                        });
+                        if (e.target.value.trim()) {
+                          setInvalidBackIndices((prev) => {
+                            const next = new Set(prev);
+                            next.delete(i);
+                            return next;
+                          });
+                        }
+                      }}
+                    />
+                    {invalidBackIndices.has(i) ? (
+                      <p className="text-destructive text-xs">Fill in or remove this example.</p>
+                    ) : null}
+                  </div>
                 ))}
               </div>
             ) : null}
@@ -1454,6 +1500,10 @@ function EditCardDialog({
                 </SelectContent>
               </Select>
             </div>
+          ) : null}
+
+          {update.error ? (
+            <p className="text-destructive text-sm">{update.error.message}</p>
           ) : null}
 
           <DialogFooter>
