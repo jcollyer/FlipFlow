@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowLeft,
+  ChevronRight,
+  FolderInput,
   LayersPlus,
   Loader2,
   Pencil,
@@ -125,6 +127,7 @@ export function CategoryDetail({ categoryId }: Props) {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [movingCardId, setMovingCardId] = useState<string | null>(null);
   const [editDeckOpen, setEditDeckOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
@@ -303,6 +306,14 @@ export function CategoryDetail({ categoryId }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setMovingCardId(card.id)}
+                      aria-label="Move to deck"
+                    >
+                      <FolderInput className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         if (confirm('Delete this card?')) remove.mutate({ id: card.id });
                       }}
@@ -375,6 +386,20 @@ export function CategoryDetail({ categoryId }: Props) {
           onSaved={() => {
             utils.flashcards.listByCategory.invalidate({ categoryId });
             setEditingId(null);
+          }}
+        />
+      ) : null}
+
+      {/* Move card to deck dialog */}
+      {isOwner && movingCardId ? (
+        <MoveCardModal
+          cardId={movingCardId}
+          currentCategoryId={categoryId}
+          onClose={() => setMovingCardId(null)}
+          onMoved={() => {
+            utils.flashcards.listByCategory.invalidate({ categoryId });
+            utils.categories.list.invalidate();
+            setMovingCardId(null);
           }}
         />
       ) : null}
@@ -1063,6 +1088,211 @@ function EditCardDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Modal that lets the user move a card to a different deck. Presents all the
+ * user's folders as collapsible rows; expanding a folder reveals its decks as
+ * selectable items. The card's current deck is pre-selected when the modal
+ * opens. Confirming calls `flashcards.update` with the new `categoryId`.
+ */
+function MoveCardModal({
+  cardId,
+  currentCategoryId,
+  onClose,
+  onMoved,
+}: {
+  cardId: string;
+  currentCategoryId: string;
+  onClose: () => void;
+  onMoved: () => void;
+}) {
+  const { data: folders } = trpc.folders.list.useQuery();
+  const { data: categories } = trpc.categories.list.useQuery();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(currentCategoryId);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  const move = trpc.flashcards.update.useMutation({ onSuccess: onMoved });
+
+  // Build a quick-lookup map from category id → category metadata.
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; color: string | null }>();
+    (categories ?? []).forEach((c) => map.set(c.id, c));
+    return map;
+  }, [categories]);
+
+  // When folder data arrives, auto-expand the folder that contains the current
+  // deck so the pre-selected item is immediately visible.
+  useEffect(() => {
+    if (!folders) return;
+    const containing = folders.find((f) => f.includedCategoryIds.includes(currentCategoryId));
+    if (containing) setExpandedFolders(new Set([containing.id]));
+  }, [folders, currentCategoryId]);
+
+  function toggleFolder(folderId: string) {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  }
+
+  // Decks that don't belong to any folder, shown in a trailing "No folder" group.
+  const folderCategoryIds = useMemo(
+    () => new Set((folders ?? []).flatMap((f) => f.includedCategoryIds)),
+    [folders],
+  );
+  const unfolderedDecks = useMemo(
+    () => (categories ?? []).filter((c) => !folderCategoryIds.has(c.id)),
+    [categories, folderCategoryIds],
+  );
+
+  function handleMove() {
+    if (selectedCategoryId === currentCategoryId) {
+      onClose();
+      return;
+    }
+    move.mutate({ id: cardId, categoryId: selectedCategoryId });
+  }
+
+  const isUnchanged = selectedCategoryId === currentCategoryId;
+
+  return (
+    <Dialog open onOpenChange={(o) => (o ? null : onClose())}>
+      <DialogContent className="flex max-h-[80dvh] flex-col">
+        <DialogHeader>
+          <DialogTitle>Move card</DialogTitle>
+          <DialogDescription>Select a deck to move this card to.</DialogDescription>
+        </DialogHeader>
+
+        {/* Scrollable folder + deck list */}
+        <div className="min-h-0 flex-1 overflow-y-auto py-1">
+          {(folders ?? []).map((folder) => {
+            const decks = folder.includedCategoryIds
+              .map((id) => categoryMap.get(id))
+              .filter((d): d is NonNullable<typeof d> => d !== undefined);
+            const isExpanded = expandedFolders.has(folder.id);
+
+            return (
+              <div key={folder.id}>
+                {/* Folder header row */}
+                <button
+                  type="button"
+                  className="hover:bg-muted/50 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                  onClick={() => toggleFolder(folder.id)}
+                >
+                  <ChevronRight
+                    className={`h-4 w-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                  />
+                  <span
+                    aria-hidden
+                    className="h-3 w-3 flex-shrink-0 rounded-sm"
+                    style={{ backgroundColor: folder.color ?? '#94a3b8' }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
+                  <span className="text-muted-foreground ml-auto flex-shrink-0 text-xs">
+                    {decks.length}
+                  </span>
+                </button>
+
+                {/* Deck rows inside the folder */}
+                {isExpanded ? (
+                  <div className="ml-8 space-y-0.5 pb-1">
+                    {decks.length === 0 ? (
+                      <p className="text-muted-foreground px-3 py-1.5 text-xs">
+                        No decks in this folder
+                      </p>
+                    ) : (
+                      decks.map((deck) => {
+                        const isSelected = selectedCategoryId === deck.id;
+                        const isCurrent = currentCategoryId === deck.id;
+                        return (
+                          <button
+                            key={deck.id}
+                            type="button"
+                            className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                              isSelected
+                                ? 'bg-primary/10 text-primary font-medium'
+                                : 'hover:bg-muted/50'
+                            }`}
+                            onClick={() => setSelectedCategoryId(deck.id)}
+                          >
+                            <span
+                              aria-hidden
+                              className="h-3 w-3 flex-shrink-0 rounded-sm"
+                              style={{ backgroundColor: deck.color ?? '#94a3b8' }}
+                            />
+                            <span className="min-w-0 flex-1 truncate text-left">{deck.name}</span>
+                            {isCurrent ? (
+                              <span className="text-muted-foreground ml-auto flex-shrink-0 text-xs">
+                                current
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+
+          {/* Decks not in any folder */}
+          {unfolderedDecks.length > 0 ? (
+            <div className="mt-1">
+              <p className="text-muted-foreground px-3 py-1.5 text-xs font-medium uppercase tracking-wide">
+                No folder
+              </p>
+              <div className="space-y-0.5">
+                {unfolderedDecks.map((deck) => {
+                  const isSelected = selectedCategoryId === deck.id;
+                  const isCurrent = currentCategoryId === deck.id;
+                  return (
+                    <button
+                      key={deck.id}
+                      type="button"
+                      className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                        isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => setSelectedCategoryId(deck.id)}
+                    >
+                      <span
+                        aria-hidden
+                        className="h-3 w-3 flex-shrink-0 rounded-sm"
+                        style={{ backgroundColor: deck.color ?? '#94a3b8' }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-left">{deck.name}</span>
+                      {isCurrent ? (
+                        <span className="text-muted-foreground ml-auto flex-shrink-0 text-xs">
+                          current
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Empty state — no folders and no unfoldered decks */}
+          {(folders ?? []).length === 0 && unfolderedDecks.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center text-sm">No other decks found.</p>
+          ) : null}
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleMove} disabled={move.isPending || isUnchanged}>
+            {move.isPending ? 'Moving…' : 'Move'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
