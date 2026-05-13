@@ -28,7 +28,7 @@ export default function MoreDecksScreen() {
           <View className="mb-4 gap-1">
             <Text className="text-2xl font-bold text-slate-900">Public decks</Text>
             <Text className="text-sm text-slate-500">
-              Browse public decks from other users and open them in read-only mode.
+              Duplicate a deck to springboard off of and edit to make it your own, or play a deck to practice sample sentences new to you.
             </Text>
           </View>
         }

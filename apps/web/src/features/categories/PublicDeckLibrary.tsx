@@ -40,8 +40,7 @@ export function PublicDeckLibrary() {
         </Button>
         <h1 className="text-3xl font-semibold tracking-tight">Public decks</h1>
         <p className="text-muted-foreground text-sm">
-          Browse public decks from other users. Play a deck in read-only mode or import a copy into
-          one of your folders.
+          Duplicate a deck to springboard off of and edit to make it your own, or play a deck to practice sample sentences new to you.
         </p>
       </div>
 
