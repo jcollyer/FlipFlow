@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { FolderCreateInput, FolderUpdateInput } from '@ensemble/types';
+import { DECK_FOLDER_COLOR_PALETTE, FolderCreateInput, FolderUpdateInput } from '@ensemble/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,20 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
-/**
- * Same six-color palette as the deck dialog so folders and decks share a
- * visual vocabulary. We'd refactor this into a shared constant if the rest
- * of the codebase grew more places using it.
- */
-export const FOLDER_COLOR_PALETTE = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-];
 
 export type FolderModalMode =
   | {
@@ -72,7 +58,7 @@ export function FolderModal({ open, onOpenChange, mode }: Props) {
     resolver: zodResolver(FolderCreateInput),
     defaultValues: {
       name: '',
-      color: FOLDER_COLOR_PALETTE[0],
+      color: DECK_FOLDER_COLOR_PALETTE[0],
       description: '',
     },
   });
@@ -84,20 +70,20 @@ export function FolderModal({ open, onOpenChange, mode }: Props) {
     if (mode.kind === 'edit') {
       form.reset({
         name: mode.folder.name,
-        color: mode.folder.color ?? FOLDER_COLOR_PALETTE[0],
+        color: mode.folder.color ?? DECK_FOLDER_COLOR_PALETTE[0],
         description: mode.folder.description ?? '',
       });
     } else {
       form.reset({
         name: '',
-        color: FOLDER_COLOR_PALETTE[0],
+        color: DECK_FOLDER_COLOR_PALETTE[0],
         description: '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode.kind, isEdit ? mode.folder.id : null]);
 
-  const selectedColor = form.watch('color') ?? FOLDER_COLOR_PALETTE[0];
+  const selectedColor = form.watch('color') ?? DECK_FOLDER_COLOR_PALETTE[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,7 +127,7 @@ export function FolderModal({ open, onOpenChange, mode }: Props) {
           <div className="space-y-2">
             <Label>Color</Label>
             <div className="flex flex-wrap gap-2">
-              {FOLDER_COLOR_PALETTE.map((color) => {
+              {DECK_FOLDER_COLOR_PALETTE.map((color) => {
                 const selected = selectedColor === color;
                 return (
                   <button

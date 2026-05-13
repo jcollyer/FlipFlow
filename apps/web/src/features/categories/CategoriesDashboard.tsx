@@ -40,6 +40,7 @@ import {
 import {
   BACK_LANGUAGES,
   CategoryCreateInput,
+  DECK_FOLDER_COLOR_PALETTE,
   FolderCreateInput,
   WORD_CLASS_OPTIONS,
 } from '@ensemble/types';
@@ -72,8 +73,6 @@ import { FolderModal } from '@/features/folders/FolderModal';
 // We translate these back to `null` before submitting.
 const NO_LANGUAGE = '__none__';
 const NO_FOLDER = '__no_folder__';
-
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export function CategoriesDashboard() {
   const router = useRouter();
@@ -203,7 +202,7 @@ export function CategoriesDashboard() {
     defaultValues: {
       name: '',
       description: null,
-      color: PALETTE[0],
+      color: DECK_FOLDER_COLOR_PALETTE[0],
       backLanguage: null,
       private: true,
     },
@@ -544,7 +543,7 @@ export function CategoriesDashboard() {
             form.reset({
               name: '',
               description: null,
-              color: PALETTE[0],
+              color: DECK_FOLDER_COLOR_PALETTE[0],
               // Restore the user's global defaults so the next open is correct.
               backLanguage: (me?.defaultLanguage as never) ?? null,
               private: me?.defaultDeckPrivate ?? true,
@@ -657,7 +656,7 @@ export function CategoriesDashboard() {
             <div className="space-y-2">
               <Label>Color</Label>
               <div className="flex flex-wrap gap-2">
-                {PALETTE.map((color) => {
+                {DECK_FOLDER_COLOR_PALETTE.map((color) => {
                   const selected = form.watch('color') === color;
                   return (
                     <button

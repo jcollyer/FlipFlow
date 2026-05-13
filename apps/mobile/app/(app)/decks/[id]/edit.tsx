@@ -12,17 +12,17 @@ import {
   View,
 } from 'react-native';
 
-import { type BackLanguageValue, CategoryUpdateInput } from '@ensemble/types';
+import {
+  type BackLanguageValue,
+  CategoryUpdateInput,
+  DECK_FOLDER_COLOR_PALETTE,
+} from '@ensemble/types';
 
 import { Button } from '../../../../src/components/Button';
 import { FolderPicker } from '../../../../src/components/FolderPicker';
 import { LanguagePicker } from '../../../../src/components/LanguagePicker';
 import { TextField } from '../../../../src/components/TextField';
 import { trpc } from '../../../../src/lib/trpc';
-
-// Same palette as the create-deck screen (and the web app) so editing
-// matches creating and a deck's color stays consistent across clients.
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 /**
  * Edit deck modal. Loads the current category, hydrates the form fields
@@ -67,7 +67,7 @@ export default function EditDeckScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [color, setColor] = useState<string>(PALETTE[0]!);
+  const [color, setColor] = useState<string>(DECK_FOLDER_COLOR_PALETTE[0]);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
   // Privacy flag — "Deck public" toggle is the inverse of this.
   const [isPrivate, setIsPrivate] = useState(true);
@@ -82,7 +82,7 @@ export default function EditDeckScreen() {
       setDescription((category as { description?: string | null }).description ?? '');
       // Fall back to the first palette swatch if the deck has no color set,
       // so the swatch UI always has a selected option.
-      setColor(category.color ?? PALETTE[0]!);
+      setColor(category.color ?? DECK_FOLDER_COLOR_PALETTE[0]);
       setBackLanguage((category.backLanguage as BackLanguageValue | null) ?? null);
       setIsPrivate((category as { private?: boolean }).private ?? true);
       setHydrated(true);
@@ -201,7 +201,7 @@ export default function EditDeckScreen() {
           <View className="gap-2">
             <Text className="text-sm font-medium text-slate-700">Color</Text>
             <View className="flex-row flex-wrap gap-3">
-              {PALETTE.map((c) => {
+              {DECK_FOLDER_COLOR_PALETTE.map((c) => {
                 const selected = c === color;
                 return (
                   <Pressable

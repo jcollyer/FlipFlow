@@ -42,6 +42,7 @@ import {
 
 import {
   BACK_LANGUAGES,
+  DECK_FOLDER_COLOR_PALETTE,
   type BackLanguageValue,
   CategoryUpdateInput,
   FlashcardUpdateInput,
@@ -89,9 +90,6 @@ type TranslateTargetValue = (typeof TRANSLATE_TARGETS)[number]['value'];
 
 const NO_GENDER = '__no_gender__';
 const NO_VERB_TYPE = '__no_verb_type__';
-
-// Same palette as the create-deck dialog so editing matches creating.
-const DECK_COLOR_PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 // Sentinels because the Radix Select doesn't allow an empty-string value;
 // we translate these back to `null` before submitting.
@@ -1750,13 +1748,13 @@ function EditCategoryDialog({
       description: category.description,
       // Fall back to the first palette color if the deck has no color set,
       // so the swatch UI always has a selected option to render.
-      color: category.color ?? DECK_COLOR_PALETTE[0],
+      color: category.color ?? DECK_FOLDER_COLOR_PALETTE[0],
       backLanguage: category.backLanguage,
       private: category.private,
     },
   });
 
-  const selectedColor = form.watch('color') ?? DECK_COLOR_PALETTE[0];
+  const selectedColor = form.watch('color') ?? DECK_FOLDER_COLOR_PALETTE[0];
   const selectedBackLanguage = form.watch('backLanguage');
   const isPrivate = form.watch('private') ?? true;
   const hasFolders = (folders?.length ?? 0) > 0;
@@ -1852,7 +1850,7 @@ function EditCategoryDialog({
           <div className="space-y-2">
             <Label>Color</Label>
             <div className="flex flex-wrap gap-2">
-              {DECK_COLOR_PALETTE.map((color) => {
+              {DECK_FOLDER_COLOR_PALETTE.map((color) => {
                 const selected = selectedColor === color;
                 return (
                   <button
