@@ -181,4 +181,136 @@ export const categoriesRouter = router({
       await ctx.prisma.category.delete({ where: { id: input.id } });
       return { ok: true };
     }),
+
+  /**
+   * Copy another user's public deck (and all of its cards) into the current
+   * user's account, then place the new deck into one of their folders.
+   *
+   * Used by the "Import" button on /app/more. The whole operation runs inside
+   * a single transaction so we never leave the user with a half-copied deck.
+   *
+   * Notes:
+   *  - Source visibility is re-checked at copy time — the client's view of
+   *    "this is public" may be stale.
+   *  - The copy is created `private: true` regardless of the source.
+   *  - Per-user fields (`difficultyLevel`) are intentionally NOT copied.
+   *  - The new deck's name is `"<source name> (copy)"`.
+   */
+  importPublic: protectedProcedure
+    .input(
+      z.object({
+        sourceCategoryId: z.string().cuid(),
+        folderId: z.string().cuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Load source + verify it's publicly visible. We require both the
+      //    deck and its owner to be public so we mirror the same rule used by
+      //    `categories.byId` / `flashcards.listByCategory` for non-owners.
+      const source = await ctx.prisma.category.findFirst({
+        where: { id: input.sourceCategoryId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          color: true,
+          backLanguage: true,
+          private: true,
+          userId: true,
+          user: { select: { private: true } },
+        },
+      });
+      if (!source) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const isOwner = source.userId === ctx.userId;
+      const isPubliclyVisible = source.private === false && source.user.private === false;
+      // Importing your own deck doesn't make sense from the public library,
+      // and would let a user duplicate their own private decks via this path.
+      if (isOwner) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot import your own deck',
+        });
+      }
+      if (!isPubliclyVisible) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      // 2. Verify the target folder belongs to the caller.
+      const folder = await ctx.prisma.folder.findFirst({
+        where: { id: input.folderId, userId: ctx.userId },
+        select: { id: true, includedCategoryIds: true },
+      });
+      if (!folder) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Folder not found' });
+      }
+
+      // 3. Load every card to copy. We snapshot the list before the
+      //    transaction so we can pass it straight into createMany. Skipping
+      //    `difficultyLevel` is deliberate — that's per-user practice state.
+      const sourceCards = await ctx.prisma.flashcard.findMany({
+        where: { categoryId: source.id },
+        select: {
+          front: true,
+          back: true,
+          frontExamples: true,
+          backExamples: true,
+          class: true,
+          gender: true,
+          verb_type: true,
+          pronunciation: true,
+          sortOrder: true,
+        },
+      });
+
+      // 4. Run the copy + folder update atomically so a failure midway never
+      //    leaves the user with a deck but no cards, or a folder pointing at
+      //    a deck that doesn't exist.
+      const created = await ctx.prisma.$transaction(async (tx) => {
+        const newCategory = await tx.category.create({
+          data: {
+            name: `${source.name} (copy)`,
+            description: source.description,
+            color: source.color,
+            backLanguage: source.backLanguage,
+            // Always private — importing is for personal use, not redistribution.
+            private: true,
+            userId: ctx.userId,
+          },
+        });
+
+        if (sourceCards.length > 0) {
+          await tx.flashcard.createMany({
+            data: sourceCards.map((card) => ({
+              front: card.front,
+              back: card.back,
+              frontExamples: card.frontExamples,
+              backExamples: card.backExamples,
+              class: card.class,
+              gender: card.gender,
+              verb_type: card.verb_type,
+              pronunciation: card.pronunciation,
+              sortOrder: card.sortOrder,
+              categoryId: newCategory.id,
+              userId: ctx.userId,
+            })),
+          });
+        }
+
+        // Add to the folder. We re-read inside the transaction would be safer
+        // against concurrent edits, but the membership array is owner-only
+        // and a single user racing themselves isn't worth the extra round
+        // trip — we append to the snapshot we already loaded.
+        await tx.folder.update({
+          where: { id: folder.id },
+          data: {
+            includedCategoryIds: folder.includedCategoryIds.includes(newCategory.id)
+              ? folder.includedCategoryIds
+              : [...folder.includedCategoryIds, newCategory.id],
+          },
+        });
+
+        return newCategory;
+      });
+
+      return { id: created.id, name: created.name };
+    }),
 });

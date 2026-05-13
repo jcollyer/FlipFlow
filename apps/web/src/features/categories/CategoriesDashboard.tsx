@@ -844,7 +844,7 @@ function LearningTogetherSection() {
         <div className="bg-primary/15 text-primary flex h-8 w-8 items-center justify-center rounded-lg">
           <Users className="h-4 w-4" />
         </div>
-        <h2 className="text-base font-semibold tracking-tight">Learning together / ensemble</h2>
+        <h2 className="text-base font-semibold tracking-tight">Learning together (English) / Apprendre ensemble (French)</h2>
       </div>
 
       {/* Stacked sections separated by borders */}

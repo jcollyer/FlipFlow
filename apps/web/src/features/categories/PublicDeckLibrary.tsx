@@ -7,18 +7,26 @@ import {
   BadgeCheck,
   ChevronDown,
   ChevronUp,
+  Download,
   Layers,
   Library,
+  Play,
   Users,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc/client';
+import { ImportDeckModal } from '@/features/categories/ImportDeckModal';
 
 export function PublicDeckLibrary() {
   const { data: users, isLoading } = trpc.categories.publicLibrary.useQuery();
   const [openUserId, setOpenUserId] = useState<string | null>(null);
+
+  // The deck the user is currently trying to import (drives the modal). We
+  // track the source deck rather than just an id so the modal can show the
+  // deck name in its description without an extra lookup.
+  const [importTarget, setImportTarget] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <div className="space-y-6">
@@ -26,12 +34,13 @@ export function PublicDeckLibrary() {
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/app">
             <ArrowLeft className="h-4 w-4" />
-            Back to your decks
+            Back
           </Link>
         </Button>
         <h1 className="text-3xl font-semibold tracking-tight">Public decks</h1>
         <p className="text-muted-foreground text-sm">
-          Browse public decks from other users and open any deck in read-only practice mode.
+          Browse public decks from other users. Play a deck in read-only mode or import a copy
+          into one of your folders.
         </p>
       </div>
 
@@ -106,12 +115,16 @@ export function PublicDeckLibrary() {
                   <CardContent className="space-y-3 pt-0">
                     {user.decks.length > 0 ? (
                       user.decks.map((deck) => (
-                        <Link
+                        // Row is no longer a Link — only the deck name and the
+                        // explicit Play / Import buttons are interactive. The
+                        // name itself acts as a Play fallback so users who
+                        // instinctively click the title still get the expected
+                        // navigation.
+                        <div
                           key={deck.id}
-                          href={`/app/categories/${deck.id}`}
                           className="hover:border-primary/40 block rounded-xl border transition hover:shadow-sm"
                         >
-                          <div className="flex items-center justify-between gap-3 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3 p-4">
                             <div className="flex min-w-0 items-center gap-3">
                               <div
                                 aria-hidden
@@ -119,16 +132,38 @@ export function PublicDeckLibrary() {
                                 style={{ backgroundColor: deck.color ?? '#94a3b8' }}
                               />
                               <div className="min-w-0">
-                                <div className="truncate font-medium">{deck.name}</div>
-                                <div className="text-muted-foreground text-sm">Read-only deck</div>
+                                <Link
+                                  href={`/app/categories/${deck.id}`}
+                                  className="hover:text-primary block truncate font-medium"
+                                >
+                                  {deck.name}
+                                </Link>
+                                <div className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
+                                  <Layers className="h-3.5 w-3.5" />
+                                  {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
+                                </div>
                               </div>
                             </div>
-                            <div className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-                              <Layers className="h-4 w-4" />
-                              {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
+                            <div className="flex flex-shrink-0 items-center gap-2">
+                              <Button asChild size="sm">
+                                <Link href={`/app/categories/${deck.id}`}>
+                                  <Play className="h-4 w-4" />
+                                  Play
+                                </Link>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setImportTarget({ id: deck.id, name: deck.name })
+                                }
+                              >
+                                <Download className="h-4 w-4" />
+                                Import
+                              </Button>
                             </div>
                           </div>
-                        </Link>
+                        </div>
                       ))
                     ) : (
                       <div className="text-muted-foreground rounded-xl border border-dashed p-4 text-sm">
@@ -154,6 +189,14 @@ export function PublicDeckLibrary() {
           </CardContent>
         </Card>
       )}
+
+      <ImportDeckModal
+        deck={importTarget}
+        open={importTarget !== null}
+        onOpenChange={(next) => {
+          if (!next) setImportTarget(null);
+        }}
+      />
     </div>
   );
 }
