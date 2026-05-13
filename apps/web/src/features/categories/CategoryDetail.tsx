@@ -488,12 +488,12 @@ export function CategoryDetail({ categoryId }: Props) {
       {isOwner ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <ProgressSnapshotCard
-            label="Total cards"
+            label="Total cards in this deck"
             value={stats?.total ?? cards?.length ?? 0}
             tone="slate"
           />
           <ProgressSnapshotCard
-            label="Challenging cards"
+            label="Challenging cards in this deck"
             value={stats?.difficultyBreakdown?.challenging ?? 0}
             percentage={getPercentage(
               stats?.difficultyBreakdown?.challenging ?? 0,
@@ -502,7 +502,7 @@ export function CategoryDetail({ categoryId }: Props) {
             tone="amber"
           />
           <ProgressSnapshotCard
-            label="Good cards"
+            label="Good cards in this deck"
             value={stats?.difficultyBreakdown?.good ?? 0}
             percentage={getPercentage(
               stats?.difficultyBreakdown?.good ?? 0,
@@ -511,7 +511,7 @@ export function CategoryDetail({ categoryId }: Props) {
             tone="blue"
           />
           <ProgressSnapshotCard
-            label="Easy cards"
+            label="Easy cards in this deck"
             value={stats?.difficultyBreakdown?.easy ?? 0}
             percentage={getPercentage(
               stats?.difficultyBreakdown?.easy ?? 0,
@@ -837,7 +837,7 @@ function ProgressSnapshotCard({
           <p className="text-muted-foreground text-sm">{label}</p>
           <p className="text-3xl font-semibold tracking-tight">{value}</p>
           {percentage !== undefined ? (
-            <p className="text-muted-foreground text-sm">{percentage}% of total cards</p>
+            <p className="text-muted-foreground text-sm">{percentage}% of this deck</p>
           ) : (
             <p className="text-muted-foreground text-sm">In this deck</p>
           )}
