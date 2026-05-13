@@ -80,7 +80,7 @@ export default async function HomePage() {
           <FeatureCard
             icon={<Star className="h-5 w-5" />}
             title="Rating"
-            body="Track progress as you learn"
+            body="Track your progress as you learn"
           />
           <FeatureCard
             icon={<HeartHandshake className="h-5 w-5" />}

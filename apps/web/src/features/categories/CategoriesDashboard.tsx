@@ -326,9 +326,11 @@ export function CategoriesDashboard() {
       {hasFolders && !isLoading && (
         <div className="space-y-2">
           {(folders ?? []).map((folder) => {
-            const folderDecks = (categories ?? []).filter((c) =>
-              folder.includedCategoryIds.includes(c.id),
-            );
+            const folderDecks = (categories ?? [])
+              .filter((c) => folder.includedCategoryIds.includes(c.id))
+              .sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+              );
             return (
               <FolderSection
                 key={folder.id}
