@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Download, Globe, Loader2, User } from 'lucide-react';
+import { ArrowLeft, Camera, Download, Globe, Loader2 } from 'lucide-react';
 
 import { BACK_LANGUAGES } from '@ensemble/types';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,18 @@ const NO_LANGUAGE = '__none__';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — must match the server-side cap
+
+function getInitials(value: string | null | undefined) {
+  return (
+    value
+      ?.split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
 
 /**
  * /app/settings — read-only profile info plus an inline editor for the user's
@@ -56,6 +68,8 @@ export function SettingsView() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   /** The file the user just picked, waiting to be uploaded on Save. */
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  /** Undefined means unchanged; 'initials' means clear the saved photo on save. */
+  const [pendingAvatarMode, setPendingAvatarMode] = useState<'initials' | undefined>(undefined);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -86,6 +100,7 @@ export function SettingsView() {
       setSavedAt(Date.now());
       setPendingFile(null);
       setAvatarPreview(null);
+      setPendingAvatarMode(undefined);
       setPendingLanguage(undefined);
       // Refresh the server component layout so the header dropdown picks up
       // the new name / avatar without a full page reload.
@@ -98,11 +113,12 @@ export function SettingsView() {
 
   const trimmed = name.trim();
   const trimmedBio = bio.trim();
-  const avatarDirty = pendingFile !== null;
+  const avatarDirty = pendingFile !== null || (pendingAvatarMode === 'initials' && !!me?.image);
   // Derive the value to show/save: fall back to the server value until the
   // user explicitly touches the dropdown (pendingLanguage !== undefined).
   const effectiveLanguage =
     pendingLanguage !== undefined ? pendingLanguage : (me?.defaultLanguage ?? null);
+  const avatarInitials = getInitials(trimmed || me?.name || me?.email);
   const dirty =
     trimmed.length > 0 &&
     (trimmed !== (me?.name ?? '') ||
@@ -135,7 +151,17 @@ export function SettingsView() {
 
     setAvatarError(null);
     setPendingFile(file);
+    setPendingAvatarMode(undefined);
     setAvatarPreview(URL.createObjectURL(file));
+    setSavedAt(null);
+  }
+
+  function handleUseInitials() {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setPendingFile(null);
+    setAvatarPreview(null);
+    setPendingAvatarMode('initials');
+    setAvatarError(null);
     setSavedAt(null);
   }
 
@@ -145,7 +171,7 @@ export function SettingsView() {
     setError(null);
     if (!dirty) return;
 
-    let newImageUrl: string | undefined;
+    let nextImage: string | null | undefined = pendingAvatarMode === 'initials' ? null : undefined;
 
     if (pendingFile) {
       setIsUploading(true);
@@ -171,7 +197,7 @@ export function SettingsView() {
           throw new Error(`Upload failed (${res.status}). Please try again.`);
         }
 
-        newImageUrl = publicUrl;
+        nextImage = publicUrl;
       } catch (err) {
         setAvatarError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
         setIsUploading(false);
@@ -188,12 +214,12 @@ export function SettingsView() {
       private: !allowPublicUser,
       defaultDeckPrivate,
       defaultLanguage: effectiveLanguage,
-      ...(newImageUrl !== undefined ? { image: newImageUrl } : {}),
+      ...(nextImage !== undefined ? { image: nextImage } : {}),
     });
   }
 
   // ── Displayed avatar src: prefer the local preview, fall back to server ──
-  const displayedAvatar = avatarPreview ?? me?.image ?? null;
+  const displayedAvatar = pendingAvatarMode === 'initials' ? null : (avatarPreview ?? me?.image ?? null);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -257,26 +283,41 @@ export function SettingsView() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-muted-foreground group-hover:text-primary flex h-full w-full flex-col items-center justify-center gap-1">
-                      <User className="h-7 w-7" />
-                      <Camera className="h-4 w-4" />
+                    <div className="bg-primary/10 text-primary flex h-full w-full items-center justify-center text-2xl font-semibold">
+                      {avatarInitials}
                     </div>
                   )}
                 </button>
 
                 <div className="space-y-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {displayedAvatar ? 'Change photo' : 'Upload photo'}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {displayedAvatar ? 'Change photo' : 'Upload photo'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleUseInitials}
+                      disabled={isUploading || (pendingAvatarMode === 'initials' ? !me?.image && !pendingFile : !displayedAvatar)}
+                    >
+                      Use initials
+                    </Button>
+                  </div>
                   <p className="text-muted-foreground text-xs">JPEG, PNG, WebP or GIF · max 5 MB</p>
                   {avatarError ? <p className="text-destructive text-sm">{avatarError}</p> : null}
-                  {avatarDirty && !isUploading ? (
+                  {pendingAvatarMode === 'initials' && avatarDirty && !isUploading ? (
+                    <p className="text-muted-foreground text-xs">
+                      Initials avatar ready — click &quot;Save changes&quot; to apply.
+                    </p>
+                  ) : null}
+                  {pendingFile && !isUploading ? (
                     <p className="text-muted-foreground text-xs">
                       Photo ready — click &quot;Save changes&quot; to apply.
                     </p>
