@@ -919,11 +919,20 @@ function LearningTogetherSection() {
   );
 }
 
+// Prefix for the per-folder expand/collapse flag in localStorage. Each
+// folder gets its own key (`${FOLDER_OPEN_KEY_PREFIX}${folder.id}`) so the
+// dashboard restores the exact open/closed state on reload and across
+// sessions.
+const FOLDER_OPEN_KEY_PREFIX = 'ensemble_folder_open_';
+
 /**
  * Collapsible full-width section for a single folder on the homepage.
  * The header row shows the folder's colour swatch, name and deck count.
  * Expanding reveals a 4-column deck grid; an empty folder shows a dashed
  * "Add your first deck" prompt card instead.
+ *
+ * The open/collapsed state is persisted to localStorage per folder so it
+ * survives page reloads and new sessions.
  */
 function FolderSection({
   folder,
@@ -945,7 +954,31 @@ function FolderSection({
   }[];
   onCreateDeck: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  // Lazy initializer reads the previously persisted state on mount. This is
+  // a client-only component (parent is `'use client'` and only renders after
+  // the tRPC folders query resolves), so reading localStorage here is safe
+  // and avoids a flash of "collapsed" before an effect would re-open it.
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem(`${FOLDER_OPEN_KEY_PREFIX}${folder.id}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  // Persist every change. Using an effect (rather than writing inside the
+  // toggle handler) keeps the storage write in sync with the rendered
+  // state even if `open` is changed by some other code path later.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(`${FOLDER_OPEN_KEY_PREFIX}${folder.id}`, String(open));
+    } catch {
+      // Storage may be unavailable (private mode, quota, etc.); failing to
+      // persist is non-fatal — the UI keeps working in-memory.
+    }
+  }, [open, folder.id]);
 
   return (
     <div className="overflow-hidden rounded-xl border transition-shadow hover:shadow-sm">
