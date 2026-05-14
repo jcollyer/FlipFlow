@@ -24,7 +24,18 @@
     "web": {
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-web-browser"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to update your profile picture.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to take a profile picture."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     },

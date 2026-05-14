@@ -29,7 +29,8 @@ export default function AppLayout() {
         contentStyle: { backgroundColor: '#f8fafc' },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Your decks' }} />
+      <Stack.Screen name="index" options={{ title: 'Home' }} />
+      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="more" options={{ title: 'Public decks' }} />
       <Stack.Screen name="all-cards" options={{ title: 'All decks' }} />
       <Stack.Screen name="all-cards-practice" options={{ title: 'Practice' }} />

@@ -1,13 +1,16 @@
 import { Link, useRouter } from 'expo-router';
-import { ChevronDown, ChevronRight, ChevronUp, FolderPlus, GalleryHorizontalEnd, Layers, Play, Plus } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, ChevronUp, FolderPlus, GalleryHorizontalEnd, Layers, LogOut, Play, Plus, Settings } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -16,6 +19,7 @@ import { trpc } from '../../src/lib/trpc';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { FolderModal } from '../../src/components/FolderModal';
+import { Stat } from '../../src/components/Stat';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,13 +65,25 @@ export default function DecksScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const utils = trpc.useUtils();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { data: me } = trpc.auth.me.useQuery();
 
   // Still needed so FolderDrawer can resolve deck names/descriptions/cardCounts.
   const { data: categories, isLoading, refetch, isRefetching } = trpc.categories.list.useQuery();
   const { data: folders, refetch: refetchFolders } = trpc.folders.list.useQuery();
+  // Global stats across all decks — same query AllDecksEntry used.
+  const { data: stats, refetch: refetchStats } = trpc.practice.stats.useQuery({});
 
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+
+  // Derive initials from the user's name (or fall back to email).
+  const userInitials = (() => {
+    const source = me?.name ?? me?.email ?? '';
+    const parts = source.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return source.slice(0, 2).toUpperCase();
+  })();
 
   // O(1) lookup for deck details used inside each FolderDrawer.
   const categoryById = new Map<string, CategoryItem>(
@@ -91,8 +107,10 @@ export default function DecksScreen() {
   const onRefresh = useCallback(() => {
     utils.categories.list.invalidate();
     utils.folders.list.invalidate();
+    utils.practice.stats.invalidate();
     refetch();
     refetchFolders();
+    refetchStats();
   }, [utils, refetch, refetchFolders]);
 
   function toggleFolder(id: string) {
@@ -141,12 +159,134 @@ export default function DecksScreen() {
         {/* Title row */}
         <View className="mb-4 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold text-slate-900">Your decks</Text>
+            <Text className="text-2xl font-bold text-slate-900">Your Flashcards</Text>
             <Text className="text-sm text-slate-500">Practice with spaced repetition.</Text>
           </View>
-          <Pressable onPress={confirmSignOut} hitSlop={8}>
-            <Text className="text-sm font-medium text-slate-500">Sign out</Text>
+          {/* User avatar / initials button */}
+          <Pressable onPress={() => setUserMenuOpen(true)} hitSlop={8}>
+            <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-200">
+              {me?.image ? (
+                <Image
+                  source={{ uri: me.image }}
+                  style={{ width: 36, height: 36, borderRadius: 18 }}
+                />
+              ) : (
+                <Text className="text-sm font-semibold text-slate-600">{userInitials}</Text>
+              )}
+            </View>
           </Pressable>
+
+          {/* User menu modal */}
+          <Modal
+            visible={userMenuOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setUserMenuOpen(false)}
+          >
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }}
+              activeOpacity={1}
+              onPress={() => setUserMenuOpen(false)}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 80,
+                  right: 16,
+                  minWidth: 200,
+                  backgroundColor: '#ffffff',
+                  borderRadius: 12,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 12,
+                  elevation: 8,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* User info header */}
+                <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {me?.image ? (
+                        <Image source={{ uri: me.image }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+                      ) : (
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#475569' }}>{userInitials}</Text>
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      {me?.name ? (
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a' }} numberOfLines={1}>
+                          {me.name}
+                        </Text>
+                      ) : null}
+                      {me?.email ? (
+                        <Text style={{ fontSize: 12, color: '#64748b' }} numberOfLines={1}>
+                          {me.email}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Settings option */}
+                <Pressable
+                  onPress={() => {
+                    setUserMenuOpen(false);
+                    router.push('/settings');
+                  }}
+                >
+                  {({ pressed }) => (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#e2e8f0',
+                        backgroundColor: pressed ? '#f8fafc' : '#ffffff',
+                      }}
+                    >
+                      <Settings size={16} color="#475569" style={{ marginRight: 10 }} />
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#0f172a' }}>Settings</Text>
+                    </View>
+                  )}
+                </Pressable>
+
+                {/* Sign out option */}
+                <Pressable
+                  onPress={() => {
+                    setUserMenuOpen(false);
+                    confirmSignOut();
+                  }}
+                >
+                  {({ pressed }) => (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        backgroundColor: pressed ? '#f8fafc' : '#ffffff',
+                      }}
+                    >
+                      <LogOut size={16} color="#ef4444" style={{ marginRight: 10 }} />
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#ef4444' }}>Sign out</Text>
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        </View>
+
+        {/* Global stats — mirrors the 4-box row on the deck detail page */}
+        <View className="mb-4 flex-row gap-2">
+          <Stat label="Total"      value={stats?.total ?? 0}                              tone="slate" />
+          <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0}  tone="amber" />
+          <Stat label="Good"       value={stats?.difficultyBreakdown?.good ?? 0}          tone="blue"  />
+          <Stat label="Easy"       value={stats?.difficultyBreakdown?.easy ?? 0}          tone="green" />
         </View>
 
         {/* Public decks shortcut */}

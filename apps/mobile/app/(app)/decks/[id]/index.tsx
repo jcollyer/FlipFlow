@@ -15,6 +15,7 @@ import { type BackLanguageValue, genderLabel } from '@ensemble/types';
 import { Button } from '../../../../src/components/Button';
 import { Card } from '../../../../src/components/Card';
 import { ClassBadge } from '../../../../src/components/ClassBadge';
+import { Stat } from '../../../../src/components/Stat';
 import { LanguagePicker } from '../../../../src/components/LanguagePicker';
 import { trpc } from '../../../../src/lib/trpc';
 import {
@@ -146,10 +147,10 @@ export default function DeckDetailScreen() {
             <View className="flex-row gap-2">
               {isOwner ? (
                 <>
-                  <Stat label="Total" value={stats?.total ?? cards.length} />
-                  <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0} />
-                  <Stat label="Good" value={stats?.difficultyBreakdown?.good ?? 0} />
-                  <Stat label="Easy" value={stats?.difficultyBreakdown?.easy ?? 0} />
+                  <Stat label="Total"       value={stats?.total ?? cards.length}                  tone="slate" />
+                  <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0}  tone="amber" />
+                  <Stat label="Good"        value={stats?.difficultyBreakdown?.good ?? 0}         tone="blue"  />
+                  <Stat label="Easy"        value={stats?.difficultyBreakdown?.easy ?? 0}         tone="green" />
                 </>
               ) : null}
             </View>
@@ -319,17 +320,6 @@ export default function DeckDetailScreen() {
         }}
       />
     </View>
-  );
-}
-
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
-  return (
-    <Card className="flex-1 p-3">
-      <Text className="text-xs uppercase tracking-wide text-slate-500">{label}</Text>
-      <Text className={`mt-1 text-2xl font-bold ${highlight ? 'text-primary' : 'text-slate-900'}`}>
-        {value}
-      </Text>
-    </Card>
   );
 }
 
