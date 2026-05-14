@@ -69,6 +69,7 @@ import { trpc } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
 import { FolderModal } from '@/features/folders/FolderModal';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
+import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
 // Sentinels because the Radix Select doesn't allow an empty-string value.
 // We translate these back to `null` before submitting.
@@ -85,6 +86,7 @@ export function CategoriesDashboard() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function togglePlayCategory(id: string) {
     setSelectedCategoryIds((prev) =>
@@ -109,6 +111,7 @@ export function CategoriesDashboard() {
     setSelectedCategoryIds([]);
     setSelectedClasses([]);
     setSelectedRatings([]);
+    setPlayMode('in_order');
   }
 
   function buildPracticeHref() {
@@ -116,6 +119,7 @@ export function CategoriesDashboard() {
     if (selectedCategoryIds.length > 0) params.set('categoryIds', selectedCategoryIds.join(','));
     if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
+    if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
   }
@@ -445,7 +449,7 @@ export function CategoriesDashboard() {
             {/* Categories */}
             {(categories?.length ?? 0) > 0 && (
               <div className="space-y-2">
-                <p className="text-muted-foreground text-xs">Categories</p>
+                <p className="text-muted-foreground text-xs">Deck</p>
                 <div className="flex flex-wrap gap-2">
                   {categories!.map((cat) => {
                     const selected = selectedCategoryIds.includes(cat.id);
@@ -476,7 +480,7 @@ export function CategoriesDashboard() {
 
             {/* Word class */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Word class</p>
+              <p className="text-muted-foreground text-xs">Category</p>
               <div className="flex flex-wrap gap-2">
                 {WORD_CLASS_OPTIONS.map((cls) => {
                   const selected = selectedClasses.includes(cls.value);
@@ -532,7 +536,8 @@ export function CategoriesDashboard() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sm:items-center sm:justify-between">
+            <PlayModeToggle value={playMode} onChange={setPlayMode} />
             <Button
               onClick={() => {
                 setPlayOpen(false);

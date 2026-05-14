@@ -3,6 +3,19 @@
  * date-fns just for one relative-time string.
  */
 
+/**
+ * Fisher–Yates shuffle. Returns a new array — does not mutate the input.
+ * Used by the practice flow when the user picks "Shuffle" mode.
+ */
+export function shuffleArray<T>(input: readonly T[]): T[] {
+  const out = input.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function formatRelative(date: Date | string | null | undefined): string {
   if (!date) return 'Never reviewed';
   const d = typeof date === 'string' ? new Date(date) : date;

@@ -1,7 +1,12 @@
 import { PracticeSession } from '@/features/practice/PracticeSession';
 
 interface Props {
-  searchParams: Promise<{ categoryIds?: string; classes?: string; difficultyLevels?: string }>;
+  searchParams: Promise<{
+    categoryIds?: string;
+    classes?: string;
+    difficultyLevels?: string;
+    shuffle?: string;
+  }>;
 }
 
 export default async function AllCategoriesPracticePage({ searchParams }: Props) {
@@ -9,12 +14,14 @@ export default async function AllCategoriesPracticePage({ searchParams }: Props)
   const categoryIds = params.categoryIds?.split(',').filter(Boolean);
   const classes = params.classes?.split(',').filter(Boolean);
   const difficultyLevels = params.difficultyLevels?.split(',').filter(Boolean);
+  const shuffle = params.shuffle === '1' || params.shuffle === 'true';
 
   return (
     <PracticeSession
       categoryIds={categoryIds?.length ? categoryIds : undefined}
       classes={classes?.length ? classes : undefined}
       difficultyLevels={difficultyLevels?.length ? difficultyLevels : undefined}
+      shuffle={shuffle}
     />
   );
 }

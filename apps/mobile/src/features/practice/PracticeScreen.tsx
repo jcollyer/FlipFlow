@@ -7,6 +7,7 @@ import { type BackLanguageValue, type DifficultyLevel } from '@ensemble/types';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { trpc } from '@/lib/trpc';
+import { shuffleArray } from '@/lib/format';
 import { FlipCard, NavButton, RatingButtons } from './FlashcardViewer';
 
 interface Props {
@@ -20,6 +21,11 @@ interface Props {
    * 'no_rating' (for cards with a null difficultyLevel). Empty = all ratings.
    */
   difficultyLevels?: string[];
+  /**
+   * When true, randomize the card order for this session. Stable across
+   * renders and rating submissions — re-shuffles only on "Play again".
+   */
+  shuffle?: boolean;
 }
 
 /**
@@ -32,7 +38,13 @@ interface Props {
  *      again" reuses the same fetched card list (no refetch) so the user
  *      gets a true restart from card 0.
  */
-export function PracticeScreen({ categoryId, categoryIds, classes, difficultyLevels }: Props) {
+export function PracticeScreen({
+  categoryId,
+  categoryIds,
+  classes,
+  difficultyLevels,
+  shuffle = false,
+}: Props) {
   const isAllCards = !categoryId;
   const router = useRouter();
   const utils = trpc.useUtils();

@@ -81,6 +81,7 @@ import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
+import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -328,6 +329,7 @@ export function CategoryDetail({ categoryId }: Props) {
   const [playOpen, setPlayOpen] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function togglePlayClass(value: string) {
     setSelectedClasses((prev) =>
@@ -344,12 +346,14 @@ export function CategoryDetail({ categoryId }: Props) {
   function resetPlayFilters() {
     setSelectedClasses([]);
     setSelectedRatings([]);
+    setPlayMode('in_order');
   }
 
   function buildPracticeHref() {
     const params = new URLSearchParams();
     if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
+    if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs
       ? `/app/categories/${categoryId}/practice?${qs}`
@@ -676,7 +680,7 @@ export function CategoryDetail({ categoryId }: Props) {
 
             {/* Word class */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Word class</p>
+              <p className="text-muted-foreground text-xs">Category</p>
               <div className="flex flex-wrap gap-2">
                 {WORD_CLASS_OPTIONS.map((cls) => {
                   const selected = selectedClasses.includes(cls.value);
@@ -732,7 +736,8 @@ export function CategoryDetail({ categoryId }: Props) {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sm:items-center sm:justify-between">
+            <PlayModeToggle value={playMode} onChange={setPlayMode} />
             <Button
               onClick={() => {
                 setPlayOpen(false);

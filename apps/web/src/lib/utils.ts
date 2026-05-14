@@ -5,6 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Fisher–Yates shuffle. Returns a new array — does not mutate the input.
+ * Used by the practice flow when the user selects "Shuffle" mode.
+ */
+export function shuffleArray<T>(input: readonly T[]): T[] {
+  const out = input.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 /** Friendly relative date formatter, e.g. "in 3 days", "2 hours ago", "now". */
 export function formatRelative(target: Date | null | undefined, now: Date = new Date()) {
   if (!target) return 'new';

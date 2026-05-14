@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { trpc } from '@/lib/trpc/client';
+import { shuffleArray } from '@/lib/utils';
 import { EditCardDialog } from '@/features/cards/EditCardDialog';
 import { FlipCard, NavButton, RatingButtons } from './FlashcardViewer';
 
@@ -24,6 +25,12 @@ interface Props {
    * 'no_rating' (for cards with a null difficultyLevel). Empty = all ratings.
    */
   difficultyLevels?: string[];
+  /**
+   * When true, randomize the card order for this session. The shuffle is
+   * stable across renders and across rating submissions — it only re-shuffles
+   * when the user presses "Play again".
+   */
+  shuffle?: boolean;
 }
 
 /**
@@ -37,7 +44,13 @@ interface Props {
  *      card list (no refetch) so the user gets a true restart from card 0
  *      with the same set of cards, in the same order.
  */
-export function PracticeSession({ categoryId, categoryIds, classes, difficultyLevels }: Props) {
+export function PracticeSession({
+  categoryId,
+  categoryIds,
+  classes,
+  difficultyLevels,
+  shuffle = false,
+}: Props) {
   const utils = trpc.useUtils();
   const isAllCards = !categoryId;
   const backHref = isAllCards ? '/app' : `/app/categories/${categoryId}`;
@@ -77,9 +90,12 @@ export function PracticeSession({ categoryId, categoryIds, classes, difficultyLe
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Incremented every time the user presses "Play again" so we can re-shuffle
+  // when shuffle mode is active. Stays at 0 for in-order play.
+  const [shuffleEpoch, setShuffleEpoch] = useState(0);
 
   const rawCards = data?.cards ?? [];
-  const cards = useMemo(() => {
+  const filteredCards = useMemo(() => {
     if (!difficultyLevels?.length) return rawCards;
     return rawCards.filter((c) => {
       const level = (c as { difficultyLevel?: string | null }).difficultyLevel ?? null;
@@ -87,6 +103,17 @@ export function PracticeSession({ categoryId, categoryIds, classes, difficultyLe
       return level !== null && difficultyLevels.includes(level);
     });
   }, [rawCards, difficultyLevels]);
+
+  // Apply shuffle on top of the filtered list. Keyed by a signature derived
+  // from the card ids so the order stays stable across re-renders and across
+  // rating submissions — it only re-derives when the underlying card set
+  // changes or the user presses "Play again" (which bumps shuffleEpoch).
+  const cardsKey = filteredCards.map((c) => c.id).join('|');
+  const cards = useMemo(() => {
+    if (!shuffle) return filteredCards;
+    return shuffleArray(filteredCards);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardsKey, shuffle, shuffleEpoch]);
   const isReadOnlyPublicDeck = Boolean(categoryId && data?.category && !data.category.isOwner);
   const canRate = !isReadOnlyPublicDeck;
   const current = cards[index];
@@ -154,13 +181,15 @@ export function PracticeSession({ categoryId, categoryIds, classes, difficultyLe
 
   // "Play again" resets local index/flip state and re-walks the same cards.
   // We intentionally do NOT refetch the queue here — the user's expectation
-  // is "restart from card 0", same deck, same order. Per-rating stats
-  // refreshes are handled by submit's onSuccess above.
+  // is "restart from card 0", same deck. In shuffle mode we bump shuffleEpoch
+  // so the order is re-randomized; in-order mode reuses the existing order.
+  // Per-rating stats refreshes are handled by submit's onSuccess above.
   const handlePracticeAgain = useCallback(() => {
     setIndex(0);
     setReviewed(0);
     setFlipped(false);
-  }, []);
+    if (shuffle) setShuffleEpoch((n) => n + 1);
+  }, [shuffle]);
 
   const progress = useMemo(() => {
     if (cards.length === 0) return 0;

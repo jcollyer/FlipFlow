@@ -24,6 +24,7 @@ import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { EditCardDialog } from '@/features/cards/EditCardDialog';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
+import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
 /**
  * Full list of every card the user owns — across all decks plus
@@ -46,6 +47,7 @@ export function AllCardsView() {
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(true);
+  const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function toggleCategory(id: string) {
     setSelectedCategoryIds((prev) =>
@@ -73,6 +75,7 @@ export function AllCardsView() {
     if (selectedCategoryIds.length > 0) params.set('categoryIds', selectedCategoryIds.join(','));
     if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
+    if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
   }
@@ -163,7 +166,7 @@ export function AllCardsView() {
             blank to play all.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setFilterOpen((o) => !o)}
@@ -178,6 +181,7 @@ export function AllCardsView() {
                 )
               : ''}
           </Button>
+          <PlayModeToggle value={playMode} onChange={setPlayMode} />
           <Button onClick={() => router.push(buildPracticeHref())}>
             <Play className="h-4 w-4" />
             Play{practiceCountLabel}
@@ -219,7 +223,7 @@ export function AllCardsView() {
             {/* Categories */}
             {(categories?.length ?? 0) > 0 && (
               <div className="space-y-2">
-                <p className="text-muted-foreground text-xs">Categories</p>
+                <p className="text-muted-foreground text-xs">Deck</p>
                 <div className="flex flex-wrap gap-2">
                   {categories!.map((cat) => {
                     const selected = selectedCategoryIds.includes(cat.id);
@@ -250,7 +254,7 @@ export function AllCardsView() {
 
             {/* Word class */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Word class</p>
+              <p className="text-muted-foreground text-xs">Category</p>
               <div className="flex flex-wrap gap-2">
                 {WORD_CLASS_OPTIONS.map((cls) => {
                   const selected = selectedClasses.includes(cls.value);
