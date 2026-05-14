@@ -123,8 +123,6 @@ export function CategoriesDashboard() {
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
   }
-  const [quickFolderNameVisible, setQuickFolderNameVisible] = useState(false);
-  const quickFolderInputRef = useRef<HTMLInputElement | null>(null);
   const utils = trpc.useUtils();
   const { data: me } = trpc.auth.me.useQuery();
   const { data: categories, isLoading } = trpc.categories.list.useQuery();
@@ -221,15 +219,7 @@ export function CategoriesDashboard() {
       description: null,
     },
   });
-  const quickFolderName = quickFolderForm.watch('name')?.trim() ?? '';
 
-  useEffect(() => {
-    if (quickFolderNameVisible) {
-      quickFolderInputRef.current?.focus();
-    }
-  }, [quickFolderNameVisible]);
-
-  const decks = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
   const hasFolders = (folders?.length ?? 0) > 0;
 
   return (
@@ -308,60 +298,6 @@ export function CategoriesDashboard() {
               <div className="bg-muted h-4 w-16 rounded-md" />
             </div>
           ))}
-        </div>
-      )}
-
-      {/* no folder section yet */}
-      {!hasFolders && !isLoading && (
-        <div className="overflow-hidden rounded-xl border border-dashed p-5 transition-shadow hover:shadow-sm">
-          <form
-            onSubmit={quickFolderForm.handleSubmit((values) => {
-              createFolder.mutate({
-                name: values.name,
-                color: null,
-                description: null,
-              });
-            })}
-            className="space-y-2"
-          >
-            <div className="flex gap-2">
-              <div className="space-y-2">
-                {!quickFolderNameVisible && (
-                  <button
-                    type="button"
-                    className="text-lg text-gray-700"
-                    onClick={() => setQuickFolderNameVisible(true)}
-                  >
-                    My First Folder: <span className="italic">click to change name</span>
-                  </button>
-                )}
-                {quickFolderNameVisible ? (
-                  <Input
-                    id="quick-folder-name"
-                    type="text"
-                    className="text-lg"
-                    placeholder="My first folder"
-                    {...quickFolderForm.register('name')}
-                    ref={(element) => {
-                      quickFolderForm.register('name').ref(element);
-                      quickFolderInputRef.current = element;
-                    }}
-                  />
-                ) : null}
-              </div>
-              {quickFolderForm.formState.errors.name ? (
-                <p className="text-destructive text-sm">
-                  {quickFolderForm.formState.errors.name.message}
-                </p>
-              ) : null}
-              {quickFolderName ? (
-                <Button type="submit" disabled={createFolder.isPending}>
-                  <FolderPlus className="h-4 w-4" />
-                  {createFolder.isPending ? 'Creating...' : 'Create your first folder'}
-                </Button>
-              ) : null}
-            </div>
-          </form>
         </div>
       )}
 
