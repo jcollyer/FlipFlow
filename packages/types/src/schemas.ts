@@ -110,10 +110,21 @@ const ExamplesArray = z.array(ExampleSentence).max(20);
 
 /** Gender options for a flashcard's front word. */
 export const GENDER_OPTIONS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Masculine' },
+  { value: 'female', label: 'Feminine' },
 ] as const;
 export type GenderValue = (typeof GENDER_OPTIONS)[number]['value'];
+
+/**
+ * Display label for a gender value. Falls back to '' for unset/unknown values.
+ * Use this in UI rather than capitalizing the raw value so we have one source
+ * of truth for label text.
+ */
+export function genderLabel(value: string | null | undefined): string {
+  if (!value) return '';
+  const opt = GENDER_OPTIONS.find((o) => o.value === value);
+  return opt?.label ?? '';
+}
 
 /**
  * Optional gender for a flashcard's front word. `null`/`undefined`/`''` = none.

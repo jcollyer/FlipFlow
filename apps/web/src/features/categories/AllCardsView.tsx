@@ -136,6 +136,7 @@ export function AllCardsView() {
     frontExamples: card.frontExamples,
     backExamples: card.backExamples,
     class: card.class ?? null,
+    gender: (card as { gender?: string | null }).gender ?? null,
     pronunciation: (card as { pronunciation?: string | null }).pronunciation ?? null,
     backLanguage: (card.categoryId
       ? (decksById.get(card.categoryId)?.backLanguage ?? null)

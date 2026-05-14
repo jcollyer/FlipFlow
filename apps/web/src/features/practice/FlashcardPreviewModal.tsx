@@ -37,6 +37,7 @@ export interface PreviewCard {
   frontExamples: string[];
   backExamples: string[];
   class: string | null;
+  gender: string | null;
   pronunciation: string | null;
   backLanguage: BackLanguageValue | null;
 }
@@ -155,6 +156,7 @@ export function FlashcardPreviewModal({
                 frontExamples={current.frontExamples}
                 backExamples={current.backExamples}
                 cardClass={current.class}
+                gender={current.gender}
                 pronunciation={current.pronunciation}
                 flipped={flipped}
                 onClick={() => setFlipped((f) => !f)}

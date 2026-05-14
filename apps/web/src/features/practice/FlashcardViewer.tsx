@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, Volume2 } from 'lucide-react';
 
 import type { BackLanguageValue, DifficultyLevel } from '@ensemble/types';
+import { genderLabel } from '@ensemble/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
@@ -84,6 +85,7 @@ export function FlipCard({
   frontExamples,
   backExamples,
   cardClass,
+  gender,
   pronunciation,
   flipped,
   onClick,
@@ -95,6 +97,7 @@ export function FlipCard({
   frontExamples: string[];
   backExamples: string[];
   cardClass: string | null;
+  gender?: string | null;
   pronunciation: string | null;
   flipped: boolean;
   onClick: () => void;
@@ -152,6 +155,12 @@ export function FlipCard({
               <p className="text-muted-foreground mt-auto text-right italic">[{pronunciation}]</p>
             )}
           </CardContent>
+          {/* Gender indicator — bottom-left of the back face. */}
+          {gender ? (
+            <span className="text-muted-foreground absolute bottom-3 left-3 text-xs italic">
+              {genderLabel(gender)}
+            </span>
+          ) : null}
           {/* Only render the audio button if the deck has a configured language. */}
           {backLanguage && cardId ? (
             <AudioButton

@@ -47,6 +47,7 @@ import {
   CategoryUpdateInput,
   FlashcardUpdateInput,
   GENDER_OPTIONS,
+  genderLabel,
   type GenderValue,
   VERB_TYPE_OPTIONS,
   type VerbTypeValue,
@@ -223,8 +224,8 @@ function SortableCard({
                 {gender ? (
                   <>
                     <span className="text-muted-foreground shrink-0">-</span>
-                    <span className="text-muted-foreground shrink-0 capitalize">
-                      {gender.replace(/_/g, ' ')}
+                    <span className="text-muted-foreground shrink-0">
+                      {genderLabel(gender)}
                     </span>
                   </>
                 ) : null}
@@ -271,6 +272,7 @@ function SortableCard({
                 ) : null}
                 <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs">
                   {card.class ? <ClassBadge value={card.class} /> : null}
+                  {gender ? <span>{genderLabel(gender)}</span> : null}
                   {isOwner && difficultyLevel ? (
                     <span className="capitalize">{difficultyLevel}</span>
                   ) : null}
@@ -444,6 +446,7 @@ export function CategoryDetail({ categoryId }: Props) {
     frontExamples: card.frontExamples,
     backExamples: card.backExamples,
     class: card.class ?? null,
+    gender: (card as { gender?: string | null }).gender ?? null,
     pronunciation: (card as { pronunciation?: string | null }).pronunciation ?? null,
     backLanguage: (category?.backLanguage ?? null) as BackLanguageValue | null,
   }));
