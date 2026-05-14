@@ -162,7 +162,7 @@ export default function DecksScreen() {
         <View className="mb-4 flex-row items-center justify-between">
           <View>
             <Text className="text-2xl font-bold text-slate-900">Your Flashcards</Text>
-            <Text className="text-sm text-slate-500">Practice with spaced repetition.</Text>
+            <Text className="text-sm text-slate-500">Play with spaced repetition.</Text>
           </View>
           {/* User avatar / initials button */}
           <Pressable onPress={() => setUserMenuOpen(true)} hitSlop={8}>

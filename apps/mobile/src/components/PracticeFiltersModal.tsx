@@ -143,7 +143,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
       <View className="flex-1 bg-slate-50">
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-4 py-4">
-          <Text className="text-lg font-semibold text-slate-900">Practice</Text>
+          <Text className="text-lg font-semibold text-slate-900">Play</Text>
           <TouchableOpacity onPress={onClose} hitSlop={8}>
             <View className="h-8 w-8 items-center justify-center rounded-full bg-slate-100">
               <X size={18} color="#475569" />
@@ -155,7 +155,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
           {/* Practice filter panel */}
           <Card className="gap-4 p-4">
             <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-semibold text-slate-700">Practice filters</Text>
+              <Text className="text-sm font-semibold text-slate-700">Play filters</Text>
               {hasActiveFilters && (
                 <Pressable onPress={resetFilters} hitSlop={8}>
                   <Text className="text-xs font-medium text-blue-500">Reset</Text>
@@ -267,7 +267,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
               <PlayModeToggle value={playMode} onChange={setPlayMode} />
             </View>
 
-            <Button onPress={navigateToPractice}>{`Practice${practiceCountLabel}`}</Button>
+            <Button onPress={navigateToPractice}>{`Play${practiceCountLabel}`}</Button>
           </Card>
         </ScrollView>
       </View>

@@ -197,7 +197,7 @@ export default function AllCardsScreen() {
             {/* ── Practice filter panel ──────────────────────────────────── */}
             <Card className="gap-4 p-4">
               <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-slate-700">Practice filters</Text>
+                <Text className="text-sm font-semibold text-slate-700">Play filters</Text>
                 {hasActiveFilters && (
                   <Pressable
                     onPress={() => {
@@ -315,7 +315,7 @@ export default function AllCardsScreen() {
                 <PlayModeToggle value={playMode} onChange={setPlayMode} />
               </View>
 
-              <Button onPress={navigateToPractice}>{`Practice${practiceCountLabel}`}</Button>
+              <Button onPress={navigateToPractice}>{`Play${practiceCountLabel}`}</Button>
             </Card>
           </View>
         }

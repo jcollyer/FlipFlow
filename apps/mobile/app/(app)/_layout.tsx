@@ -33,11 +33,11 @@ export default function AppLayout() {
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="more" options={{ title: 'Public decks' }} />
       <Stack.Screen name="all-cards" options={{ title: 'All decks' }} />
-      <Stack.Screen name="all-cards-practice" options={{ title: 'Practice' }} />
+      <Stack.Screen name="all-cards-practice" options={{ title: 'Play' }} />
       <Stack.Screen name="new-deck" options={{ title: 'New deck', presentation: 'modal' }} />
       <Stack.Screen name="new-card" options={{ title: 'New card', presentation: 'modal' }} />
       <Stack.Screen name="decks/[id]/index" options={{ title: 'Deck' }} />
-      <Stack.Screen name="decks/[id]/practice" options={{ title: 'Practice' }} />
+      <Stack.Screen name="decks/[id]/practice" options={{ title: 'Play' }} />
       <Stack.Screen
         name="decks/[id]/edit"
         options={{ title: 'Edit deck', presentation: 'modal' }}

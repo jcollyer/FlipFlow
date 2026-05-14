@@ -157,7 +157,7 @@ export function PracticeScreen({
   return (
     <View className="flex-1 bg-slate-50">
       <Stack.Screen
-        options={{ title: data?.category?.name ?? (isAllCards ? 'All cards' : 'Practice') }}
+        options={{ title: data?.category?.name ?? (isAllCards ? 'All cards' : 'Play') }}
       />
 
       <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
