@@ -1,3 +1,4 @@
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, SafeAreaView, Text, View } from 'react-native';
 
@@ -43,7 +44,7 @@ export function FolderPicker({ folders, value, onChange, disabled }: Props) {
         <Text className={`text-base ${value ? 'text-slate-900' : 'text-slate-400'}`}>
           {folders.length === 0 ? 'No folders yet — create one first' : labelFor(folders, value)}
         </Text>
-        <Text className="text-base text-slate-400">▾</Text>
+        <ChevronDown size={18} color="#94a3b8" />
       </Pressable>
 
       <Modal
@@ -81,9 +82,7 @@ export function FolderPicker({ folders, value, onChange, disabled }: Props) {
                     />
                     <Text className="text-base text-slate-900">{item.name}</Text>
                   </View>
-                  {selected ? (
-                    <Text className="text-primary text-base font-semibold">✓</Text>
-                  ) : null}
+                  {selected ? <Check size={18} color="#5584bb" /> : null}
                 </Pressable>
               );
             }}

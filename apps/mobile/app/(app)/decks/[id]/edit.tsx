@@ -45,11 +45,6 @@ export default function EditDeckScreen() {
     }
   }, [category, router, categoryId]);
 
-  // Only surface the audio-language picker if the server can actually call
-  // Google Cloud TTS — otherwise the option would be a dead end.
-  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
-  const ttsAvailable = !!ttsAvailability?.available;
-
   // Folder — required.
   const { data: folders } = trpc.folders.list.useQuery();
   const { data: folderIdsForDeck } = trpc.folders.forDeck.useQuery({ categoryId });
@@ -69,10 +64,14 @@ export default function EditDeckScreen() {
   const [description, setDescription] = useState('');
   const [color, setColor] = useState<string>(DECK_FOLDER_COLOR_PALETTE[0]);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
+  const [languageError, setLanguageError] = useState(false);
   // Privacy flag — "Deck public" toggle is the inverse of this.
   const [isPrivate, setIsPrivate] = useState(true);
   const [nameError, setNameError] = useState<string | undefined>();
   const [hydrated, setHydrated] = useState(false);
+
+  const { data: me } = trpc.auth.me.useQuery();
+  const setDefaultLanguage = trpc.auth.setDefaultLanguage.useMutation();
 
   // Seed the form from the fetched category once; don't clobber edits on
   // subsequent background refetches.
@@ -102,6 +101,10 @@ export default function EditDeckScreen() {
     onSuccess: () => {
       utils.categories.byId.invalidate({ id: categoryId });
       utils.categories.list.invalidate();
+      // Persist chosen language as the user's new default if it changed.
+      if (backLanguage && backLanguage !== me?.defaultLanguage) {
+        setDefaultLanguage.mutate({ defaultLanguage: backLanguage });
+      }
       // Sync folder membership if it changed.
       const newFolderIds = folderId ? [folderId] : [];
       const prevFolderIds = folderIdsForDeck ?? [];
@@ -122,6 +125,12 @@ export default function EditDeckScreen() {
       return;
     }
     setFolderError(false);
+    // Validate language.
+    if (!backLanguage) {
+      setLanguageError(true);
+      return;
+    }
+    setLanguageError(false);
     setNameError(undefined);
     const parsed = CategoryUpdateInput.safeParse({
       id: categoryId,
@@ -220,15 +229,24 @@ export default function EditDeckScreen() {
             </View>
           </View>
 
-          {ttsAvailable ? (
-            <View className="gap-2">
-              <Text className="text-sm font-medium text-slate-700">Language for translation</Text>
-              <LanguagePicker value={backLanguage} onChange={setBackLanguage} />
-              <Text className="text-xs text-slate-500">
-                Pick a language to enable a speaker button on the back of cards during practice.
-              </Text>
-            </View>
-          ) : null}
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-slate-700">
+              Language for translation <Text className="text-red-500">*</Text>
+            </Text>
+            <LanguagePicker
+              value={backLanguage}
+              onChange={(val) => {
+                setBackLanguage(val);
+                if (val) setLanguageError(false);
+              }}
+            />
+            {languageError ? (
+              <Text className="text-sm text-red-500">Please select a language.</Text>
+            ) : null}
+            <Text className="text-xs text-slate-500">
+              Pick a language to enable a speaker button on the back of cards during play.
+            </Text>
+          </View>
 
           <View className="flex-row items-center justify-between gap-3">
             <View className="shrink gap-1">

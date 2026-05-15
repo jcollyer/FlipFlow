@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -40,15 +40,23 @@ export default function NewDeckScreen() {
   const [description, setDescription] = useState('');
   const [color, setColor] = useState<string>(DECK_FOLDER_COLOR_PALETTE[0]);
   const [backLanguage, setBackLanguage] = useState<BackLanguageValue | null>(null);
+  const [languageError, setLanguageError] = useState(false);
   // The toggle is "Deck public" and starts off, which corresponds to
   // `private = true` on the model.
   const [isPrivate, setIsPrivate] = useState(true);
   const [nameError, setNameError] = useState<string | undefined>();
+  const [langHydrated, setLangHydrated] = useState(false);
 
-  // Only surface the audio-language picker if the server can actually call
-  // Google Cloud TTS — otherwise the option would be a dead end.
-  const { data: ttsAvailability } = trpc.tts.isAvailable.useQuery();
-  const ttsAvailable = !!ttsAvailability?.available;
+  // Pre-populate language from the user's saved default.
+  const { data: me } = trpc.auth.me.useQuery();
+  useEffect(() => {
+    if (!langHydrated && me?.defaultLanguage) {
+      setBackLanguage(me.defaultLanguage as BackLanguageValue);
+      setLangHydrated(true);
+    }
+  }, [me, langHydrated]);
+
+  const setDefaultLanguage = trpc.auth.setDefaultLanguage.useMutation();
 
   const setDeckFolders = trpc.folders.setDeckFolders.useMutation({
     onSuccess: () => {
@@ -61,6 +69,10 @@ export default function NewDeckScreen() {
   const create = trpc.categories.create.useMutation({
     onSuccess: (deck) => {
       utils.categories.list.invalidate();
+      // Persist chosen language as the user's new default if it changed.
+      if (backLanguage && backLanguage !== me?.defaultLanguage) {
+        setDefaultLanguage.mutate({ defaultLanguage: backLanguage });
+      }
       // Always assign the required folder.
       if (folderId) {
         setDeckFolders.mutate({ categoryId: deck.id, folderIds: [folderId] });
@@ -78,6 +90,12 @@ export default function NewDeckScreen() {
       return;
     }
     setFolderError(false);
+    // Validate language.
+    if (!backLanguage) {
+      setLanguageError(true);
+      return;
+    }
+    setLanguageError(false);
     setNameError(undefined);
     const parsed = CategoryCreateInput.safeParse({
       name,
@@ -168,15 +186,24 @@ export default function NewDeckScreen() {
             </View>
           </View>
 
-          {ttsAvailable ? (
-            <View className="gap-2">
-              <Text className="text-sm font-medium text-slate-700">Language for translation</Text>
-              <LanguagePicker value={backLanguage} onChange={setBackLanguage} />
-              <Text className="text-xs text-slate-500">
-                Pick a language to enable a speaker button on the back of cards during practice.
-              </Text>
-            </View>
-          ) : null}
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-slate-700">
+              Language for translation <Text className="text-red-500">*</Text>
+            </Text>
+            <LanguagePicker
+              value={backLanguage}
+              onChange={(val) => {
+                setBackLanguage(val);
+                if (val) setLanguageError(false);
+              }}
+            />
+            {languageError ? (
+              <Text className="text-sm text-red-500">Please select a language.</Text>
+            ) : null}
+            <Text className="text-xs text-slate-500">
+              Pick a language to enable a speaker button on the back of cards during play.
+            </Text>
+          </View>
 
           <View className="flex-row items-center justify-between gap-3">
             <View className="shrink gap-1">
