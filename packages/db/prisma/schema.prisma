@@ -3,7 +3,14 @@
 // Models:
 //   - User / Account / Session / VerificationToken: NextAuth v5 adapter
 //   - Category: a deck of flashcards owned by a user
-//   - Flashcard: front/back card with a free-form difficulty rating
+//   - Flashcard: front/back card (per-user difficulty lives in CardProgress)
+//   - CardProgress: per-(user, card) practice state — the per-user piece of
+//     what used to be Flashcard.difficultyLevel. Necessary because group
+//     decks are studied by many users at once and each needs their own rating.
+//   - Folder: a user-defined grouping of decks (single-owner)
+//   - Group: a multi-user grouping of decks, with members + invites. Decks
+//     and cards stay singly-owned; the Group just records "this deck is
+//     shared into this group" and authorization expands accordingly.
 
 generator client {
   provider      = "prisma-client-js"
@@ -37,14 +44,27 @@ model User {
   email              String?     @unique
   emailVerified DateTime?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
-  categories    Category[]
-  flashcards    Flashcard[]
-  folders       Folder[]
-  folderDeckOrders FolderDeckOrder[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  accounts          Account[]
+  sessions          Session[]
+  categories        Category[]
+  flashcards        Flashcard[]
+  folders           Folder[]
+  folderDeckOrders  FolderDeckOrder[]
+  // Groups the user created. A user can own many groups.
+  ownedGroups       Group[]           @relation("GroupOwner")
+  // Groups the user belongs to (including the ones they own — there's always
+  // a matching GroupMember row for the owner, with role = "owner").
+  groupMemberships  GroupMember[]
+  // Invites this user has sent and received. Receiving invites is optional
+  // — link invites have no `invitedUserId`.
+  sentInvites       GroupInvite[]     @relation("InvitesSent")
+  receivedInvites   GroupInvite[]     @relation("InvitesReceived")
+  groupDeckOrders   GroupDeckOrder[]
+  // Per-user practice state for individual cards. Replaces the old
+  // Flashcard.difficultyLevel column.
+  cardProgress      CardProgress[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model Account {
@@ -113,6 +133,116 @@ model Category {
   updatedAt DateTime    @updatedAt
 
   @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// Group: a multi-user grouping of decks.
+// ----------------------------------------------------------------------------
+//
+// Mirrors the Folder pattern (an array of Category ids defines membership),
+// but with an additional concept of members + invites. The Group's owner is
+// the user who created it and holds admin powers (delete the group, remove
+// other members, etc.) — there is always a matching GroupMember row for the
+// owner with role = "owner".
+//
+// Decks (Category) and cards (Flashcard) are NOT re-owned when shared into a
+// group. The original creator remains the owner; the Group just records the
+// share and authorization checks expand from "did you create this?" to
+// "did you create this OR is this in a group you're a member of?". This means
+// existing single-owner code keeps working unchanged for personal decks.
+//
+// As with Folder, deleting a deck or removing it from the group just leaves
+// a dangling id in `includedCategoryIds` which is filtered out at read time.
+model Group {
+  id                  String           @id @default(cuid())
+  name                String
+  description         String?          @db.Text
+  color               String?
+  ownerId             String
+  owner               User             @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  // Membership of decks in the group. Same shape and read-time reconciliation
+  // rules as Folder.includedCategoryIds.
+  includedCategoryIds String[]         @default([]) @map("included_category_ids")
+  members             GroupMember[]
+  invites             GroupInvite[]
+  deckOrders          GroupDeckOrder[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([ownerId])
+}
+
+// One row per (user, group) — the join table that defines membership.
+// The owner of a group ALSO has a row here with role = "owner"; that
+// invariant lets us write group-listing queries as a single join through
+// GroupMember without special-casing the owner.
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  // "owner" | "member". A group has exactly one "owner" row at any time;
+  // the leave/transfer-ownership logic enforces this in application code.
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+// Pending / historic invitations to a group.
+//
+// Two flavors live in this one table:
+//   - Link invites: `token` is set, `invitedUserId` is null. Anyone with the
+//     URL can accept. Reusable, optionally expiring, revocable (status flip).
+//   - Direct invites: `invitedUserId` is set, `token` is null. Shows up in the
+//     invited user's pending-invites UI and can be accepted/declined in-app.
+//
+// `status` is one of "pending" | "accepted" | "declined" | "revoked". We keep
+// accepted/declined rows around for a (lightweight) audit trail rather than
+// deleting them on accept — easier debugging if a user reports "I clicked the
+// link and nothing happened."
+model GroupInvite {
+  id            String    @id @default(cuid())
+  groupId       String
+  // Who sent the invite. Required for both flavors.
+  invitedById   String
+  // Set for direct invites; null for link invites.
+  invitedUserId String?
+  // URL-safe random token. Set for link invites; null for direct invites.
+  // Generated by the API layer (not by Prisma defaults) so the value is
+  // cryptographically random rather than a guessable cuid.
+  token         String?   @unique
+  status        String    @default("pending")
+  expiresAt     DateTime?
+  acceptedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  group         Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitedBy     User      @relation("InvitesSent", fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedUser   User?     @relation("InvitesReceived", fields: [invitedUserId], references: [id], onDelete: SetNull)
+
+  @@index([groupId])
+  @@index([invitedUserId])
+  @@index([token])
+}
+
+// Per-viewer ordering of the decks inside a group. Direct analog of
+// FolderDeckOrder — see the comment on that model for the reconciliation
+// rules. Each member of a shared group can drag-and-drop their own
+// arrangement without affecting other members.
+model GroupDeckOrder {
+  id                 String   @id @default(cuid())
+  userId             String
+  groupId            String
+  orderedCategoryIds String[] @default([]) @map("ordered_category_ids")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group              Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, groupId])
+  @@index([groupId])
 }
 
 // A user-defined grouping of decks (Categories). The relationship is stored
@@ -189,23 +319,56 @@ model Flashcard {
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   // Direct ownership pointer so we can find a user's uncategorized cards
-  // (where categoryId is null) without joining through Category.
+  // (where categoryId is null) without joining through Category. For cards
+  // added to a group-shared deck by a non-owner, this points to the *author*
+  // of the card (not the deck owner) — that preserves attribution and means
+  // deleting your account only cascades cards you actually wrote.
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Difficulty rating set by the user during practice. One of
-  // 'challenging' / 'good' / 'easy', or null if the card has never been
-  // rated. Validation lives at the API edge (z.enum in @ensemble/types).
-  difficultyLevel String?
+  // Per-user practice state lives in CardProgress now (one row per viewer of
+  // a shared card). The old `difficultyLevel` column was dropped in the
+  // "groups + per-user progress" migration.
+  progress   CardProgress[]
 
   // User-defined display order within the deck. Null means the card has not
   // been explicitly positioned yet and falls back to createdAt ordering.
   // Written in bulk by the reorder mutation when the user drags to reorder.
+  // For group-shared decks this is intentionally a single shared value
+  // (last-write-wins) rather than per-user.
   sortOrder Int? @map("sort_order")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([categoryId])
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+// CardProgress: per-user practice state for a single card.
+// ----------------------------------------------------------------------------
+//
+// One row per (user, card). Replaces the old Flashcard.difficultyLevel column
+// so a group-shared card can have a different rating per viewer. Absent row
+// = "this user has never rated this card", which the UI renders as "No rating".
+//
+// We keep the model intentionally small so it's cheap to query alongside the
+// card list. New per-user fields (last-reviewed timestamp, SRS state, etc.)
+// can be added here without touching the canonical Flashcard row.
+model CardProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  cardId          String
+  // 'challenging' | 'good' | 'easy' | null. Validation lives at the API
+  // edge (z.enum in @ensemble/types).
+  difficultyLevel String?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card            Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, cardId])
+  @@index([cardId])
   @@index([userId])
 }

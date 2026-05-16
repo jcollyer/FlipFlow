@@ -196,6 +196,68 @@ export const FlashcardUpdateInput = z.object({
 export type FlashcardUpdateInput = z.infer<typeof FlashcardUpdateInput>;
 
 // ----------------------------------------------------------------------------
+// Group
+// ----------------------------------------------------------------------------
+
+/**
+ * A multi-user grouping of decks. Shares the deck/folder color palette and
+ * the same description length cap so the modals can be visually identical.
+ *
+ * Membership of decks in the group is managed via separate `addDeck` /
+ * `removeDeck` mutations rather than a full-array replacement, because a
+ * group is multi-user and the client's view of "the canonical set" may be
+ * stale at any moment.
+ */
+export const GroupColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a 6-digit hex value like #5584bb')
+  .nullish();
+
+export const GroupDescriptionSchema = z.string().trim().max(2000).nullish();
+
+export const GroupCreateInput = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(80),
+  color: GroupColorSchema,
+  description: GroupDescriptionSchema,
+});
+export type GroupCreateInput = z.infer<typeof GroupCreateInput>;
+
+export const GroupUpdateInput = z.object({
+  id: z.string().cuid(),
+  name: z.string().trim().min(1).max(80).optional(),
+  color: GroupColorSchema,
+  description: GroupDescriptionSchema,
+});
+export type GroupUpdateInput = z.infer<typeof GroupUpdateInput>;
+
+// ----------------------------------------------------------------------------
+// Group invites
+// ----------------------------------------------------------------------------
+
+/**
+ * Tokens for share-by-link invites are URL-safe random strings. The format
+ * comes from the API layer (crypto.randomBytes → base64url) — this schema
+ * just enforces "looks like a token" so accept-invite endpoints can do a
+ * cheap shape check before hitting the database.
+ */
+export const GroupInviteTokenSchema = z
+  .string()
+  .trim()
+  .min(16, 'Invalid invite link')
+  .max(128, 'Invalid invite link');
+
+/**
+ * Direct invite payload. The UI passes an email; the API resolves it to a
+ * userId before storing (an existing-user check is deliberate — v1 doesn't
+ * support pending invites for accounts that don't exist yet).
+ */
+export const GroupInviteUserInput = z.object({
+  groupId: z.string().cuid(),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address'),
+});
+export type GroupInviteUserInput = z.infer<typeof GroupInviteUserInput>;
+
+// ----------------------------------------------------------------------------
 // Practice
 // ----------------------------------------------------------------------------
 

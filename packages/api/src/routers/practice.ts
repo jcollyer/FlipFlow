@@ -3,7 +3,20 @@ import { z } from 'zod';
 
 import { SubmitReviewInput } from '@ensemble/types';
 
+import { resolveDeckVisibility } from '../lib/groupAuth';
 import { protectedProcedure, router } from '../trpc';
+
+/**
+ * Practice procedures.
+ *
+ * After the Groups + CardProgress migration:
+ *   - The per-user difficulty rating lives in CardProgress, keyed on
+ *     (userId, cardId). Submitting a review upserts into that table; the
+ *     queue/stats endpoints read from it (joining back to the user's own
+ *     row, so other members of a group can't see your rating).
+ *   - Deck visibility uses resolveDeckVisibility so group members can
+ *     practice a shared deck the same way they would their own.
+ */
 
 export const practiceRouter = router({
   /**
@@ -36,8 +49,6 @@ export const practiceRouter = router({
       const category = input.categoryId
         ? await ctx.prisma.category.findFirst({
             where: { id: input.categoryId },
-            // backLanguage powers the per-card audio button; the practice UI
-            // hides the button entirely when it's null.
             select: {
               id: true,
               name: true,
@@ -51,12 +62,11 @@ export const practiceRouter = router({
         : null;
       if (input.categoryId && !category) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      const categoryIsOwner = category ? category.userId === ctx.userId : false;
-      const categoryIsPublic = category
-        ? category.private === false && category.user.private === false
-        : false;
-      if (input.categoryId && !categoryIsOwner && !categoryIsPublic) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
+      let categoryIsOwner = false;
+      if (category) {
+        const v = await resolveDeckVisibility(ctx.prisma, ctx.userId, category);
+        if (!v.canRead) throw new TRPCError({ code: 'NOT_FOUND' });
+        categoryIsOwner = v.isOwner;
       }
 
       // Build category filter: single categoryId takes priority over the array.
@@ -71,6 +81,11 @@ export const practiceRouter = router({
 
       const cards = await ctx.prisma.flashcard.findMany({
         where: {
+          // For deck-scoped queries we don't filter by userId — group-shared
+          // decks contain cards authored by multiple members and the viewer
+          // can practice all of them. For unscoped ("all cards") queries we
+          // still scope to the viewer's own cards, matching the All-cards
+          // page's intent.
           ...(input.categoryId ? {} : { userId: ctx.userId }),
           ...categoryFilter,
           ...classFilter,
@@ -82,14 +97,23 @@ export const practiceRouter = router({
             },
           },
         },
-        // Deck practice matches the deck-detail list ordering so in-order
-        // play walks cards top→bottom from what the user sees on screen.
-        // All-cards / multi-deck practice keeps newest-first to match
-        // `flashcards.listAll`, which feeds the All-cards view.
         orderBy: input.categoryId
           ? [{ sortOrder: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }]
           : { createdAt: 'desc' },
       });
+
+      // Attach the viewer's own per-card difficulty rating from CardProgress.
+      // Pre-Groups this column lived on Flashcard; now it lives in a separate
+      // table so a card in a shared deck can have a different rating per
+      // viewer. Cards the viewer has never rated come back with null, same
+      // as before.
+      const progressRows = cards.length
+        ? await ctx.prisma.cardProgress.findMany({
+            where: { userId: ctx.userId, cardId: { in: cards.map((c) => c.id) } },
+            select: { cardId: true, difficultyLevel: true },
+          })
+        : [];
+      const progressByCardId = new Map(progressRows.map((p) => [p.cardId, p.difficultyLevel]));
 
       return {
         category: category
@@ -101,62 +125,89 @@ export const practiceRouter = router({
               isOwner: categoryIsOwner,
             }
           : null,
-        cards,
+        cards: cards.map((card) => ({
+          ...card,
+          difficultyLevel: progressByCardId.get(card.id) ?? null,
+        })),
       };
     }),
 
   /**
-   * Persists the user's difficulty rating for a card. There is no longer any
-   * scheduling computation here — we just store the latest rating so the UI
-   * can render the per-deck breakdown (Challenging / Good / Easy tiles) and
-   * so the value survives reloads.
+   * Persists this viewer's difficulty rating for a card via a CardProgress
+   * upsert. The viewer may rate any card they can see — i.e. one they
+   * authored, one in a deck they own, or one in a group-shared deck they
+   * have access to.
    */
   submitReview: protectedProcedure.input(SubmitReviewInput).mutation(async ({ ctx, input }) => {
-    const card = await ctx.prisma.flashcard.findFirst({
-      where: { id: input.cardId, userId: ctx.userId },
-      select: { id: true },
+    // Load the card + its deck so we can run the same visibility check used
+    // everywhere else. Practicing a card you can't see shouldn't be allowed.
+    const card = await ctx.prisma.flashcard.findUnique({
+      where: { id: input.cardId },
+      include: {
+        category: {
+          select: {
+            id: true,
+            userId: true,
+            private: true,
+            user: { select: { private: true } },
+          },
+        },
+      },
     });
     if (!card) throw new TRPCError({ code: 'NOT_FOUND' });
 
-    return ctx.prisma.flashcard.update({
-      where: { id: card.id },
-      data: { difficultyLevel: input.difficultyLevel },
+    let canRate = card.userId === ctx.userId;
+    if (!canRate && card.category) {
+      const v = await resolveDeckVisibility(ctx.prisma, ctx.userId, card.category);
+      canRate = v.canRead;
+    }
+    if (!canRate) throw new TRPCError({ code: 'NOT_FOUND' });
+
+    return ctx.prisma.cardProgress.upsert({
+      where: { userId_cardId: { userId: ctx.userId, cardId: card.id } },
+      create: {
+        userId: ctx.userId,
+        cardId: card.id,
+        difficultyLevel: input.difficultyLevel,
+      },
+      update: { difficultyLevel: input.difficultyLevel },
     });
   }),
 
   /**
    * Lightweight stats for the deck detail view.
    *
-   * When `categoryId` is supplied, stats are scoped to that deck. Otherwise
-   * we count every card the user owns — including uncategorized ones —
-   * which is what the "All decks" view needs.
-   *
-   * `difficultyBreakdown` counts cards by their last-stored difficulty
-   * rating. Cards that have never been rated (difficultyLevel = null) do
-   * not appear in any of the three buckets.
+   * Counts always reflect the *viewer's* per-card progress: in a group
+   * deck, the breakdown shown to each member is computed against their
+   * own CardProgress rows. "Total cards" is the deck's total (or every
+   * card the viewer owns, when no categoryId is supplied).
    */
   stats: protectedProcedure
     .input(z.object({ categoryId: z.string().cuid().optional() }))
     .query(async ({ ctx, input }) => {
-      // Filter by direct ownership so uncategorized cards (categoryId = null)
-      // are still counted when no categoryId is supplied.
-      const where = {
-        userId: ctx.userId,
-        ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-      };
+      // Total counts come from Flashcard. Scoped by categoryId when given,
+      // otherwise by direct ownership so uncategorized cards stay included.
+      const totalWhere = input.categoryId
+        ? { categoryId: input.categoryId }
+        : { userId: ctx.userId };
 
-      const [total, challenging, good, easy] = await Promise.all([
-        ctx.prisma.flashcard.count({ where }),
-        ctx.prisma.flashcard.count({
-          where: { ...where, difficultyLevel: 'challenging' },
-        }),
-        ctx.prisma.flashcard.count({
-          where: { ...where, difficultyLevel: 'good' },
-        }),
-        ctx.prisma.flashcard.count({
-          where: { ...where, difficultyLevel: 'easy' },
+      const [total, progressBreakdown] = await Promise.all([
+        ctx.prisma.flashcard.count({ where: totalWhere }),
+        // Count this viewer's CardProgress rows in the same scope. We join
+        // through `card` so we can apply the same scope filter directly.
+        ctx.prisma.cardProgress.groupBy({
+          by: ['difficultyLevel'],
+          where: {
+            userId: ctx.userId,
+            card: input.categoryId ? { categoryId: input.categoryId } : { userId: ctx.userId },
+          },
+          _count: { _all: true },
         }),
       ]);
+
+      const challenging = progressBreakdown.find((r) => r.difficultyLevel === 'challenging')?._count?._all ?? 0;
+      const good = progressBreakdown.find((r) => r.difficultyLevel === 'good')?._count?._all ?? 0;
+      const easy = progressBreakdown.find((r) => r.difficultyLevel === 'easy')?._count?._all ?? 0;
 
       return {
         total,

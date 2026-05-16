@@ -35,6 +35,7 @@ import {
   ArrowRight,
   ChevronDown,
   X,
+  Mail,
 } from 'lucide-react';
 
 import {
@@ -127,6 +128,11 @@ export function CategoriesDashboard() {
   const { data: me } = trpc.auth.me.useQuery();
   const { data: categories, isLoading } = trpc.categories.list.useQuery();
   const { data: folders } = trpc.folders.list.useQuery();
+  // Groups + pending invites. Both queries run unconditionally so the home
+  // page reacts the moment a user creates/joins a group or receives an
+  // invite from another window.
+  const { data: groups } = trpc.groups.list.useQuery();
+  const { data: pendingInvites } = trpc.invites.listMine.useQuery();
   // Aggregate counts across every card the user owns. Drives the four
   // ProgressSnapshotCard tiles below the header.
   const { data: stats } = trpc.practice.stats.useQuery({});
@@ -221,6 +227,8 @@ export function CategoriesDashboard() {
   });
 
   const hasFolders = (folders?.length ?? 0) > 0;
+  const hasGroups = (groups?.length ?? 0) > 0;
+  const invitesCount = pendingInvites?.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -330,6 +338,54 @@ export function CategoriesDashboard() {
           })}
         </div>
       )}
+
+      {/* ── Groups: header + pending-invite shortcut + expandables ─────── */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Users className="text-muted-foreground h-4 w-4" />
+            <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">
+              Groups
+            </h2>
+          </div>
+          <Link
+            href="/app/groups"
+            className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium"
+          >
+            {invitesCount > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="h-4 w-4" />
+                {invitesCount} pending invitation{invitesCount === 1 ? '' : 's'}
+              </span>
+            ) : (
+              <span>All groups</span>
+            )}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {hasGroups ? (
+          <div className="space-y-2">
+            {(groups ?? []).map((group) => (
+              <GroupSection key={group.id} group={group} />
+            ))}
+          </div>
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <p className="text-muted-foreground text-sm">
+                Groups let you share decks with other people.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/app/groups">
+                  <Plus className="h-4 w-4" />
+                  Create a group
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <GettingStartedSection />
 
@@ -1150,6 +1206,153 @@ function FolderSection({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Prefix mirrors the folder pattern so the two sets of expandables remember
+// their open/closed state independently.
+const GROUP_OPEN_KEY_PREFIX = 'ensemble_group_open_';
+
+/**
+ * Home-page expandable for one Group the user belongs to. Renders the same
+ * way as FolderSection: chevron header that toggles a 4-column deck grid.
+ *
+ * Differences from FolderSection:
+ *   - Deck list comes straight from `groups.list` (one batched query) rather
+ *     than the local intersection of folders × categories, because group
+ *     decks may be owned by other members and wouldn't appear in the
+ *     viewer's own `categories.list`.
+ *   - Click on the header navigates to the group detail page; the inline
+ *     grid is read-only here (no drag-and-drop / no "+ Add deck" tile). The
+ *     full management surface lives on /app/groups/[id].
+ */
+function GroupSection({
+  group,
+}: {
+  group: {
+    id: string;
+    name: string;
+    color: string | null;
+    isOwner: boolean;
+    deckCount: number;
+    includedDecks: {
+      id: string;
+      name: string;
+      color: string | null;
+      description?: string | null;
+      cardCount: number;
+      isYours: boolean;
+    }[];
+  };
+}) {
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem(`${GROUP_OPEN_KEY_PREFIX}${group.id}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(`${GROUP_OPEN_KEY_PREFIX}${group.id}`, String(open));
+    } catch {
+      // Storage may be unavailable; non-fatal.
+    }
+  }, [open, group.id]);
+
+  return (
+    <div className="overflow-hidden rounded-xl border transition-shadow hover:shadow-sm">
+      {/* ── Header row ── */}
+      <div className="flex w-full items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="hover:bg-muted/40 flex flex-1 items-center gap-3 px-5 py-4 text-left transition"
+          aria-expanded={open}
+        >
+          <div
+            aria-hidden
+            className="h-5 w-5 shrink-0 rounded-md"
+            style={{ backgroundColor: group.color ?? '#94a3b8' }}
+          />
+          <span className="min-w-0 flex-1 truncate text-base font-semibold">
+            {group.name}
+            {group.isOwner ? (
+              <span className="text-muted-foreground ml-2 text-xs font-normal">(owner)</span>
+            ) : null}
+          </span>
+          <span className="text-muted-foreground shrink-0 text-sm">
+            {group.deckCount} {group.deckCount === 1 ? 'deck' : 'decks'}
+          </span>
+          <ChevronDown
+            className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {/* Quick-jump to the group detail page — kept separate from the
+            collapse header so a click on this link doesn't also toggle. */}
+        <Link
+          href={`/app/groups/${group.id}`}
+          className="text-muted-foreground hover:text-primary mr-3 shrink-0 text-xs font-medium"
+        >
+          Manage
+        </Link>
+      </div>
+
+      {/* ── Expanded deck grid ── */}
+      {open ? (
+        <div className="border-t px-5 py-5">
+          {group.includedDecks.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              No decks in this group yet.{' '}
+              <Link
+                href={`/app/groups/${group.id}`}
+                className="text-primary font-medium hover:underline"
+              >
+                Add one →
+              </Link>
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {group.includedDecks.map((d) => (
+                <Link key={d.id} href={`/app/categories/${d.id}`} className="group block">
+                  <Card className="hover:border-primary/40 h-full transition hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center gap-3">
+                      <div
+                        aria-hidden
+                        className="h-10 w-10 shrink-0 rounded-md"
+                        style={{ backgroundColor: d.color ?? '#94a3b8' }}
+                      />
+                      <div className="min-w-0">
+                        <CardTitle className="group-hover:text-primary truncate text-sm">
+                          {d.name}
+                        </CardTitle>
+                        {d.description ? (
+                          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs font-normal">
+                            {d.description}
+                          </p>
+                        ) : null}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="text-muted-foreground flex items-center gap-3 text-xs">
+                      <span className="inline-flex items-center gap-1">
+                        <Layers className="h-3.5 w-3.5" />
+                        {d.cardCount} {d.cardCount === 1 ? 'card' : 'cards'}
+                      </span>
+                      {!d.isYours ? (
+                        <span className="text-muted-foreground/70">Shared</span>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

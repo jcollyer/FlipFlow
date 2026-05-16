@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { BackLanguageValue, CategoryCreateInput, CategoryUpdateInput } from '@ensemble/types';
 
+import { resolveDeckVisibility } from '../lib/groupAuth';
 import { protectedProcedure, router } from '../trpc';
 
 export const categoriesRouter = router({
@@ -108,9 +109,8 @@ export const categoriesRouter = router({
       });
       if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      const isOwner = category.userId === ctx.userId;
-      const isPubliclyVisible = category.private === false && category.user.private === false;
-      if (!isOwner && !isPubliclyVisible) throw new TRPCError({ code: 'NOT_FOUND' });
+      const visibility = await resolveDeckVisibility(ctx.prisma, ctx.userId, category);
+      if (!visibility.canRead) throw new TRPCError({ code: 'NOT_FOUND' });
 
       return {
         id: category.id,
@@ -121,7 +121,10 @@ export const categoriesRouter = router({
         private: category.private,
         createdAt: category.createdAt,
         updatedAt: category.updatedAt,
-        isOwner,
+        isOwner: visibility.isOwner,
+        // New: tells the UI to enable "create card" / "reorder" affordances
+        // for non-owners who happen to be in a group containing the deck.
+        isGroupMember: visibility.isGroupMember,
       };
     }),
 
