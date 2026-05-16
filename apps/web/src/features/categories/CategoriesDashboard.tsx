@@ -27,6 +27,7 @@ import {
   Layers,
   Library,
   Users,
+  FolderTree,
   Play,
   FolderPlus,
   GripVertical,
@@ -312,6 +313,22 @@ export function CategoriesDashboard() {
       {/* Folder sections — collapsible, full-width */}
       {hasFolders && !isLoading && (
         <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <FolderTree className="text-muted-foreground h-4 w-4" />
+              <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">
+                Folders
+              </h2>
+            </div>
+            <Link
+              href="/app/folders"
+              className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium"
+            >
+              <span>All folders</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
           {(folders ?? []).map((folder) => {
             // Build folderDecks in the order the API returned in
             // `includedCategoryIds`. The folders.list query already applies
