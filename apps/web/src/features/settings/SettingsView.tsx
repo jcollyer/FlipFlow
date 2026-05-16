@@ -8,14 +8,7 @@ import { ArrowLeft, Camera, Download, Globe, Loader2, Trash2 } from 'lucide-reac
 import { BACK_LANGUAGES } from '@ensemble/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { RequireNameConfirmationDialog } from '@/components/RequireNameConfirmationDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -85,7 +78,6 @@ export function SettingsView() {
 
   // ── Delete-account modal state ───────────────────────────────────────────
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -576,7 +568,6 @@ export function SettingsView() {
               size="sm"
               className="gap-2"
               onClick={() => {
-                setDeleteConfirm('');
                 setDeleteError(null);
                 setIsDeleting(false);
                 setDeleteOpen(true);
@@ -590,103 +581,29 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
-      {/* ── Delete-account confirmation modal ────────────────────────────── */}
-      <Dialog
+      <RequireNameConfirmationDialog
         open={deleteOpen}
         onOpenChange={(open) => {
-          // Don't allow dismissing the modal while the mutation is in flight
-          // — otherwise the user could close the dialog mid-delete and end up
-          // staring at a stale settings page that's about to become invalid.
-          if (isDeleting) return;
           setDeleteOpen(open);
           if (!open) {
-            setDeleteConfirm('');
             setDeleteError(null);
           }
         }}
-      >
-        <DialogContent
-          onEscapeKeyDown={(e) => {
-            if (isDeleting) e.preventDefault();
-          }}
-          onPointerDownOutside={(e) => {
-            if (isDeleting) e.preventDefault();
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Delete your account?</DialogTitle>
-            <DialogDescription>
-              This will permanently delete your account and all of your folders, decks, and cards.
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!me?.email) return;
-              if (deleteConfirm.trim().toLowerCase() !== me.email.toLowerCase()) {
-                setDeleteError("The email you typed doesn't match.");
-                return;
-              }
-              setDeleteError(null);
-              setIsDeleting(true);
-              deleteAccount.mutate({ confirmEmail: deleteConfirm.trim() });
-            }}
-            className="space-y-3"
-          >
-            <Label htmlFor="delete-confirm-email" className="text-sm">
-              To confirm, type{' '}
-              <span className="text-foreground font-mono font-semibold">{me?.email ?? ''}</span>{' '}
-              below:
-            </Label>
-            <Input
-              id="delete-confirm-email"
-              value={deleteConfirm}
-              onChange={(e) => {
-                setDeleteConfirm(e.target.value);
-                setDeleteError(null);
-              }}
-              autoComplete="off"
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-              disabled={isDeleting}
-              placeholder={me?.email ?? ''}
-            />
-            {deleteError ? <p className="text-destructive text-sm">{deleteError}</p> : null}
-
-            <DialogFooter className="gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDeleteOpen(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={
-                  isDeleting ||
-                  !me?.email ||
-                  deleteConfirm.trim().toLowerCase() !== (me?.email ?? '').toLowerCase()
-                }
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting…
-                  </>
-                ) : (
-                  'Delete account'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        title="Delete your account?"
+        description="This will permanently delete your account and all of your folders, decks, and cards. This action cannot be undone."
+        confirmLabel="Email"
+        expectedName={me?.email ?? ''}
+        confirmActionLabel={isDeleting ? 'Deleting...' : 'Delete account'}
+        isPending={isDeleting}
+        mismatchMessage={deleteError ?? "The email you typed doesn't match."}
+        normalizeValue={(value) => value.trim().toLowerCase()}
+        onConfirm={() => {
+          if (!me?.email) return;
+          setDeleteError(null);
+          setIsDeleting(true);
+          deleteAccount.mutate({ confirmEmail: me.email });
+        }}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { ArrowLeft, Users, Layers, Pencil, Plus, Trash2, Check, X } from 'lucide
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { RequireNameConfirmationDialog } from '@/components/RequireNameConfirmationDialog';
 import { trpc } from '@/lib/trpc/client';
 import { GroupModal } from '@/features/groups/GroupModal';
 
@@ -27,6 +28,7 @@ export function GroupsDashboard() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
 
   const createGroup = trpc.groups.create.useMutation({
     onSuccess: (group) => {
@@ -44,7 +46,10 @@ export function GroupsDashboard() {
   });
 
   const deleteGroup = trpc.groups.delete.useMutation({
-    onSuccess: () => utils.groups.list.invalidate(),
+    onSuccess: () => {
+      utils.groups.list.invalidate();
+      setDeletingGroup(null);
+    },
   });
 
   const acceptInvite = trpc.invites.accept.useMutation({
@@ -198,15 +203,7 @@ export function GroupsDashboard() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => {
-                        if (
-                          confirm(
-                            `Delete "${g.name}"? Members will lose access. Decks inside the group aren't deleted — they go back to being personal decks for whoever owns them.`,
-                          )
-                        ) {
-                          deleteGroup.mutate({ id: g.id });
-                        }
-                      }}
+                      onClick={() => setDeletingGroup({ id: g.id, name: g.name })}
                       aria-label="Delete group"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -263,6 +260,23 @@ export function GroupsDashboard() {
           }}
         />
       ) : null}
+
+      <RequireNameConfirmationDialog
+        open={deletingGroup !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingGroup(null);
+        }}
+        title="Delete this group?"
+        description="Members will lose access immediately. Decks shared in this group are not deleted; they go back to being personal decks for whoever owns them. This action cannot be undone."
+        confirmLabel="Group"
+        expectedName={deletingGroup?.name ?? ''}
+        confirmActionLabel={deleteGroup.isPending ? 'Deleting...' : 'Delete group'}
+        isPending={deleteGroup.isPending}
+        onConfirm={() => {
+          if (!deletingGroup) return;
+          deleteGroup.mutate({ id: deletingGroup.id });
+        }}
+      />
     </div>
   );
 }

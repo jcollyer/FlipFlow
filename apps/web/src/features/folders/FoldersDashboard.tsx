@@ -7,6 +7,7 @@ import { ArrowLeft, FolderTree, Layers, Pencil, Plus, Trash2 } from 'lucide-reac
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RequireNameConfirmationDialog } from '@/components/RequireNameConfirmationDialog';
 import { trpc } from '@/lib/trpc/client';
 import { FolderModal } from '@/features/folders/FolderModal';
 
@@ -22,6 +23,7 @@ export function FoldersDashboard() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingFolder, setDeletingFolder] = useState<{ id: string; name: string } | null>(null);
 
   const createFolder = trpc.folders.create.useMutation({
     onSuccess: (folder) => {
@@ -39,7 +41,10 @@ export function FoldersDashboard() {
   });
 
   const deleteFolder = trpc.folders.delete.useMutation({
-    onSuccess: () => utils.folders.list.invalidate(),
+    onSuccess: () => {
+      utils.folders.list.invalidate();
+      setDeletingFolder(null);
+    },
   });
 
   const editing = editingId ? ((folders ?? []).find((f) => f.id === editingId) ?? null) : null;
@@ -121,11 +126,7 @@ export function FoldersDashboard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      if (confirm(`Delete "${f.name}"? Decks inside it won't be deleted.`)) {
-                        deleteFolder.mutate({ id: f.id });
-                      }
-                    }}
+                    onClick={() => setDeletingFolder({ id: f.id, name: f.name })}
                     aria-label="Delete folder"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -182,6 +183,23 @@ export function FoldersDashboard() {
           }}
         />
       ) : null}
+
+      <RequireNameConfirmationDialog
+        open={deletingFolder !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingFolder(null);
+        }}
+        title="Delete this folder?"
+        description="Decks inside this folder are not deleted; they will simply stop being grouped here. This action cannot be undone."
+        confirmLabel="Folder"
+        expectedName={deletingFolder?.name ?? ''}
+        confirmActionLabel={deleteFolder.isPending ? 'Deleting...' : 'Delete folder'}
+        isPending={deleteFolder.isPending}
+        onConfirm={() => {
+          if (!deletingFolder) return;
+          deleteFolder.mutate({ id: deletingFolder.id });
+        }}
+      />
     </div>
   );
 }
