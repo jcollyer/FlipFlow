@@ -31,8 +31,7 @@ export default function AppLayout() {
     >
       <Stack.Screen name="index" options={{ title: 'Home' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-      <Stack.Screen name="more" options={{ title: 'Public decks' }} />
-      <Stack.Screen name="all-cards" options={{ title: 'All decks' }} />
+<Stack.Screen name="all-cards" options={{ title: 'All decks' }} />
       <Stack.Screen name="all-cards-practice" options={{ title: 'Play' }} />
       <Stack.Screen name="folders/index" options={{ title: 'Folders' }} />
       <Stack.Screen name="groups/index" options={{ title: 'Groups' }} />
