@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  Linking,
   Pressable,
   ScrollView,
   Switch,
@@ -14,7 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 
 import { trpc } from '../../src/lib/trpc';
-import { API_URL } from '../../src/lib/config';
+import { useAuth } from '../../src/lib/AuthContext';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { TextField } from '../../src/components/TextField';
@@ -59,6 +58,7 @@ function mimeFromUri(uri: string): AllowedMimeType {
 
 export default function SettingsScreen() {
   const utils = trpc.useUtils();
+  const { signOut } = useAuth();
 
   const { data: me, isLoading } = trpc.auth.me.useQuery();
 
@@ -68,6 +68,10 @@ export default function SettingsScreen() {
   const [defaultDeckPrivate, setDefaultDeckPrivate] = useState(true);
   const [nameError, setNameError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  // ── Delete account state ──────────────────────────────────────────────────
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteEmailInput, setDeleteEmailInput] = useState('');
 
   // ── Avatar state ──────────────────────────────────────────────────────────
   /** Local URI of a newly picked image, shown as an optimistic preview. */
@@ -104,6 +108,25 @@ export default function SettingsScreen() {
       Alert.alert('Could not save settings', err.message);
     },
   });
+
+  const deleteAccount = trpc.auth.deleteAccount.useMutation({
+    onSuccess: async () => {
+      await signOut();
+    },
+    onError: (err) => {
+      Alert.alert('Could not delete account', err.message);
+    },
+  });
+
+  function handleDeleteAccount() {
+    const typedEmail = deleteEmailInput.trim();
+    const accountEmail = (me?.email ?? '').trim();
+    if (typedEmail.toLowerCase() !== accountEmail.toLowerCase()) {
+      Alert.alert('Email does not match', 'Please type your account email exactly to confirm.');
+      return;
+    }
+    deleteAccount.mutate({ confirmEmail: typedEmail });
+  }
 
   // ── Dirty check ───────────────────────────────────────────────────────────
   const trimmed = name.trim();
@@ -460,36 +483,128 @@ export default function SettingsScreen() {
       {/* ── Account card ─────────────────────────────────────────────────── */}
       <Card className="mt-4 gap-3 p-4">
         <Text className="text-base font-semibold text-slate-900">Account</Text>
-        <Text className="text-xs text-slate-500">
-          To export your data or permanently delete your account, visit Settings on the web.
-        </Text>
-        <Pressable onPress={() => Linking.openURL(`${API_URL}/app/settings`)}>
-          {({ pressed }) => (
+
+        {!showDeleteConfirm ? (
+          <Pressable
+            onPress={() => setShowDeleteConfirm(true)}
+            disabled={deleteAccount.isPending}
+          >
+            {({ pressed }) => (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderWidth: 1,
+                  borderColor: '#fca5a5',
+                  borderRadius: 8,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  backgroundColor: pressed ? '#fef2f2' : '#fff5f5',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#dc2626' }}>
+                    Delete account
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#ef4444', marginTop: 2 }}>
+                    Permanently removes all your data.
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 16, color: '#fca5a5', marginLeft: 8 }}>→</Text>
+              </View>
+            )}
+          </Pressable>
+        ) : (
+          <View style={{ gap: 12 }}>
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderWidth: 1,
-                borderColor: '#fca5a5',
+                backgroundColor: '#fef2f2',
                 borderRadius: 8,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                backgroundColor: pressed ? '#fef2f2' : '#fff5f5',
+                padding: 12,
+                borderWidth: 1,
+                borderColor: '#fecaca',
               }}
             >
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#dc2626' }}>
-                  Delete account
-                </Text>
-                <Text style={{ fontSize: 11, color: '#ef4444', marginTop: 2 }}>
-                  Permanently removes all your data.
-                </Text>
-              </View>
-              <Text style={{ fontSize: 16, color: '#fca5a5', marginLeft: 8 }}>→</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#dc2626', marginBottom: 4 }}>
+                This cannot be undone
+              </Text>
+              <Text style={{ fontSize: 12, color: '#ef4444', lineHeight: 18 }}>
+                All your decks, cards, practice history, and account data will be permanently
+                deleted. Type your account email below to confirm.
+              </Text>
             </View>
-          )}
-        </Pressable>
+
+            <TextField
+              label={`Type "${me?.email ?? 'your email'}" to confirm`}
+              value={deleteEmailInput}
+              onChangeText={setDeleteEmailInput}
+              placeholder={me?.email ?? 'your@email.com'}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              editable={!deleteAccount.isPending}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                onPress={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteEmailInput('');
+                }}
+                disabled={deleteAccount.isPending}
+                style={{ flex: 1 }}
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      borderRadius: 8,
+                      paddingVertical: 11,
+                      alignItems: 'center',
+                      backgroundColor: pressed ? '#f1f5f9' : '#ffffff',
+                    }}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#475569' }}>
+                      Cancel
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+
+              <Pressable
+                onPress={handleDeleteAccount}
+                disabled={deleteAccount.isPending || !deleteEmailInput.trim()}
+                style={{ flex: 1 }}
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      borderRadius: 8,
+                      paddingVertical: 11,
+                      alignItems: 'center',
+                      backgroundColor:
+                        deleteAccount.isPending || !deleteEmailInput.trim()
+                          ? '#fca5a5'
+                          : pressed
+                            ? '#b91c1c'
+                            : '#dc2626',
+                    }}
+                  >
+                    {deleteAccount.isPending ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff' }}>
+                        Delete permanently
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        )}
       </Card>
     </ScrollView>
   );
