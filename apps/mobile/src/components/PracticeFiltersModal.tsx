@@ -115,8 +115,16 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
     if (deckMode && categoryId) {
       // Lock to this deck's cards.
       params.set('categoryIds', categoryId);
-    } else if (selectedCategoryIds.length > 0) {
-      params.set('categoryIds', selectedCategoryIds.join(','));
+      // Signal that the user entered practice from a deck detail page so the
+      // completion view can show "Back to deck" and navigate back correctly.
+      params.set('origin', 'deck');
+    } else {
+      if (selectedCategoryIds.length > 0) {
+        params.set('categoryIds', selectedCategoryIds.join(','));
+      }
+      // Signal that the user entered practice from the home page so the
+      // completion view can show "Back to home".
+      params.set('origin', 'home');
     }
 
     if (selectedClasses.length > 0) {

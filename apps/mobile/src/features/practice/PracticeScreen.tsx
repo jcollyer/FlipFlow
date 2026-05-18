@@ -26,6 +26,14 @@ interface Props {
    * renders and rating submissions — re-shuffles only on "Play again".
    */
   shuffle?: boolean;
+  /**
+   * Where the user entered practice from. Controls the back-button label and
+   * destination shown on the completion screen:
+   *   - 'home'  → "Back to home" → navigates to /
+   *   - 'deck'  → "Back to deck" → navigates to /decks/<id>
+   *   - undefined → falls back to the legacy isAllCards logic
+   */
+  origin?: 'home' | 'deck';
 }
 
 /**
@@ -44,6 +52,7 @@ export function PracticeScreen({
   classes,
   difficultyLevels,
   shuffle = false,
+  origin,
 }: Props) {
   const isAllCards = !categoryId;
   const router = useRouter();
@@ -110,8 +119,26 @@ export function PracticeScreen({
     data?.category?.backLanguage ??
     null) as BackLanguageValue | null;
   const done = !isLoading && cards.length > 0 && index >= cards.length;
-  const backTarget = isAllCards ? '/all-cards' : `/decks/${categoryId}`;
-  const backLabel = isAllCards ? 'Back to all cards' : 'Back to deck';
+  // Resolve the back-button destination and label. When an explicit origin is
+  // provided (set by PracticeFiltersModal), use it. Otherwise fall back to the
+  // legacy per-categoryId logic used by the direct /decks/[id]/practice route.
+  const deckBackId = categoryId ?? categoryIds?.[0];
+  const backTarget =
+    origin === 'home'
+      ? '/'
+      : origin === 'deck'
+        ? `/decks/${deckBackId}`
+        : isAllCards
+          ? '/all-cards'
+          : `/decks/${categoryId}`;
+  const backLabel =
+    origin === 'home'
+      ? 'Back to home'
+      : origin === 'deck'
+        ? 'Back to deck'
+        : isAllCards
+          ? 'Back to all cards'
+          : 'Back to deck';
 
   function handleRate(level: DifficultyLevel) {
     if (!current || !canRate) return;
