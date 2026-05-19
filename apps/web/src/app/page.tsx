@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import underlinePng from './underline.png';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
@@ -50,7 +52,16 @@ export default async function HomePage() {
           ensemble
         </h1>
         <h2 className="font-accent text-xl text-gray-700">
-          LANGUAGE BRINGS PEOPLE <span className="font-semibold italic">TOGETHER</span>
+          LANGUAGE BRINGS PEOPLE{' '}
+          <span className="relative inline-block font-semibold italic">
+            TOGETHER
+            <Image
+              src={underlinePng}
+              alt=""
+              className="absolute left-1/4 w-[120%] max-w-none -translate-x-1/4"
+              style={{ top: '55%' }}
+            />
+          </span>
         </h2>
         <p className="text-muted-foreground text-md mt-6 max-w-xl text-balance">
           Create flashcards. Play your decks. Track your progress.
@@ -60,8 +71,8 @@ export default async function HomePage() {
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
-            <Link href="/signin">
-              Get started <ArrowRight className="h-4 w-4" />
+            <Link href="/signin" className="group">
+              Get started <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>
@@ -102,9 +113,13 @@ export default async function HomePage() {
           />
         </div>
         <div className="mt-14 text-center">
-          <a href="mailto:ensemblelanguage@gmail.com" className="text-primary hover:underline">
-            ensemblelanguage@gmail.com
+          <a href="mailto:hello@ensemblelanguage.com" className="text-primary hover:underline">
+            hello@ensemblelanguage.com
           </a>
+          <div className="inline-block mx-2 text-gray-300">|</div>
+          <Link href="/privacy" className="text-primary hover:underline">
+            privacy policy
+          </Link>
         </div>
       </section>
     </main>
@@ -134,7 +149,7 @@ function FeatureCard({
           </span>
         ) : null}
       </div>
-      <div className="font-semibold">{title}</div>
+      <div className="font-semibold text-gray-600">{title}</div>
       <div className="text-muted-foreground text-sm">{body}</div>
     </div>
   );

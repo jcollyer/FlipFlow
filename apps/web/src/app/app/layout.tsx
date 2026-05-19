@@ -97,10 +97,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             add them. Notes of bugs and suggestions are welcome!
           </p>
           <a
-            href="mailto:ensemblelanguage@gmail.com"
+            href="mailto:hello@ensemblelanguage.com"
             className="text-primary mt-4 inline-block text-sm font-medium hover:underline"
           >
-            ensemblelanguage@gmail.com
+            hello@ensemblelanguage.com
           </a>
         </div>
       </footer>
