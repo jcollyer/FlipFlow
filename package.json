@@ -21,7 +21,9 @@
     "db:migrate:status:prod": "dotenv -e .env -- prisma migrate status --schema=packages/db/prisma/schema.prisma",
     "db:migrate:resolve:prod": "dotenv -e .env -- prisma migrate resolve --schema=packages/db/prisma/schema.prisma",
     "db:studio": "dotenv -e .env -- prisma studio --schema=packages/db/prisma/schema.prisma",
-    "db:seed": "dotenv -e .env -- tsx packages/db/prisma/seed.ts"
+    "db:seed": "dotenv -e .env -- tsx packages/db/prisma/seed.ts",
+    "mobile:build": "npm --workspace=@ensemble/mobile eas build --platform ios --profile production",
+    "mobile:submit": "npm --workspace=@ensemble/mobile eas submit --platform ios --profile production"
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.4",
