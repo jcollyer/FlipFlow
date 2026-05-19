@@ -553,8 +553,14 @@ function FolderDrawer({ folder, expanded, onToggle, categoryById }: FolderDrawer
       {expanded ? (
         <View className="border-t border-border">
           {decks.length === 0 ? (
-            <View className="px-4 py-3">
+            <View className="items-center gap-2 px-4 py-6">
               <Text className="text-sm text-slate-400">No decks in this folder yet.</Text>
+              <Link href={`/new-deck?folderId=${folder.id}`} asChild>
+                <Pressable className="flex-row items-center gap-1 active:opacity-70">
+                  <Plus size={14} color="#3b82f6" />
+                  <Text className="text-sm font-medium text-blue-500">Create first deck</Text>
+                </Pressable>
+              </Link>
             </View>
           ) : (
             decks.map((deck, index) => (

@@ -349,7 +349,7 @@ export default function DeckDetailScreen() {
           </Card>
         }
         ListFooterComponent={
-          cards.length > 0 && isOwner ? (
+          isOwner ? (
             <View className="mt-8 flex-row items-center justify-center gap-6 py-3">
               <Pressable onPress={confirmDeleteDeck} hitSlop={8} className="active:opacity-70">
                 <Text className="text-destructive text-sm font-medium">Delete deck</Text>

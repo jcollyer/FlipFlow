@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -31,9 +31,12 @@ export default function NewDeckScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
 
+  // Pre-select a folder when navigated from a folder's empty state.
+  const { folderId: folderIdParam } = useLocalSearchParams<{ folderId?: string }>();
+
   // Folder — required.
   const { data: folders } = trpc.folders.list.useQuery();
-  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string | null>(folderIdParam ?? null);
   const [folderError, setFolderError] = useState(false);
 
   const [name, setName] = useState('');
