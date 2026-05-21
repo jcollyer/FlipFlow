@@ -940,7 +940,13 @@ function LearningTogetherSection() {
               <span aria-hidden className="text-primary/60 shrink-0 font-bold">
                 •
               </span>
-              <span>See the Ensemble pinned deck for inspiration on how to create cards</span>
+              <span>Create or join a group with a friend or classmates</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="text-primary/60 shrink-0 font-bold">
+                •
+              </span>
+              <span>Collaborate to create a new deck [coming soon], or share decks you’ve created</span>
             </li>
           </ul>
         </div>
@@ -953,51 +959,17 @@ function LearningTogetherSection() {
                 •
               </span>
               <span>
-                Duplicate a public deck to springboard off of and edit to make it your own
+                Duplicate a shared deck to springboard off of and edit to make it your own
               </span>
             </li>
             <li className="flex items-center gap-2.5">
               <span aria-hidden className="text-primary/60 shrink-0 font-bold">
                 •
               </span>
-              <span>Play a public deck to practice sample sentences new to you</span>
+              <span>Play a shared deck to practice sample sentences new to you</span>
             </li>
           </ul>
         </div>
-
-        {/* Section 3 */}
-        <div className="px-6 py-4">
-          <ul className="text-muted-foreground space-y-1.5 text-sm">
-            <li className="flex items-center gap-2.5">
-              <span aria-hidden className="text-primary/60 shrink-0 font-bold">
-                •
-              </span>
-              <span>
-                Make your decks public or private under your profile in the upper right hand corner
-              </span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <span aria-hidden className="text-primary/60 shrink-0 font-bold">
-                •
-              </span>
-              <span>
-                Share permission with another user to collaborate on a deck together{' '}
-                <span className="text-muted-foreground/50 text-xs">[coming soon]</span>
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Footer link */}
-      <div className="border-primary/15 bg-primary/5 border-t px-6 py-4">
-        <Link
-          href="/app/more"
-          className="text-primary hover:text-primary/80 group inline-flex items-center gap-2 text-base font-semibold transition-colors"
-        >
-          Explore public decks
-          <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
       </div>
     </section>
   );

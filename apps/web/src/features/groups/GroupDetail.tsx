@@ -541,7 +541,7 @@ export function GroupDetail({ groupId }: Props) {
                     duplicate action is shown when the viewer isn't the
                     deck owner. */}
                 <div className="flex items-center justify-end gap-1 border-t px-3 py-2">
-                  {!d.isYours ? (
+                  {!d.isYours && group.isOwner ? (
                     <Button
                       variant="ghost"
                       size="sm"

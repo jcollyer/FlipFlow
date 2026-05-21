@@ -97,7 +97,6 @@ export default async function HomePage() {
             icon={<HeartHandshake className="h-5 w-5" />}
             title="Collaborate"
             body="Create together or duplicate classmates’ decks"
-            badge="Coming soon"
           />
           <FeatureCard
             icon={<Crown className="h-5 w-5" />}
