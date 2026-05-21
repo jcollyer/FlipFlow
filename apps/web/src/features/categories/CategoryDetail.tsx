@@ -456,7 +456,7 @@ export function CategoryDetail({ categoryId }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
-            <Link href={isOwner ? '/app' : '/app/more'}>
+            <Link href="/app">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Link>
