@@ -10,7 +10,6 @@
 
 A type-safe TypeScript monorepo where one backend powers two clients — a Next.js web app and an Expo / React Native mobile app — with the SM-2 algorithm, Google Translate, Google Cloud Text-to-Speech, and Wiktionary baked in.
 
-
 </div>
 
 ---

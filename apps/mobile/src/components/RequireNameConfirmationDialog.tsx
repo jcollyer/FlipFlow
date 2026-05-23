@@ -83,12 +83,7 @@ export function RequireNameConfirmationDialog({
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleRequestClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
       <TouchableWithoutFeedback onPress={handleRequestClose}>
         <View
           style={{
@@ -151,7 +146,9 @@ export function RequireNameConfirmationDialog({
                       onPress={handleConfirm}
                       disabled={isPending || !isMatch}
                       className={`flex-row items-center justify-center rounded-lg px-4 py-3 ${
-                        isPending || !isMatch ? 'bg-destructive/50' : 'bg-destructive active:opacity-80'
+                        isPending || !isMatch
+                          ? 'bg-destructive/50'
+                          : 'bg-destructive active:opacity-80'
                       }`}
                     >
                       <Text className="font-semibold text-white">{confirmActionLabel}</Text>

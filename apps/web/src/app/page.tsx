@@ -31,9 +31,9 @@ export default async function HomePage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-primary inline-flex size-8 items-center justify-center rounded-full">
-              <p className="text-white font-brand h-12 text-4xl font-semibold">e</p>
+              <p className="font-brand h-12 text-4xl font-semibold text-white">e</p>
             </div>
-            <span className="font-brand text-xl font-semibold leading-none text-primary">
+            <span className="font-brand text-primary text-xl font-semibold leading-none">
               ensemble
             </span>
           </div>
@@ -72,7 +72,8 @@ export default async function HomePage() {
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
             <Link href="/signin" className="group">
-              Get started <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+              Get started{' '}
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>
@@ -115,7 +116,7 @@ export default async function HomePage() {
           <a href="mailto:hello@ensemblelanguage.com" className="text-primary hover:underline">
             hello@ensemblelanguage.com
           </a>
-          <div className="inline-block mx-2 text-gray-300">|</div>
+          <div className="mx-2 inline-block text-gray-300">|</div>
           <Link href="/privacy" className="text-primary hover:underline">
             privacy policy
           </Link>

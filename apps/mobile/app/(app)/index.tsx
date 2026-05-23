@@ -1,5 +1,18 @@
 import { Link, useRouter } from 'expo-router';
-import { ChevronDown, ChevronRight, ChevronUp, FolderPlus, FolderTree, GalleryHorizontalEnd, Layers, LogOut, Play, Plus, Settings, Users } from 'lucide-react-native';
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  FolderPlus,
+  FolderTree,
+  GalleryHorizontalEnd,
+  Layers,
+  LogOut,
+  Play,
+  Plus,
+  Settings,
+  Users,
+} from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -125,9 +138,7 @@ function SignedInHomeScreen() {
   })();
 
   // O(1) lookup for deck details used inside each FolderDrawer.
-  const categoryById = new Map<string, CategoryItem>(
-    (categories ?? []).map((c) => [c.id, c]),
-  );
+  const categoryById = new Map<string, CategoryItem>((categories ?? []).map((c) => [c.id, c]));
 
   const hasFolders = (folders?.length ?? 0) > 0;
   const hasGroups = (groups?.length ?? 0) > 0;
@@ -267,16 +278,34 @@ function SignedInHomeScreen() {
                 {/* User info header */}
                 <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        backgroundColor: '#e2e8f0',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
                       {me?.image ? (
-                        <Image source={{ uri: me.image }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+                        <Image
+                          source={{ uri: me.image }}
+                          style={{ width: 36, height: 36, borderRadius: 18 }}
+                        />
                       ) : (
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#475569' }}>{userInitials}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#475569' }}>
+                          {userInitials}
+                        </Text>
                       )}
                     </View>
                     <View style={{ flex: 1 }}>
                       {me?.name ? (
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a' }} numberOfLines={1}>
+                        <Text
+                          style={{ fontSize: 14, fontWeight: '600', color: '#0f172a' }}
+                          numberOfLines={1}
+                        >
                           {me.name}
                         </Text>
                       ) : null}
@@ -309,7 +338,9 @@ function SignedInHomeScreen() {
                       }}
                     >
                       <Settings size={16} color="#475569" style={{ marginRight: 10 }} />
-                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#0f172a' }}>Settings</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#0f172a' }}>
+                        Settings
+                      </Text>
                     </View>
                   )}
                 </Pressable>
@@ -332,7 +363,9 @@ function SignedInHomeScreen() {
                       }}
                     >
                       <LogOut size={16} color="#ef4444" style={{ marginRight: 10 }} />
-                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#ef4444' }}>Sign out</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#ef4444' }}>
+                        Sign out
+                      </Text>
                     </View>
                   )}
                 </Pressable>
@@ -343,10 +376,14 @@ function SignedInHomeScreen() {
 
         {/* Global stats — mirrors the 4-box row on the deck detail page */}
         <View className="mb-4 flex-row gap-2">
-          <Stat label="Total"      value={stats?.total ?? 0}                              tone="slate" />
-          <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0}  tone="amber" />
-          <Stat label="Good"       value={stats?.difficultyBreakdown?.good ?? 0}          tone="blue"  />
-          <Stat label="Easy"       value={stats?.difficultyBreakdown?.easy ?? 0}          tone="green" />
+          <Stat label="Total" value={stats?.total ?? 0} tone="slate" />
+          <Stat
+            label="Challenging"
+            value={stats?.difficultyBreakdown?.challenging ?? 0}
+            tone="amber"
+          />
+          <Stat label="Good" value={stats?.difficultyBreakdown?.good ?? 0} tone="blue" />
+          <Stat label="Easy" value={stats?.difficultyBreakdown?.easy ?? 0} tone="green" />
         </View>
 
         <View className="gap-6">
@@ -410,10 +447,7 @@ function SignedInHomeScreen() {
                 />
               ))
             ) : (
-              <Pressable
-                onPress={() => router.push('/groups')}
-                className="active:opacity-70"
-              >
+              <Pressable onPress={() => router.push('/groups')} className="active:opacity-70">
                 <Card className="gap-1 border-dashed p-4">
                   <View className="flex-row items-center gap-2">
                     <Users size={18} color="#5584bb" />
@@ -473,11 +507,15 @@ function SignedInHomeScreen() {
         visible={createGroupOpen}
         onClose={() => setCreateGroupOpen(false)}
         mode={{ kind: 'create' }}
-        onSubmit={(values) => createGroup.mutate(values as {
-          name: string;
-          color: string | null;
-          description: string | null;
-        })}
+        onSubmit={(values) =>
+          createGroup.mutate(
+            values as {
+              name: string;
+              color: string | null;
+              description: string | null;
+            },
+          )
+        }
         isPending={createGroup.isPending}
       />
 
@@ -555,17 +593,18 @@ function FolderDrawer({ folder, expanded, onToggle, categoryById }: FolderDrawer
                 {folder.deckCount} {folder.deckCount === 1 ? 'deck' : 'decks'}
               </Text>
             </View>
-            {expanded
-              ? <ChevronUp size={16} color="#94a3b8" />
-              : <ChevronDown size={16} color="#94a3b8" />
-            }
+            {expanded ? (
+              <ChevronUp size={16} color="#94a3b8" />
+            ) : (
+              <ChevronDown size={16} color="#94a3b8" />
+            )}
           </View>
         </View>
       </Pressable>
 
       {/* Expanded deck list */}
       {expanded ? (
-        <View className="border-t border-border">
+        <View className="border-border border-t">
           {decks.length === 0 ? (
             <View className="items-center gap-2 px-4 py-6">
               <Text className="text-sm text-slate-400">No decks in this folder yet.</Text>
@@ -665,7 +704,7 @@ function GroupDrawer({ group, expanded, onToggle, onManage }: GroupDrawerProps) 
       </Pressable>
 
       {expanded ? (
-        <View className="border-t border-border">
+        <View className="border-border border-t">
           {group.includedDecks.length === 0 ? (
             <View className="px-4 py-3">
               <Text className="text-sm text-slate-400">No decks in this group yet.</Text>

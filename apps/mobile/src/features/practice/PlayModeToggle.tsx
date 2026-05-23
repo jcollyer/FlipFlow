@@ -29,9 +29,7 @@ export function PlayModeToggle({ value, onChange }: PlayModeToggleProps) {
         accessibilityRole="radio"
         accessibilityState={{ selected: value === 'in_order' }}
         onPress={() => onChange('in_order')}
-        className={`rounded-full px-3 py-1.5 ${
-          value === 'in_order' ? 'bg-white shadow-sm' : ''
-        }`}
+        className={`rounded-full px-3 py-1.5 ${value === 'in_order' ? 'bg-white shadow-sm' : ''}`}
       >
         <Text
           className={`text-xs font-medium ${
@@ -45,9 +43,7 @@ export function PlayModeToggle({ value, onChange }: PlayModeToggleProps) {
         accessibilityRole="radio"
         accessibilityState={{ selected: value === 'shuffle' }}
         onPress={() => onChange('shuffle')}
-        className={`rounded-full px-3 py-1.5 ${
-          value === 'shuffle' ? 'bg-white shadow-sm' : ''
-        }`}
+        className={`rounded-full px-3 py-1.5 ${value === 'shuffle' ? 'bg-white shadow-sm' : ''}`}
       >
         <Text
           className={`text-xs font-medium ${

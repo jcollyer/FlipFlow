@@ -224,9 +224,7 @@ function SortableCard({
                 {gender ? (
                   <>
                     <span className="text-muted-foreground shrink-0">-</span>
-                    <span className="text-muted-foreground shrink-0">
-                      {genderLabel(gender)}
-                    </span>
+                    <span className="text-muted-foreground shrink-0">{genderLabel(gender)}</span>
                   </>
                 ) : null}
                 {verbType ? (
@@ -1803,11 +1801,7 @@ function EditCategoryDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-deck-name">Name</Label>
-            <Input
-              id="edit-deck-name"
-              placeholder="e.g. French verbs"
-              {...form.register('name')}
-            />
+            <Input id="edit-deck-name" placeholder="e.g. French verbs" {...form.register('name')} />
             {form.formState.errors.name ? (
               <p className="text-destructive text-sm">{form.formState.errors.name.message}</p>
             ) : null}

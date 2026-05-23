@@ -246,9 +246,7 @@ export function PracticeSession({
                 frontExamples={current?.frontExamples ?? []}
                 backExamples={current?.backExamples ?? []}
                 cardClass={current?.class ?? null}
-                gender={
-                  (current as { gender?: string | null } | undefined)?.gender ?? null
-                }
+                gender={(current as { gender?: string | null } | undefined)?.gender ?? null}
                 pronunciation={
                   (current as { pronunciation?: string | null } | undefined)?.pronunciation ?? null
                 }

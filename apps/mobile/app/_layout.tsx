@@ -1,10 +1,7 @@
 import 'react-native-gesture-handler';
 import '../global.css';
 
-import {
-  BodoniModa_400Regular,
-  BodoniModa_700Bold,
-} from '@expo-google-fonts/bodoni-moda';
+import { BodoniModa_400Regular, BodoniModa_700Bold } from '@expo-google-fonts/bodoni-moda';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

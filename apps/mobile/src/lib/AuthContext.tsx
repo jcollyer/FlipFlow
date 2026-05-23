@@ -89,31 +89,26 @@ export function useRequireAuth() {
         onAuthed();
         return;
       }
-      Alert.alert(
-        opts?.title ?? 'Sign in required',
-        opts?.reason ?? 'Sign in to continue.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Sign in',
-            onPress: async () => {
-              try {
-                await signIn();
-                // The auth state update will re-render anything that depends
-                // on `session`, but the caller's specific action still needs
-                // to fire — e.g. they were trying to push to /new-deck.
-                onAuthed();
-              } catch (err) {
-                const message =
-                  err instanceof Error ? err.message : 'Something went wrong.';
-                if (message !== 'Sign in was cancelled.') {
-                  Alert.alert('Sign in failed', message);
-                }
+      Alert.alert(opts?.title ?? 'Sign in required', opts?.reason ?? 'Sign in to continue.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign in',
+          onPress: async () => {
+            try {
+              await signIn();
+              // The auth state update will re-render anything that depends
+              // on `session`, but the caller's specific action still needs
+              // to fire — e.g. they were trying to push to /new-deck.
+              onAuthed();
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Something went wrong.';
+              if (message !== 'Sign in was cancelled.') {
+                Alert.alert('Sign in failed', message);
               }
-            },
+            }
           },
-        ],
-      );
+        },
+      ]);
     },
     [session, signIn],
   );

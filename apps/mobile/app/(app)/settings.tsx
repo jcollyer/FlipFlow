@@ -231,9 +231,7 @@ export default function SettingsScreen() {
 
         nextImage = publicUrl;
       } catch (err) {
-        setAvatarError(
-          err instanceof Error ? err.message : 'Upload failed. Please try again.',
-        );
+        setAvatarError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
         setIsUploading(false);
         return;
       } finally {
@@ -417,9 +415,7 @@ export default function SettingsScreen() {
           style={{ opacity: 0.6 }}
         />
 
-        {savedAt && !dirty ? (
-          <Text className="text-xs text-slate-500">Settings saved.</Text>
-        ) : null}
+        {savedAt && !dirty ? <Text className="text-xs text-slate-500">Settings saved.</Text> : null}
       </Card>
 
       {/* ── Privacy card ─────────────────────────────────────────────────── */}
@@ -442,7 +438,10 @@ export default function SettingsScreen() {
           </View>
           <Switch
             value={allowPublicUser}
-            onValueChange={(v) => { setAllowPublicUser(v); setSavedAt(null); }}
+            onValueChange={(v) => {
+              setAllowPublicUser(v);
+              setSavedAt(null);
+            }}
             trackColor={{ false: '#cbd5e1', true: '#5584bb' }}
             thumbColor="#ffffff"
           />
@@ -464,7 +463,10 @@ export default function SettingsScreen() {
           </View>
           <Switch
             value={!defaultDeckPrivate}
-            onValueChange={(v) => { setDefaultDeckPrivate(!v); setSavedAt(null); }}
+            onValueChange={(v) => {
+              setDefaultDeckPrivate(!v);
+              setSavedAt(null);
+            }}
             trackColor={{ false: '#cbd5e1', true: '#5584bb' }}
             thumbColor="#ffffff"
           />
@@ -485,10 +487,7 @@ export default function SettingsScreen() {
         <Text className="text-base font-semibold text-slate-900">Account</Text>
 
         {!showDeleteConfirm ? (
-          <Pressable
-            onPress={() => setShowDeleteConfirm(true)}
-            disabled={deleteAccount.isPending}
-          >
+          <Pressable onPress={() => setShowDeleteConfirm(true)} disabled={deleteAccount.isPending}>
             {({ pressed }) => (
               <View
                 style={{

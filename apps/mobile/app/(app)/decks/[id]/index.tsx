@@ -145,10 +145,14 @@ export default function DeckDetailScreen() {
             <View className="flex-row gap-2">
               {isOwner ? (
                 <>
-                  <Stat label="Total"       value={stats?.total ?? cards.length}                  tone="slate" />
-                  <Stat label="Challenging" value={stats?.difficultyBreakdown?.challenging ?? 0}  tone="amber" />
-                  <Stat label="Good"        value={stats?.difficultyBreakdown?.good ?? 0}         tone="blue"  />
-                  <Stat label="Easy"        value={stats?.difficultyBreakdown?.easy ?? 0}         tone="green" />
+                  <Stat label="Total" value={stats?.total ?? cards.length} tone="slate" />
+                  <Stat
+                    label="Challenging"
+                    value={stats?.difficultyBreakdown?.challenging ?? 0}
+                    tone="amber"
+                  />
+                  <Stat label="Good" value={stats?.difficultyBreakdown?.good ?? 0} tone="blue" />
+                  <Stat label="Easy" value={stats?.difficultyBreakdown?.easy ?? 0} tone="green" />
                 </>
               ) : null}
             </View>
@@ -222,12 +226,13 @@ export default function DeckDetailScreen() {
                 </View>
               </View>
             ) : null}
-
           </View>
         }
         renderItem={({ item, index: itemIndex }) => (
           <Pressable onPress={() => setPreviewIndex(itemIndex)} className="active:opacity-80">
-            <Card className={`gap-3 p-4 ${cardViewMode === 'list' ? 'flex-row items-center' : 'flex-row items-start'}`}>
+            <Card
+              className={`gap-3 p-4 ${cardViewMode === 'list' ? 'flex-row items-center' : 'flex-row items-start'}`}
+            >
               <View className="flex-1 gap-1">
                 {cardViewMode === 'list' ? (
                   /* ── List mode: condensed single-line row ── */
@@ -400,4 +405,3 @@ export default function DeckDetailScreen() {
     </View>
   );
 }
-

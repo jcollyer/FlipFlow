@@ -120,8 +120,8 @@ export function GroupsDashboard() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{inv.group.name}</p>
                     <p className="text-muted-foreground truncate text-xs">
-                      Invited by {inv.invitedBy.name ?? 'someone'} ·{' '}
-                      {inv.group.memberCount} {inv.group.memberCount === 1 ? 'member' : 'members'}
+                      Invited by {inv.invitedBy.name ?? 'someone'} · {inv.group.memberCount}{' '}
+                      {inv.group.memberCount === 1 ? 'member' : 'members'}
                     </p>
                   </div>
                 </div>

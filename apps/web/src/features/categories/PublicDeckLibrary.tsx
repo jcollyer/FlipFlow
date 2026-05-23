@@ -40,7 +40,8 @@ export function PublicDeckLibrary() {
         </Button>
         <h1 className="text-3xl font-semibold tracking-tight">Public decks</h1>
         <p className="text-muted-foreground text-sm">
-          Duplicate a deck to springboard off of and edit to make it your own, or play a deck to practice sample sentences new to you.
+          Duplicate a deck to springboard off of and edit to make it your own, or play a deck to
+          practice sample sentences new to you.
         </p>
       </div>
 
@@ -144,7 +145,7 @@ export function PublicDeckLibrary() {
                                   <Layers className="h-3.5 w-3.5" />
                                   {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
                                 </div>
-                                     {deck.description ? (
+                                {deck.description ? (
                                   <p className="text-muted-foreground mt-0.5 line-clamp-2 text-sm">
                                     {deck.description}
                                   </p>

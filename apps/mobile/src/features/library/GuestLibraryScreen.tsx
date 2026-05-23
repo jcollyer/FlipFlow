@@ -69,9 +69,7 @@ export function GuestLibraryScreen() {
         <View className="mb-4 flex-row items-center justify-between">
           <View>
             <Text className="text-2xl font-bold text-slate-900">Public library</Text>
-            <Text className="text-sm text-slate-500">
-              Browse decks shared by other learners.
-            </Text>
+            <Text className="text-sm text-slate-500">Browse decks shared by other learners.</Text>
           </View>
           <Pressable
             onPress={handleSignIn}
@@ -93,8 +91,8 @@ export function GuestLibraryScreen() {
             </Text>
           </View>
           <Text className="text-sm text-slate-500">
-            Tap any deck below to practice its cards. Sign in to create your own decks,
-            track progress with spaced repetition, and share with study groups.
+            Tap any deck below to practice its cards. Sign in to create your own decks, track
+            progress with spaced repetition, and share with study groups.
           </Text>
         </Card>
 
@@ -105,9 +103,7 @@ export function GuestLibraryScreen() {
           </View>
         ) : (library?.length ?? 0) === 0 ? (
           <Card className="items-center gap-3 border-dashed p-10">
-            <Text className="text-base font-semibold text-slate-900">
-              No public decks yet
-            </Text>
+            <Text className="text-base font-semibold text-slate-900">No public decks yet</Text>
             <Text className="text-center text-sm text-slate-500">
               Be the first — sign in and make a deck public from its settings.
             </Text>
@@ -159,9 +155,7 @@ function LibraryUserSection({ user }: { user: LibraryUser }) {
               style={{ width: 28, height: 28, borderRadius: 14 }}
             />
           ) : (
-            <Text className="text-xs font-semibold text-slate-600">
-              {initialsFor(user.name)}
-            </Text>
+            <Text className="text-xs font-semibold text-slate-600">{initialsFor(user.name)}</Text>
           )}
         </View>
         <Text className="flex-1 text-sm font-semibold text-slate-900" numberOfLines={1}>

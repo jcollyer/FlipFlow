@@ -117,7 +117,11 @@ export function GroupModal({ open, onOpenChange, mode }: Props) {
         >
           <div className="space-y-2">
             <Label htmlFor="group-name">Name</Label>
-            <Input id="group-name" placeholder="e.g. French class — Spring '26" {...form.register('name')} />
+            <Input
+              id="group-name"
+              placeholder="e.g. French class — Spring '26"
+              {...form.register('name')}
+            />
             {form.formState.errors.name ? (
               <p className="text-destructive text-sm">{form.formState.errors.name.message}</p>
             ) : null}

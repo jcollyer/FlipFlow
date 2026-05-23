@@ -35,9 +35,13 @@ export default function SignInScreen() {
       <View className="flex-1 items-center justify-center px-8">
         <View className="mb-10 items-center">
           <View className="bg-primary mb-4 h-16 w-16 items-center justify-center rounded-2xl">
-            <Text className="text-3xl text-white" style={{ fontFamily: 'BodoniModa_700Bold' }}>e</Text>
+            <Text className="text-3xl text-white" style={{ fontFamily: 'BodoniModa_700Bold' }}>
+              e
+            </Text>
           </View>
-          <Text className="text-3xl text-slate-900" style={{ fontFamily: 'BodoniModa_700Bold' }}>ensemble</Text>
+          <Text className="text-3xl text-slate-900" style={{ fontFamily: 'BodoniModa_700Bold' }}>
+            ensemble
+          </Text>
           <Text className="mt-2 text-center text-base text-slate-500">
             Flashcards with spaced repetition.
           </Text>
@@ -56,8 +60,8 @@ export default function SignInScreen() {
         </Pressable>
 
         <Text className="mt-6 px-4 text-center text-xs text-slate-400">
-          You'll be taken to your browser to sign in with Apple, Google, or a magic link,
-          then bounced right back here.
+          You'll be taken to your browser to sign in with Apple, Google, or a magic link, then
+          bounced right back here.
         </Text>
       </View>
     </SafeAreaView>

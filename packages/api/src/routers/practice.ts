@@ -217,7 +217,8 @@ export const practiceRouter = router({
         }),
       ]);
 
-      const challenging = progressBreakdown.find((r) => r.difficultyLevel === 'challenging')?._count?._all ?? 0;
+      const challenging =
+        progressBreakdown.find((r) => r.difficultyLevel === 'challenging')?._count?._all ?? 0;
       const good = progressBreakdown.find((r) => r.difficultyLevel === 'good')?._count?._all ?? 0;
       const easy = progressBreakdown.find((r) => r.difficultyLevel === 'easy')?._count?._all ?? 0;
 

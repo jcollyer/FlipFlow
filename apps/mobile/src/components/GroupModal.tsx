@@ -1,18 +1,7 @@
 import { useEffect, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
-import {
-  DECK_FOLDER_COLOR_PALETTE,
-  GroupCreateInput,
-  GroupUpdateInput,
-} from '@ensemble/types';
+import { DECK_FOLDER_COLOR_PALETTE, GroupCreateInput, GroupUpdateInput } from '@ensemble/types';
 
 import { Button } from './Button';
 import { TextField } from './TextField';
@@ -130,10 +119,7 @@ export function GroupModal({ visible, onClose, mode, onSubmit, isPending }: Prop
           <View style={{ width: 56 }} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={{ padding: 20 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
           <Text className="mb-6 text-base text-slate-500">
             {isEdit
               ? 'Update the group name, color, or description.'

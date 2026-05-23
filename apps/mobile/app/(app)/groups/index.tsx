@@ -52,7 +52,9 @@ export default function GroupsScreen() {
     onError: (err) => Alert.alert('Could not delete group', err.message),
   });
 
-  const editing = editingId ? (groups ?? []).find((group) => group.id === editingId) ?? null : null;
+  const editing = editingId
+    ? ((groups ?? []).find((group) => group.id === editingId) ?? null)
+    : null;
 
   if (isLoading && !groups) {
     return (
@@ -76,7 +78,8 @@ export default function GroupsScreen() {
               <View className="flex-1 gap-1">
                 <Text className="text-2xl font-bold text-slate-900">Your groups</Text>
                 <Text className="text-sm text-slate-500">
-                  Share decks with other people. Anyone in a group can add their own decks and cards.
+                  Share decks with other people. Anyone in a group can add their own decks and
+                  cards.
                 </Text>
               </View>
               <Button size="sm" onPress={() => setCreateOpen(true)}>
@@ -104,7 +107,10 @@ export default function GroupsScreen() {
                         />
                         <View className="flex-1">
                           <View className="flex-row items-center gap-2">
-                            <Text className="text-base font-semibold text-slate-900" numberOfLines={1}>
+                            <Text
+                              className="text-base font-semibold text-slate-900"
+                              numberOfLines={1}
+                            >
                               {group.name}
                             </Text>
                             {group.isOwner ? (

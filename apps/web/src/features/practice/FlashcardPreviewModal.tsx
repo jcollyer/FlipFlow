@@ -136,7 +136,7 @@ export function FlashcardPreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className=" max-w-3xl gap-0 p-6">
+      <DialogContent className="max-w-3xl gap-0 p-6">
         {/* Visually hidden title for screen readers */}
         <DialogTitle className="sr-only">Flashcard preview</DialogTitle>
 

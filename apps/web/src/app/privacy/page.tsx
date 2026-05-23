@@ -32,18 +32,15 @@ export default function PrivacyPage() {
       {/* Content */}
       <main className="container mx-auto max-w-3xl px-4 py-16">
         <h1 className="font-brand text-primary mb-2 text-4xl font-semibold">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-10 text-sm">
-          Effective date: {EFFECTIVE_DATE}
-        </p>
+        <p className="text-muted-foreground mb-10 text-sm">Effective date: {EFFECTIVE_DATE}</p>
 
         <div className="prose prose-slate max-w-none space-y-10 text-gray-700">
-
           {/* 1. Introduction */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900">1. Introduction</h2>
             <p>
-              {COMPANY} ("we," "us," or "our") operates the {APP_NAME} language learning
-              application and website at{' '}
+              {COMPANY} ("we," "us," or "our") operates the {APP_NAME} language learning application
+              and website at{' '}
               <a href={WEBSITE} className="text-primary hover:underline">
                 {WEBSITE}
               </a>{' '}
@@ -51,8 +48,8 @@ export default function PrivacyPage() {
               collect, how we use it, who we share it with, and the choices you have.
             </p>
             <p className="mt-3">
-              By using the Service, you agree to the collection and use of information in
-              accordance with this policy. If you do not agree, please do not use the Service.
+              By using the Service, you agree to the collection and use of information in accordance
+              with this policy. If you do not agree, please do not use the Service.
             </p>
           </section>
 
@@ -73,8 +70,8 @@ export default function PrivacyPage() {
                 create, including any text, translations, and notes you enter.
               </li>
               <li>
-                <strong>Profile photo:</strong> If you choose to upload one, your photo is stored
-                on our servers. You can remove it at any time from Settings.
+                <strong>Profile photo:</strong> If you choose to upload one, your photo is stored on
+                our servers. You can remove it at any time from Settings.
               </li>
             </ul>
 
@@ -84,8 +81,8 @@ export default function PrivacyPage() {
             <ul className="mt-2 list-disc space-y-1 pl-6">
               <li>
                 <strong>Practice history:</strong> Your flashcard practice sessions, self-rated
-                recall scores, and spaced-repetition scheduling data (SM-2 algorithm parameters)
-                so the app can show you cards at the right time.
+                recall scores, and spaced-repetition scheduling data (SM-2 algorithm parameters) so
+                the app can show you cards at the right time.
               </li>
               <li>
                 <strong>Audio files:</strong> When you use the text-to-speech feature, audio
@@ -93,9 +90,9 @@ export default function PrivacyPage() {
                 without regenerating each time.
               </li>
               <li>
-                <strong>Session tokens:</strong> When you sign in, we store a secure session
-                token on your device to keep you signed in. This token is stored in your device's
-                secure enclave (iOS Keychain via expo-secure-store).
+                <strong>Session tokens:</strong> When you sign in, we store a secure session token
+                on your device to keep you signed in. This token is stored in your device's secure
+                enclave (iOS Keychain via expo-secure-store).
               </li>
             </ul>
 
@@ -109,10 +106,10 @@ export default function PrivacyPage() {
                 browser type). This data does not identify you personally.
               </li>
               <li>
-                <strong>Log data:</strong> Our hosting infrastructure may automatically log
-                standard server request information such as IP address, request timestamp, and
-                HTTP status codes for security and diagnostic purposes. These logs are retained
-                for a short period and are not used for marketing.
+                <strong>Log data:</strong> Our hosting infrastructure may automatically log standard
+                server request information such as IP address, request timestamp, and HTTP status
+                codes for security and diagnostic purposes. These logs are retained for a short
+                period and are not used for marketing.
               </li>
             </ul>
           </section>
@@ -127,8 +124,8 @@ export default function PrivacyPage() {
               <li>Create and manage your account and authenticate your identity</li>
               <li>Provide and improve the Service, including spaced-repetition scheduling</li>
               <li>
-                Generate translations and audio pronunciations for cards you create using
-                Google Cloud Translate and Text-to-Speech
+                Generate translations and audio pronunciations for cards you create using Google
+                Cloud Translate and Text-to-Speech
               </li>
               <li>Send transactional emails (sign-in magic links, group invitations)</li>
               <li>Respond to your support requests and questions</li>
@@ -136,8 +133,8 @@ export default function PrivacyPage() {
               <li>Analyze aggregate usage patterns to improve the Service</li>
             </ul>
             <p className="mt-3">
-              We do not use your flashcard content or practice history for advertising purposes,
-              and we do not sell your personal information to third parties.
+              We do not use your flashcard content or practice history for advertising purposes, and
+              we do not sell your personal information to third parties.
             </p>
           </section>
 
@@ -145,8 +142,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900">4. Third-Party Services</h2>
             <p>
-              We rely on the following third-party services to operate the Service. Each has its
-              own privacy policy governing their handling of data.
+              We rely on the following third-party services to operate the Service. Each has its own
+              privacy policy governing their handling of data.
             </p>
 
             <div className="mt-4 space-y-4">
@@ -194,35 +191,32 @@ export default function PrivacyPage() {
               5. Data Storage and Security
             </h2>
             <p>
-              Your data is stored on servers located in the United States (AWS and Neon,
-              us-east-1 region; Vercel infrastructure). If you are located outside the United
-              States, your information is transferred to and processed in the United States.
+              Your data is stored on servers located in the United States (AWS and Neon, us-east-1
+              region; Vercel infrastructure). If you are located outside the United States, your
+              information is transferred to and processed in the United States.
             </p>
             <p className="mt-3">
               We use industry-standard measures to protect your data, including encrypted
-              connections (HTTPS/TLS) for all data in transit, encrypted database connections,
-              and secure token storage on mobile devices via the iOS Keychain. However, no
-              method of transmission or storage is 100% secure, and we cannot guarantee absolute
-              security.
+              connections (HTTPS/TLS) for all data in transit, encrypted database connections, and
+              secure token storage on mobile devices via the iOS Keychain. However, no method of
+              transmission or storage is 100% secure, and we cannot guarantee absolute security.
             </p>
           </section>
 
           {/* 6. Children's Privacy (COPPA) */}
           <section>
-            <h2 className="mb-3 text-xl font-semibold text-gray-900">
-              6. Children's Privacy
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">6. Children's Privacy</h2>
             <p>
-              The Service is available to users of all ages. We are committed to complying with
-              the Children's Online Privacy Protection Act (COPPA) and similar laws regarding the
+              The Service is available to users of all ages. We are committed to complying with the
+              Children's Online Privacy Protection Act (COPPA) and similar laws regarding the
               privacy of children under 13.
             </p>
             <p className="mt-3">
               <strong>Users under 13:</strong> If you are under 13 years of age, you must have
-              verifiable consent from a parent or legal guardian before creating an account or
-              using the Service. By creating an account on behalf of a child under 13, the
-              parent or guardian represents that they have reviewed this Privacy Policy and
-              consent to our collection and use of the child's information as described herein.
+              verifiable consent from a parent or legal guardian before creating an account or using
+              the Service. By creating an account on behalf of a child under 13, the parent or
+              guardian represents that they have reviewed this Privacy Policy and consent to our
+              collection and use of the child's information as described herein.
             </p>
             <p className="mt-3">
               We do not knowingly collect personal information from children under 13 without
@@ -248,26 +242,23 @@ export default function PrivacyPage() {
 
           {/* 7. Your Rights */}
           <section>
-            <h2 className="mb-3 text-xl font-semibold text-gray-900">
-              7. Your Privacy Rights
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">7. Your Privacy Rights</h2>
 
             <h3 className="mb-2 mt-4 text-base font-semibold text-gray-800">All users</h3>
             <p>Regardless of where you are located, you have the right to:</p>
             <ul className="mt-2 list-disc space-y-1 pl-6">
               <li>
-                <strong>Access and update your data:</strong> View and edit your profile
-                information at any time in the Settings screen.
+                <strong>Access and update your data:</strong> View and edit your profile information
+                at any time in the Settings screen.
               </li>
               <li>
                 <strong>Delete your account:</strong> Permanently delete your account and all
-                associated data directly from the Settings screen in the app, or by contacting us
-                at{' '}
+                associated data directly from the Settings screen in the app, or by contacting us at{' '}
                 <a href={`mailto:${PRIVACY_EMAIL}`} className="text-primary hover:underline">
                   {PRIVACY_EMAIL}
                 </a>
-                . Deletion is irreversible and removes all your decks, cards, practice history,
-                and account information.
+                . Deletion is irreversible and removes all your decks, cards, practice history, and
+                account information.
               </li>
             </ul>
 
@@ -276,13 +267,13 @@ export default function PrivacyPage() {
             </h3>
             <p>
               If you are located in the European Economic Area (EEA) or the United Kingdom, the
-              General Data Protection Regulation (GDPR) or UK GDPR applies to our processing of
-              your personal data. Our legal basis for processing your data is:
+              General Data Protection Regulation (GDPR) or UK GDPR applies to our processing of your
+              personal data. Our legal basis for processing your data is:
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-6">
               <li>
-                <strong>Contract performance:</strong> Processing your email, name, and content
-                is necessary to provide the Service you signed up for.
+                <strong>Contract performance:</strong> Processing your email, name, and content is
+                necessary to provide the Service you signed up for.
               </li>
               <li>
                 <strong>Legitimate interests:</strong> Security monitoring and aggregate analytics
@@ -298,15 +289,11 @@ export default function PrivacyPage() {
               <li>Access a copy of the personal data we hold about you</li>
               <li>Correct inaccurate personal data</li>
               <li>Request erasure of your personal data ("right to be forgotten")</li>
+              <li>Restrict or object to certain processing (e.g., opting out of analytics)</li>
+              <li>Data portability — receive your data in a structured, machine-readable format</li>
               <li>
-                Restrict or object to certain processing (e.g., opting out of analytics)
-              </li>
-              <li>
-                Data portability — receive your data in a structured, machine-readable format
-              </li>
-              <li>
-                Lodge a complaint with your local supervisory authority (e.g., the ICO in the
-                UK, or your EU Member State's data protection authority)
+                Lodge a complaint with your local supervisory authority (e.g., the ICO in the UK, or
+                your EU Member State's data protection authority)
               </li>
             </ul>
             <p className="mt-3">
@@ -319,8 +306,8 @@ export default function PrivacyPage() {
             </p>
             <p className="mt-3">
               Because your data is stored in the United States, international data transfers from
-              the EEA/UK are covered by Standard Contractual Clauses (SCCs) or equivalent
-              mechanisms as required by applicable law.
+              the EEA/UK are covered by Standard Contractual Clauses (SCCs) or equivalent mechanisms
+              as required by applicable law.
             </p>
           </section>
 
@@ -330,8 +317,8 @@ export default function PrivacyPage() {
             <p>
               We retain your personal data for as long as your account is active or as needed to
               provide the Service. If you delete your account, we will delete or anonymize your
-              personal data within 30 days, except where we are required to retain it for legal
-              or compliance purposes (e.g., fraud prevention records).
+              personal data within 30 days, except where we are required to retain it for legal or
+              compliance purposes (e.g., fraud prevention records).
             </p>
             <p className="mt-3">
               Audio files generated by the text-to-speech feature are retained as long as the
@@ -341,15 +328,13 @@ export default function PrivacyPage() {
 
           {/* 9. Changes */}
           <section>
-            <h2 className="mb-3 text-xl font-semibold text-gray-900">
-              9. Changes to This Policy
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">9. Changes to This Policy</h2>
             <p>
-              We may update this Privacy Policy from time to time. When we do, we will revise
-              the "Effective date" at the top of this page. For significant changes, we will
-              notify you by email or through a notice in the app before the change takes effect.
-              Your continued use of the Service after the effective date constitutes your
-              acceptance of the updated policy.
+              We may update this Privacy Policy from time to time. When we do, we will revise the
+              "Effective date" at the top of this page. For significant changes, we will notify you
+              by email or through a notice in the app before the change takes effect. Your continued
+              use of the Service after the effective date constitutes your acceptance of the updated
+              policy.
             </p>
           </section>
 
@@ -357,8 +342,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900">10. Contact Us</h2>
             <p>
-              If you have any questions, concerns, or requests regarding this Privacy Policy or
-              our data practices, please contact us:
+              If you have any questions, concerns, or requests regarding this Privacy Policy or our
+              data practices, please contact us:
             </p>
             <address className="mt-3 not-italic">
               <p className="font-medium">{COMPANY}</p>
@@ -376,7 +361,6 @@ export default function PrivacyPage() {
               </p>
             </address>
           </section>
-
         </div>
       </main>
 
@@ -397,15 +381,7 @@ export default function PrivacyPage() {
   );
 }
 
-function ThirdParty({
-  name,
-  purpose,
-  link,
-}: {
-  name: string;
-  purpose: string;
-  link: string;
-}) {
+function ThirdParty({ name, purpose, link }: { name: string; purpose: string; link: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
       <p className="font-semibold text-gray-900">{name}</p>

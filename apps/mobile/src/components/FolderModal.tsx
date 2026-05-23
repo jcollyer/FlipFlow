@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { DECK_FOLDER_COLOR_PALETTE } from '@ensemble/types';
 
@@ -113,10 +106,7 @@ export function FolderModal({ visible, onClose, mode, onSubmit, isPending }: Pro
           <View style={{ width: 56 }} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={{ padding: 20 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
           <Text className="mb-6 text-base text-slate-500">
             {isEdit
               ? 'Update the folder name, color, or description.'

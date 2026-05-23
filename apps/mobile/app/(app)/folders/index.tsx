@@ -56,7 +56,7 @@ export default function FoldersScreen() {
   });
 
   const editing = editingId
-    ? (folders ?? []).find((folder) => folder.id === editingId) ?? null
+    ? ((folders ?? []).find((folder) => folder.id === editingId) ?? null)
     : null;
 
   function confirmDeleteFolder(folderId: string, folderName: string) {
@@ -120,10 +120,7 @@ export default function FoldersScreen() {
                         style={{ backgroundColor: folder.color ?? '#94a3b8' }}
                       />
                       <View className="flex-1">
-                        <Text
-                          className="text-base font-semibold text-slate-900"
-                          numberOfLines={1}
-                        >
+                        <Text className="text-base font-semibold text-slate-900" numberOfLines={1}>
                           {folder.name}
                         </Text>
                         {folder.description ? (

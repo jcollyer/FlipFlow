@@ -73,9 +73,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
     { enabled: deckMode },
   );
 
-  const baseCards = deckMode
-    ? (deckCardsQuery.data ?? [])
-    : (allCardsQuery.data ?? []);
+  const baseCards = deckMode ? (deckCardsQuery.data ?? []) : (allCardsQuery.data ?? []);
 
   const filteredCards = useMemo(() => {
     let result = baseCards;

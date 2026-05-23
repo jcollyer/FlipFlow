@@ -32,9 +32,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="container flex h-14 items-center justify-between">
           <Link href="/app" className="flex items-center gap-2">
             <div className="bg-primary inline-flex size-8 items-center justify-center rounded-full">
-              <p className="text-white font-brand h-11 text-4xl font-semibold leading-none">e</p>
+              <p className="font-brand h-11 text-4xl font-semibold leading-none text-white">e</p>
             </div>
-            <span className="font-brand text-xl font-semibold leading-none text-primary">
+            <span className="font-brand text-primary text-xl font-semibold leading-none">
               ensemble
             </span>
           </Link>

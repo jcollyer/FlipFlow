@@ -86,7 +86,9 @@ export default function GroupDetailScreen() {
       if (result.status === 'invited') {
         setInviteMessage(`Invited ${result.target.name ?? result.target.email}.`);
       } else if (result.status === 'already_invited') {
-        setInviteMessage(`${result.target.name ?? result.target.email} already has a pending invite.`);
+        setInviteMessage(
+          `${result.target.name ?? result.target.email} already has a pending invite.`,
+        );
       } else {
         setInviteMessage(`${result.target.name ?? result.target.email} is already in this group.`);
       }
@@ -197,7 +199,8 @@ export default function GroupDetailScreen() {
                   ) : null}
                 </View>
                 <Text className="text-sm text-slate-500">
-                  Share decks with other people. Anyone in a group can add their own decks and cards.
+                  Share decks with other people. Anyone in a group can add their own decks and
+                  cards.
                 </Text>
               </View>
             </View>
@@ -373,7 +376,10 @@ export default function GroupDetailScreen() {
                       />
                       <View className="flex-1">
                         <View className="flex-row items-center gap-2">
-                          <Text className="text-base font-semibold text-slate-900" numberOfLines={1}>
+                          <Text
+                            className="text-base font-semibold text-slate-900"
+                            numberOfLines={1}
+                          >
                             {deck.name}
                           </Text>
                           {!deck.isYours ? (
@@ -420,7 +426,7 @@ export default function GroupDetailScreen() {
             {group.members.map((member) => (
               <Card key={member.id} className="p-4">
                 <View className="flex-row items-center gap-3">
-                  <View className="bg-slate-200 h-10 w-10 items-center justify-center rounded-full">
+                  <View className="h-10 w-10 items-center justify-center rounded-full bg-slate-200">
                     <Users size={18} color="#64748b" />
                   </View>
                   <View className="flex-1">

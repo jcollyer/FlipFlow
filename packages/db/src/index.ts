@@ -36,8 +36,7 @@ if (cachedPrisma && !canReusePrismaClient(cachedPrisma)) {
   globalThis.__ensemble_prisma__ = undefined;
 }
 
-export const prisma: PrismaClient =
-  globalThis.__ensemble_prisma__ ?? createPrismaClient();
+export const prisma: PrismaClient = globalThis.__ensemble_prisma__ ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.__ensemble_prisma__ = prisma;

@@ -234,30 +234,30 @@ export function CategoriesDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setFolderOpen(true);
-            }}
-          >
-            <FolderPlus className="h-4 w-4" />
-            New folder
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              form.setValue('private', me?.defaultDeckPrivate ?? true);
-              form.setValue('backLanguage', (me?.defaultLanguage as never) ?? null);
-              setDeckOpen(true);
-            }}
-          >
-            <ListPlus className="h-4 w-4" />
-            New deck
-          </Button>
-          <Button onClick={() => setPlayOpen(true)}>
-            <Play className="h-4 w-4" />
-            Play
-          </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setFolderOpen(true);
+          }}
+        >
+          <FolderPlus className="h-4 w-4" />
+          New folder
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            form.setValue('private', me?.defaultDeckPrivate ?? true);
+            form.setValue('backLanguage', (me?.defaultLanguage as never) ?? null);
+            setDeckOpen(true);
+          }}
+        >
+          <ListPlus className="h-4 w-4" />
+          New deck
+        </Button>
+        <Button onClick={() => setPlayOpen(true)}>
+          <Play className="h-4 w-4" />
+          Play
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -303,14 +303,11 @@ export function CategoriesDashboard() {
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-gray-800">Create your first Folder</h3>
             <p className="text-sm text-gray-500">
-              Folders help you organise your decks by topic, subject, or any structure that works for you.
+              Folders help you organise your decks by topic, subject, or any structure that works
+              for you.
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setFolderOpen(true)}
-            className="mt-1"
-          >
+          <Button variant="outline" onClick={() => setFolderOpen(true)} className="mt-1">
             <FolderPlus className="h-4 w-4" />
             New folder
           </Button>
@@ -384,9 +381,7 @@ export function CategoriesDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Users className="text-muted-foreground h-4 w-4" />
-            <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">
-              Groups
-            </h2>
+            <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">Groups</h2>
           </div>
           <Link
             href="/app/groups"
@@ -924,11 +919,11 @@ function LearningTogetherSection() {
 
   useEffect(() => {
     const dismissed = localStorage.getItem(LEARNING_TOGETHER_KEY);
-    setVisible(dismissed !== "true");
+    setVisible(dismissed !== 'true');
   }, []);
 
   function dismiss() {
-    localStorage.setItem(LEARNING_TOGETHER_KEY, "true");
+    localStorage.setItem(LEARNING_TOGETHER_KEY, 'true');
     setVisible(false);
   }
 
@@ -969,15 +964,15 @@ function LearningTogetherSection() {
             <span aria-hidden className="mt-0.5 shrink-0 font-bold text-blue-400">
               •
             </span>
-            <span>Collaborate to create a new deck [coming soon], or share decks you’ve created</span>
+            <span>
+              Collaborate to create a new deck [coming soon], or share decks you’ve created
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <span aria-hidden className="mt-0.5 shrink-0 font-bold text-blue-400">
               •
             </span>
-            <span>
-              Duplicate a shared deck to springboard off of and edit to make it your own
-            </span>
+            <span>Duplicate a shared deck to springboard off of and edit to make it your own</span>
           </li>
           <li className="flex items-start gap-2">
             <span aria-hidden className="mt-0.5 shrink-0 font-bold text-blue-400">
@@ -1370,9 +1365,7 @@ function GroupSection({
                         <Layers className="h-3.5 w-3.5" />
                         {d.cardCount} {d.cardCount === 1 ? 'card' : 'cards'}
                       </span>
-                      {!d.isYours ? (
-                        <span className="text-muted-foreground/70">Shared</span>
-                      ) : null}
+                      {!d.isYours ? <span className="text-muted-foreground/70">Shared</span> : null}
                     </CardContent>
                   </Card>
                 </Link>

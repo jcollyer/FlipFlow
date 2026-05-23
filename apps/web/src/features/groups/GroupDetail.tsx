@@ -205,10 +205,7 @@ export function GroupDetail({ groupId }: Props) {
         </div>
         <ul className="divide-y">
           {group.members.map((m) => (
-            <li
-              key={m.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3"
-            >
+            <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="bg-muted text-muted-foreground relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold">
                   {m.image ? (
@@ -289,10 +286,7 @@ export function GroupDetail({ groupId }: Props) {
             </li>
           ))}
           {group.pendingDirectInvites.map((inv) => (
-            <li
-              key={inv.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3"
-            >
+            <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="bg-muted text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
                   <Mail className="h-4 w-4" />
@@ -332,9 +326,7 @@ export function GroupDetail({ groupId }: Props) {
             can coexist (e.g. one for class, one for friends). */}
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-muted-foreground text-sm">
-              Anyone with the link can join.
-            </p>
+            <p className="text-muted-foreground text-sm">Anyone with the link can join.</p>
             <Button
               variant="outline"
               size="sm"
@@ -437,9 +429,7 @@ export function GroupDetail({ groupId }: Props) {
               {inviteUser.isPending ? 'Sending…' : 'Invite'}
             </Button>
           </div>
-          {inviteMessage ? (
-            <p className="text-muted-foreground text-xs">{inviteMessage}</p>
-          ) : null}
+          {inviteMessage ? <p className="text-muted-foreground text-xs">{inviteMessage}</p> : null}
         </form>
       </section>
 

@@ -24,13 +24,15 @@ export function ProgressSnapshotCard({
 
   return (
     <Card>
-      <CardContent className="flex items-start justify-between gap-4 p-5 h-full">
+      <CardContent className="flex h-full items-start justify-between gap-4 p-5">
         <div className="flex h-full flex-col">
           <p className="text-muted-foreground text-sm">{label}</p>
-          <div className="flex flex-col mt-auto">
+          <div className="mt-auto flex flex-col">
             <p className="text-3xl font-semibold tracking-tight">{value}</p>
             {percentage !== undefined ? (
-              <p className="text-muted-foreground text-sm">{percentage}% {percentageLabel}</p>
+              <p className="text-muted-foreground text-sm">
+                {percentage}% {percentageLabel}
+              </p>
             ) : (
               <p className="text-muted-foreground text-sm">{valueLabel}</p>
             )}

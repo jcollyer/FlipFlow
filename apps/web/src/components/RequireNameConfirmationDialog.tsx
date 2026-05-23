@@ -81,7 +81,8 @@ export function RequireNameConfirmationDialog({
             e.preventDefault();
             if (!isMatch) {
               setError(
-                mismatchMessage ?? `The ${confirmLabel.toLowerCase()} name you typed doesn't match.`,
+                mismatchMessage ??
+                  `The ${confirmLabel.toLowerCase()} name you typed doesn't match.`,
               );
               return;
             }
@@ -91,8 +92,7 @@ export function RequireNameConfirmationDialog({
         >
           <Label htmlFor="typed-delete-confirmation" className="text-sm">
             To confirm, type{' '}
-            <span className="text-foreground font-mono font-semibold">{expectedName}</span>{' '}
-            below:
+            <span className="text-foreground font-mono font-semibold">{expectedName}</span> below:
           </Label>
           <Input
             id="typed-delete-confirmation"
@@ -112,7 +112,12 @@ export function RequireNameConfirmationDialog({
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
           <DialogFooter className="gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
             <Button type="submit" variant="destructive" disabled={isPending || !isMatch}>

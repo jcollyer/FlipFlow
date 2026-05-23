@@ -122,9 +122,7 @@ export const groupsRouter = router({
           select: { groupId: true, orderedCategoryIds: true },
         })
       : [];
-    const orderByGroupId = new Map(
-      savedOrders.map((o) => [o.groupId, o.orderedCategoryIds]),
-    );
+    const orderByGroupId = new Map(savedOrders.map((o) => [o.groupId, o.orderedCategoryIds]));
 
     return memberships.map((m) => {
       const ordered = resolveOrderedDeckIds(
@@ -383,8 +381,7 @@ export const groupsRouter = router({
       if (membership.role === 'owner') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message:
-            'Transfer ownership to another member before leaving, or delete the group.',
+          message: 'Transfer ownership to another member before leaving, or delete the group.',
         });
       }
 
@@ -577,7 +574,7 @@ export const groupsRouter = router({
       if (!isGroupOwner && !isDeckOwner) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: "You can only remove decks you own from a group.",
+          message: 'You can only remove decks you own from a group.',
         });
       }
 
@@ -588,9 +585,7 @@ export const groupsRouter = router({
       await ctx.prisma.group.update({
         where: { id: input.groupId },
         data: {
-          includedCategoryIds: group.includedCategoryIds.filter(
-            (id) => id !== input.categoryId,
-          ),
+          includedCategoryIds: group.includedCategoryIds.filter((id) => id !== input.categoryId),
         },
       });
       return { ok: true, removed: true as const };
@@ -713,7 +708,7 @@ export const groupsRouter = router({
       if (source.userId === ctx.userId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: "You already own that deck — no need to duplicate it.",
+          message: 'You already own that deck — no need to duplicate it.',
         });
       }
 

@@ -105,45 +105,43 @@ export const categoriesRouter = router({
    * signing in. Visibility falls back to "is the deck public?" when there's
    * no session — group membership and ownership both require a user.
    */
-  byId: publicProcedure
-    .input(z.object({ id: z.string().cuid() }))
-    .query(async ({ ctx, input }) => {
-      const viewerId = ctx.session?.user?.id ?? null;
-      const category = await ctx.prisma.category.findFirst({
-        where: { id: input.id },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          color: true,
-          backLanguage: true,
-          private: true,
-          userId: true,
-          createdAt: true,
-          updatedAt: true,
-          user: { select: { private: true } },
-        },
-      });
-      if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
+  byId: publicProcedure.input(z.object({ id: z.string().cuid() })).query(async ({ ctx, input }) => {
+    const viewerId = ctx.session?.user?.id ?? null;
+    const category = await ctx.prisma.category.findFirst({
+      where: { id: input.id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        color: true,
+        backLanguage: true,
+        private: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+        user: { select: { private: true } },
+      },
+    });
+    if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      const visibility = await resolveDeckVisibility(ctx.prisma, viewerId, category);
-      if (!visibility.canRead) throw new TRPCError({ code: 'NOT_FOUND' });
+    const visibility = await resolveDeckVisibility(ctx.prisma, viewerId, category);
+    if (!visibility.canRead) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      return {
-        id: category.id,
-        name: category.name,
-        description: category.description,
-        color: category.color,
-        backLanguage: category.backLanguage,
-        private: category.private,
-        createdAt: category.createdAt,
-        updatedAt: category.updatedAt,
-        isOwner: visibility.isOwner,
-        // New: tells the UI to enable "create card" / "reorder" affordances
-        // for non-owners who happen to be in a group containing the deck.
-        isGroupMember: visibility.isGroupMember,
-      };
-    }),
+    return {
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      color: category.color,
+      backLanguage: category.backLanguage,
+      private: category.private,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+      isOwner: visibility.isOwner,
+      // New: tells the UI to enable "create card" / "reorder" affordances
+      // for non-owners who happen to be in a group containing the deck.
+      isGroupMember: visibility.isGroupMember,
+    };
+  }),
 
   create: protectedProcedure.input(CategoryCreateInput).mutation(async ({ ctx, input }) => {
     // If the caller didn't specify a backLanguage, fall back to the user's

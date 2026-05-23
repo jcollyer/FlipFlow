@@ -89,7 +89,7 @@ export function AcceptInviteClient({ token }: Props) {
               ? 'This invitation has expired.'
               : status === 'revoked'
                 ? 'This invitation has been revoked.'
-                : "This invitation can no longer be used."}{' '}
+                : 'This invitation can no longer be used.'}{' '}
             Ask the inviter to send a new one.
           </CardDescription>
         </CardHeader>
@@ -114,7 +114,7 @@ export function AcceptInviteClient({ token }: Props) {
         </div>
         <CardTitle className="text-2xl">Join {group.name}</CardTitle>
         <CardDescription>
-          {invitedBy?.name ? `${invitedBy.name} invited you to ` : 'You\'ve been invited to '}
+          {invitedBy?.name ? `${invitedBy.name} invited you to ` : "You've been invited to "}
           this group of {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}.
         </CardDescription>
       </CardHeader>

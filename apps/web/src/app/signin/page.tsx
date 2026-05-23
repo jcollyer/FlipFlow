@@ -33,9 +33,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <CardHeader className="text-center">
           <Link href="/" className="mx-auto mb-2 inline-flex items-center gap-2">
             <div className="bg-primary inline-flex size-8 items-center justify-center rounded-full">
-              <p className="text-white font-brand h-12 text-4xl font-semibold">e</p>
+              <p className="font-brand h-12 text-4xl font-semibold text-white">e</p>
             </div>
-            <span className="font-brand text-xl font-semibold leading-none text-primary">
+            <span className="font-brand text-primary text-xl font-semibold leading-none">
               ensemble
             </span>
           </Link>
@@ -60,10 +60,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 await signIn('apple', { redirectTo: target });
               }}
             >
-              <Button
-                type="submit"
-                className="w-full bg-black text-white hover:bg-black/90"
-              >
+              <Button type="submit" className="w-full bg-black text-white hover:bg-black/90">
                 <AppleIcon className="h-4 w-4" />
                 Continue with Apple
               </Button>

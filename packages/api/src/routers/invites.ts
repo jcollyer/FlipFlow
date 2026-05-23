@@ -188,84 +188,82 @@ export const invitesRouter = router({
    * who's already a member, we return an idempotent "already a member"
    * response rather than erroring.
    */
-  inviteUser: protectedProcedure
-    .input(GroupInviteUserInput)
-    .mutation(async ({ ctx, input }) => {
-      const membership = await ctx.prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: input.groupId, userId: ctx.userId } },
-        select: { id: true },
-      });
-      if (!membership) throw new TRPCError({ code: 'NOT_FOUND' });
+  inviteUser: protectedProcedure.input(GroupInviteUserInput).mutation(async ({ ctx, input }) => {
+    const membership = await ctx.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: input.groupId, userId: ctx.userId } },
+      select: { id: true },
+    });
+    if (!membership) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      // Email lookup is case-insensitive (the schema lowercases on input).
-      const target = await ctx.prisma.user.findUnique({
-        where: { email: input.email },
-        select: { id: true, email: true, name: true, image: true },
+    // Email lookup is case-insensitive (the schema lowercases on input).
+    const target = await ctx.prisma.user.findUnique({
+      where: { email: input.email },
+      select: { id: true, email: true, name: true, image: true },
+    });
+    if (!target) {
+      // Surfacing "no such user" is intentional — the user will want to
+      // know if they typo'd an email. The API is gated by being a member,
+      // so this isn't a useful enumeration vector.
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No account found for that email. Ask them to sign up first, then try again.',
       });
-      if (!target) {
-        // Surfacing "no such user" is intentional — the user will want to
-        // know if they typo'd an email. The API is gated by being a member,
-        // so this isn't a useful enumeration vector.
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: "No account found for that email. Ask them to sign up first, then try again.",
-        });
-      }
-      if (target.id === ctx.userId) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: "You're already in this group.",
-        });
-      }
+    }
+    if (target.id === ctx.userId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: "You're already in this group.",
+      });
+    }
 
-      const existingMembership = await ctx.prisma.groupMember.findUnique({
-        where: {
-          groupId_userId: { groupId: input.groupId, userId: target.id },
-        },
-        select: { id: true },
-      });
-      if (existingMembership) {
-        return {
-          ok: true as const,
-          status: 'already_member' as const,
-          target: { id: target.id, name: target.name, email: target.email, image: target.image },
-        };
-      }
-
-      // Re-use an existing pending invite to the same user rather than
-      // creating duplicates. Cleaner UI (one row per pending recipient).
-      const existingInvite = await ctx.prisma.groupInvite.findFirst({
-        where: {
-          groupId: input.groupId,
-          invitedUserId: target.id,
-          status: 'pending',
-        },
-        select: { id: true, createdAt: true },
-      });
-      if (existingInvite) {
-        return {
-          ok: true as const,
-          status: 'already_invited' as const,
-          inviteId: existingInvite.id,
-          target: { id: target.id, name: target.name, email: target.email, image: target.image },
-        };
-      }
-
-      const created = await ctx.prisma.groupInvite.create({
-        data: {
-          groupId: input.groupId,
-          invitedById: ctx.userId,
-          invitedUserId: target.id,
-          status: 'pending',
-        },
-      });
+    const existingMembership = await ctx.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: { groupId: input.groupId, userId: target.id },
+      },
+      select: { id: true },
+    });
+    if (existingMembership) {
       return {
         ok: true as const,
-        status: 'invited' as const,
-        inviteId: created.id,
+        status: 'already_member' as const,
         target: { id: target.id, name: target.name, email: target.email, image: target.image },
       };
-    }),
+    }
+
+    // Re-use an existing pending invite to the same user rather than
+    // creating duplicates. Cleaner UI (one row per pending recipient).
+    const existingInvite = await ctx.prisma.groupInvite.findFirst({
+      where: {
+        groupId: input.groupId,
+        invitedUserId: target.id,
+        status: 'pending',
+      },
+      select: { id: true, createdAt: true },
+    });
+    if (existingInvite) {
+      return {
+        ok: true as const,
+        status: 'already_invited' as const,
+        inviteId: existingInvite.id,
+        target: { id: target.id, name: target.name, email: target.email, image: target.image },
+      };
+    }
+
+    const created = await ctx.prisma.groupInvite.create({
+      data: {
+        groupId: input.groupId,
+        invitedById: ctx.userId,
+        invitedUserId: target.id,
+        status: 'pending',
+      },
+    });
+    return {
+      ok: true as const,
+      status: 'invited' as const,
+      inviteId: created.id,
+      target: { id: target.id, name: target.name, email: target.email, image: target.image },
+    };
+  }),
 
   /**
    * Accept an invite. Two call shapes:
