@@ -1,20 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import underlinePng from './underline.png';
+import appIconPng from './app-icon.png';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
   Sparkles,
-  Zap,
-  Volume2,
-  Wand2,
   Star,
-  Tags,
-  Users,
   Crown,
   Globe,
   HeartHandshake,
-  Martini,
+  Smartphone,
   ListStart,
 } from 'lucide-react';
 
@@ -100,18 +96,51 @@ export default async function HomePage() {
             body="Create together or duplicate classmates’ decks"
           />
           <FeatureCard
+            icon={<Smartphone className="h-5 w-5" />}
+            title="On the go"
+            body="Play on the app in easy 5 or 10 minute pockets of time"
+          />
+          <FeatureCard
             icon={<Crown className="h-5 w-5" />}
             title="Personalized convos"
             body="Chat with ensemble using only your known vocabulary"
             badge="Coming soon"
           />
-          <FeatureCard
-            icon={<Martini className="h-5 w-5" />}
-            title="On the go"
-            body="Play on the app in easy 5 or 10 minute pockets of time"
-            badge="Coming soon"
-          />
         </div>
+        <div className="mt-20 w-full max-w-3xl">
+          <div className="bg-muted/30 flex flex-col items-center gap-6 rounded-2xl border p-8 sm:flex-row sm:gap-8 sm:p-10 sm:text-left">
+            <Image
+              src={appIconPng}
+              alt="ensemble app icon"
+              width={96}
+              height={96}
+              className="h-24 w-24 flex-shrink-0 rounded-[22%] shadow-md"
+            />
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-brand text-primary text-2xl font-semibold sm:text-3xl">
+                Take ensemble with you
+              </h3>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Practice on the go — download the iOS app and learn in those spare 5 or 10 minute
+                pockets of time.
+              </p>
+            </div>
+            <a
+              href="https://apps.apple.com/us/app/ensemble-language/id6770618195"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 transition-transform duration-200 hover:scale-105"
+              aria-label="Download ensemble on the App Store"
+            >
+              <img
+                src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83"
+                alt="Download on the App Store"
+                className="h-12 w-auto"
+              />
+            </a>
+          </div>
+        </div>
+
         <div className="mt-14 text-center">
           <a href="mailto:hello@ensemblelanguage.com" className="text-primary hover:underline">
             hello@ensemblelanguage.com
