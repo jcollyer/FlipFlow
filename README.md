@@ -6,7 +6,7 @@
 
 **Spaced-repetition flashcards, on the web and in your pocket.**
 
-[**Live site → ensemblelanguage.com**](https://ensemblelanguage.com/)
+[**Web → ensemblelanguage.com**](https://ensemblelanguage.com/) · [**iOS → App Store**](https://apps.apple.com/us/app/ensemble-language/id6770618195)
 
 A type-safe TypeScript monorepo where one backend powers two clients — a Next.js web app and an Expo / React Native mobile app — with the SM-2 algorithm, Google Translate, Google Cloud Text-to-Speech, and Wiktionary baked in.
 
@@ -173,6 +173,8 @@ The web app and mobile app share the same backend at `EXPO_PUBLIC_API_URL`, so a
 
 <div align="center">
 
-Built by [Jeremy Collyer](mailto:collyerdesign@gmail.com) · [ensemblelanguage.com](https://ensemblelanguage.com/)
+Built by [Jeremy Collyer](mailto:collyerdesign@gmail.com)
+
+[ensemblelanguage.com](https://ensemblelanguage.com/) · [Download on the App Store](https://apps.apple.com/us/app/ensemble-language/id6770618195)
 
 </div>
