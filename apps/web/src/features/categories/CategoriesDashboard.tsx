@@ -290,7 +290,7 @@ export function CategoriesDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-4">
         <ProgressSnapshotCard
           label="Total cards"
           value={stats?.total ?? 0}
@@ -946,11 +946,12 @@ function GettingStartedSection() {
           type="button"
           onClick={() => setExpanded((current) => !current)}
           aria-expanded={expanded}
-          className="group inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
+          className="flex items-center gap-2 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
         >
-          Ready to get started? Close this box and let&apos;s begin (<em>English</em>) /
-          Commençons&nbsp;! (<em>French</em>)
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          <div>
+            Ready to get started? Close this box and let&apos;s begin (<em>English</em>) / Commençons&nbsp;! (<em>French</em>)
+          </div>
+          <ArrowRight className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
     </section>
@@ -977,8 +978,8 @@ function LearningTogetherSection() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-blue-200 bg-blue-100/60 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
-            <Users className="h-4 w-4" />
+          <div className="flex flex-1 size-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
+            <Users className="size-5 shrink-0" />
           </div>
           <h2 className="text-base font-semibold uppercase tracking-tight text-blue-900">
             Learning together (English) / Apprendre ensemble (French)

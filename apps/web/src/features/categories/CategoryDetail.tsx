@@ -516,7 +516,7 @@ export function CategoryDetail({ categoryId }: Props) {
       </div>
 
       {isOwner ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-4">
           <ProgressSnapshotCard
             label="Total cards in this deck"
             value={stats?.total ?? cards?.length ?? 0}
