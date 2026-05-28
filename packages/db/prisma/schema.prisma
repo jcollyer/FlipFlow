@@ -369,6 +369,13 @@ model CardProgress {
   // Null/empty means the user has not used the advanced picker for this card.
   // Validation lives at the API edge in @ensemble/types.
   advancedDifficultyLevel String?
+  // Per-user "favorite" flag for the card. Toggled from the practice flow
+  // (heart button next to the rating buttons, or as an 8th row in the
+  // Advanced rating panel) and from the card list views. Independent of
+  // difficultyLevel — favoriting a card never changes its rating, and
+  // rating a card never changes its favorite state. Filtered on in the
+  // Play Flashcards modal via the "Favorite" / "Not favorite" chips.
+  favorite        Boolean   @default(false)
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   card            Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt       DateTime  @default(now())

@@ -1,7 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { encodeAdvancedDifficultyLevels, SubmitReviewInput } from '@ensemble/types';
+import {
+  encodeAdvancedDifficultyLevels,
+  SetFavoriteInput,
+  SubmitReviewInput,
+} from '@ensemble/types';
 
 import { resolveDeckVisibility } from '../lib/groupAuth';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
@@ -124,7 +128,12 @@ export const practiceRouter = router({
         viewerId && cards.length
           ? await ctx.prisma.cardProgress.findMany({
               where: { userId: viewerId, cardId: { in: cards.map((c) => c.id) } },
-              select: { cardId: true, difficultyLevel: true, advancedDifficultyLevel: true },
+              select: {
+                cardId: true,
+                difficultyLevel: true,
+                advancedDifficultyLevel: true,
+                favorite: true,
+              },
             })
           : [];
       const progressByCardId = new Map(progressRows.map((p) => [p.cardId, p]));
@@ -145,6 +154,10 @@ export const practiceRouter = router({
             ...card,
             difficultyLevel: p?.difficultyLevel ?? null,
             advancedDifficultyLevel: p?.advancedDifficultyLevel ?? null,
+            // Guests never have CardProgress rows, so they always see
+            // `favorite: false` — which matches the UI's "you must be
+            // signed in to favorite a card" behavior.
+            favorite: p?.favorite ?? false,
           };
         }),
       };
@@ -209,6 +222,68 @@ export const practiceRouter = router({
         ...advancedColumnUpdate,
       },
     });
+  }),
+
+  /**
+   * Toggle the per-user `favorite` flag on a card. Independent of the
+   * rating — calling this never reads or writes difficultyLevel /
+   * advancedDifficultyLevel, so favoriting from a list row doesn't have to
+   * fabricate a rating and re-rating doesn't accidentally clear a favorite.
+   *
+   * Same visibility check as `submitReview`: you can favorite any card you
+   * can see (one you authored, one in a deck you own, or one in a group-
+   * shared deck you have access to).
+   *
+   * Returns the resulting CardProgress row's favorite + difficulty fields so
+   * the client can write the response straight into its query cache without
+   * an extra round-trip.
+   */
+  setFavorite: protectedProcedure.input(SetFavoriteInput).mutation(async ({ ctx, input }) => {
+    const card = await ctx.prisma.flashcard.findUnique({
+      where: { id: input.cardId },
+      include: {
+        category: {
+          select: {
+            id: true,
+            userId: true,
+            private: true,
+            user: { select: { private: true } },
+          },
+        },
+      },
+    });
+    if (!card) throw new TRPCError({ code: 'NOT_FOUND' });
+
+    let canFavorite = card.userId === ctx.userId;
+    if (!canFavorite && card.category) {
+      const v = await resolveDeckVisibility(ctx.prisma, ctx.userId, card.category);
+      canFavorite = v.canRead;
+    }
+    if (!canFavorite) throw new TRPCError({ code: 'NOT_FOUND' });
+
+    const row = await ctx.prisma.cardProgress.upsert({
+      where: { userId_cardId: { userId: ctx.userId, cardId: card.id } },
+      // On first-favorite we may create the row with no rating at all —
+      // that's intentional and matches "the user favorited a card they've
+      // never practiced." difficultyLevel stays null and the list views
+      // already render that as "No rating."
+      create: {
+        userId: ctx.userId,
+        cardId: card.id,
+        favorite: input.favorite,
+      },
+      update: {
+        favorite: input.favorite,
+      },
+      select: {
+        cardId: true,
+        favorite: true,
+        difficultyLevel: true,
+        advancedDifficultyLevel: true,
+      },
+    });
+
+    return row;
   }),
 
   /**

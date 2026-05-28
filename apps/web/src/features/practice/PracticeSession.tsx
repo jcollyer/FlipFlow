@@ -36,6 +36,13 @@ interface Props {
    */
   advancedDifficultyLevels?: string[];
   /**
+   * Filter by the per-user favorite flag. Values: `'favorite'` (only show
+   * favorited cards), `'not_favorite'` (only show non-favorited). Empty
+   * array or undefined = no favorite filtering. Providing both values is
+   * equivalent to no filter (every card is either favorite or not).
+   */
+  favorites?: string[];
+  /**
    * When true, randomize the card order for this session. The shuffle is
    * stable across renders and across rating submissions — it only re-shuffles
    * when the user presses "Play again".
@@ -60,6 +67,7 @@ export function PracticeSession({
   classes,
   difficultyLevels,
   advancedDifficultyLevels,
+  favorites,
   shuffle = false,
 }: Props) {
   const utils = trpc.useUtils();
@@ -97,6 +105,42 @@ export function PracticeSession({
     },
   });
 
+  // Per-user favorite toggle. We optimistically rewrite the current
+  // queue's cache so the heart visibly flips instantly; on the rare
+  // failure case the next queue invalidation snaps it back. We don't
+  // invalidate listByCategory / listAll here on success because those
+  // already include `favorite` and will refresh on next mount.
+  const setFavorite = trpc.practice.setFavorite.useMutation({
+    onMutate: async ({ cardId, favorite }) => {
+      const input = {
+        categoryId,
+        categoryIds: categoryIds?.length ? categoryIds : undefined,
+        classes: classes?.length ? classes : undefined,
+      };
+      await utils.practice.queue.cancel(input);
+      const previous = utils.practice.queue.getData(input);
+      if (previous) {
+        utils.practice.queue.setData(input, {
+          ...previous,
+          cards: previous.cards.map((c) =>
+            c.id === cardId ? { ...c, favorite } : c,
+          ),
+        });
+      }
+      return { previous, input };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) utils.practice.queue.setData(ctx.input, ctx.previous);
+    },
+    onSettled: () => {
+      if (categoryId) {
+        utils.flashcards.listByCategory.invalidate({ categoryId });
+      } else {
+        utils.flashcards.listAll.invalidate();
+      }
+    },
+  });
+
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
@@ -124,8 +168,22 @@ export function PracticeSession({
         return tokens.some((t) => advancedDifficultyLevels.includes(t));
       });
     }
+    // Favorite filter — "favorite" matches favorited cards, "not_favorite"
+    // matches the rest. Both selected = no-op (every card qualifies). We
+    // mirror the difficulty filter's "any-of" semantics so the chips read
+    // consistently with the rest of the modal.
+    if (favorites?.length) {
+      const wantFav = favorites.includes('favorite');
+      const wantNotFav = favorites.includes('not_favorite');
+      if (wantFav !== wantNotFav) {
+        result = result.filter((c) => {
+          const fav = (c as { favorite?: boolean }).favorite ?? false;
+          return wantFav ? fav : !fav;
+        });
+      }
+    }
     return result;
-  }, [rawCards, difficultyLevels, advancedDifficultyLevels]);
+  }, [rawCards, difficultyLevels, advancedDifficultyLevels, favorites]);
 
   // Apply shuffle on top of the filtered list. Keyed by a signature derived
   // from the card ids so the order stays stable across re-renders and across
@@ -306,6 +364,12 @@ export function PracticeSession({
                 (current as { advancedDifficultyLevel?: string | null } | undefined)
                   ?.advancedDifficultyLevel ?? null,
               )}
+              favorite={(current as { favorite?: boolean } | undefined)?.favorite ?? false}
+              onToggleFavorite={() => {
+                if (!current) return;
+                const next = !((current as { favorite?: boolean }).favorite ?? false);
+                setFavorite.mutate({ cardId: current.id, favorite: next });
+              }}
             />
           ) : flipped ? (
             <div className="text-muted-foreground text-center text-sm">

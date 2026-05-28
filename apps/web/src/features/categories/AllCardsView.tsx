@@ -7,6 +7,7 @@ import {
   AlignLeft,
   AlignRight,
   ArrowLeft,
+  Heart,
   Library,
   Pencil,
   Play,
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { EditCardDialog } from '@/features/cards/EditCardDialog';
 import { ClassBadge } from '@/features/cards/ClassBadge';
+import { FavoriteFilter } from '@/features/practice/FavoriteFilter';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
@@ -46,6 +48,7 @@ export function AllCardsView() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(true);
   const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
@@ -67,14 +70,24 @@ export function AllCardsView() {
     );
   }
 
+  function toggleFavorite(value: string) {
+    setSelectedFavorites((prev) =>
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
+    );
+  }
+
   const hasActiveFilters =
-    selectedCategoryIds.length > 0 || selectedClasses.length > 0 || selectedRatings.length > 0;
+    selectedCategoryIds.length > 0 ||
+    selectedClasses.length > 0 ||
+    selectedRatings.length > 0 ||
+    selectedFavorites.length > 0;
 
   function buildPracticeHref() {
     const params = new URLSearchParams();
     if (selectedCategoryIds.length > 0) params.set('categoryIds', selectedCategoryIds.join(','));
     if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
+    if (selectedFavorites.length > 0) params.set('favorites', selectedFavorites.join(','));
     if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
@@ -84,6 +97,26 @@ export function AllCardsView() {
     onSuccess: () => {
       utils.flashcards.listAll.invalidate();
       utils.categories.list.invalidate();
+    },
+  });
+
+  // Per-user favorite toggle from the All cards rows. Optimistically
+  // rewrites the listAll cache so the heart flips instantly; rolls back
+  // on failure.
+  const setFavorite = trpc.practice.setFavorite.useMutation({
+    onMutate: async ({ cardId, favorite }) => {
+      await utils.flashcards.listAll.cancel();
+      const previous = utils.flashcards.listAll.getData();
+      if (previous) {
+        utils.flashcards.listAll.setData(
+          undefined,
+          previous.map((c) => (c.id === cardId ? { ...c, favorite } : c)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) utils.flashcards.listAll.setData(undefined, ctx.previous);
     },
   });
 
@@ -114,8 +147,18 @@ export function AllCardsView() {
         return level !== null && selectedRatings.includes(level);
       });
     }
+    if (selectedFavorites.length > 0) {
+      const wantFav = selectedFavorites.includes('favorite');
+      const wantNotFav = selectedFavorites.includes('not_favorite');
+      if (wantFav !== wantNotFav) {
+        result = result.filter((c) => {
+          const fav = (c as { favorite?: boolean }).favorite ?? false;
+          return wantFav ? fav : !fav;
+        });
+      }
+    }
     return result;
-  }, [allCards, selectedCategoryIds, selectedClasses, selectedRatings]);
+  }, [allCards, selectedCategoryIds, selectedClasses, selectedRatings, selectedFavorites]);
 
   // The Play button shows the size of the upcoming session: filtered card
   // count when filters are active, otherwise the total across all decks.
@@ -145,6 +188,7 @@ export function AllCardsView() {
     // pre-tick the user's previous choice when they re-rate a card.
     advancedDifficultyLevel:
       (card as { advancedDifficultyLevel?: string | null }).advancedDifficultyLevel ?? null,
+    favorite: (card as { favorite?: boolean }).favorite ?? false,
   }));
 
   return (
@@ -180,10 +224,12 @@ export function AllCardsView() {
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {hasActiveFilters
-              ? ` (${selectedCategoryIds.length + selectedClasses.length + selectedRatings.length || ''})`.replace(
-                  ' ()',
-                  '',
-                )
+              ? ` (${
+                  selectedCategoryIds.length +
+                    selectedClasses.length +
+                    selectedRatings.length +
+                    selectedFavorites.length || ''
+                })`.replace(' ()', '')
               : ''}
           </Button>
           <PlayModeToggle value={playMode} onChange={setPlayMode} />
@@ -208,6 +254,7 @@ export function AllCardsView() {
                       setSelectedCategoryIds([]);
                       setSelectedClasses([]);
                       setSelectedRatings([]);
+                      setSelectedFavorites([]);
                     }}
                     className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
                   >
@@ -313,6 +360,9 @@ export function AllCardsView() {
                 })}
               </div>
             </div>
+
+            {/* Favorite — per-user flag. Both chips selected = no filter. */}
+            <FavoriteFilter selected={selectedFavorites} onToggle={toggleFavorite} />
           </CardContent>
         </Card>
       )}
@@ -381,8 +431,30 @@ export function AllCardsView() {
                       ) : null}
                     </div>
                   </div>
-                  {/* Stop propagation so edit/delete don't also open the preview */}
+                  {/* Stop propagation so edit/delete/favorite don't also open the preview */}
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    {(() => {
+                      const isFavorite = (card as { favorite?: boolean }).favorite ?? false;
+                      return (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setFavorite.mutate({ cardId: card.id, favorite: !isFavorite })
+                          }
+                          aria-pressed={isFavorite}
+                          aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
+                          title={isFavorite ? 'Unfavorite' : 'Favorite'}
+                          className={cn(
+                            isFavorite
+                              ? 'text-rose-500 hover:text-rose-600'
+                              : 'text-muted-foreground hover:text-rose-500',
+                          )}
+                        >
+                          <Heart className={cn('h-4 w-4', isFavorite && 'fill-current')} />
+                        </Button>
+                      );
+                    })()}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -447,6 +519,18 @@ export function AllCardsView() {
         canRate
         onRated={() => {
           utils.flashcards.listAll.invalidate();
+        }}
+        onFavoriteToggled={(cardId, favorite) => {
+          // Reflect the modal's optimistic flip back into this view's list
+          // cache so the row heart stays in sync without waiting for a
+          // refetch round-trip.
+          const previous = utils.flashcards.listAll.getData();
+          if (previous) {
+            utils.flashcards.listAll.setData(
+              undefined,
+              previous.map((c) => (c.id === cardId ? { ...c, favorite } : c)),
+            );
+          }
         }}
       />
     </div>

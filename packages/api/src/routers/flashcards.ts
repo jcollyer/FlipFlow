@@ -75,7 +75,12 @@ export const flashcardsRouter = router({
                 userId: viewerId,
                 cardId: { in: cards.map((c) => c.id) },
               },
-              select: { cardId: true, difficultyLevel: true, advancedDifficultyLevel: true },
+              select: {
+                cardId: true,
+                difficultyLevel: true,
+                advancedDifficultyLevel: true,
+                favorite: true,
+              },
             })
           : [];
       const progressByCardId = new Map(progressRows.map((p) => [p.cardId, p]));
@@ -93,6 +98,11 @@ export const flashcardsRouter = router({
           ...card,
           difficultyLevel: exposeProgress ? (p?.difficultyLevel ?? null) : null,
           advancedDifficultyLevel: exposeProgress ? (p?.advancedDifficultyLevel ?? null) : null,
+          // Favorite is per-user state the viewer owns, so it's safe to
+          // surface for both owners and group members. Hidden from
+          // public-deck/guest viewers along with the rest of the per-user
+          // fields (they shouldn't see another user's favorites).
+          favorite: exposeProgress ? (p?.favorite ?? false) : false,
         };
       });
     }),
@@ -114,7 +124,12 @@ export const flashcardsRouter = router({
 
     const progressRows = await ctx.prisma.cardProgress.findMany({
       where: { userId: ctx.userId, cardId: { in: cards.map((c) => c.id) } },
-      select: { cardId: true, difficultyLevel: true, advancedDifficultyLevel: true },
+      select: {
+        cardId: true,
+        difficultyLevel: true,
+        advancedDifficultyLevel: true,
+        favorite: true,
+      },
     });
     const progressByCardId = new Map(progressRows.map((p) => [p.cardId, p]));
 
@@ -124,6 +139,7 @@ export const flashcardsRouter = router({
         ...card,
         difficultyLevel: p?.difficultyLevel ?? null,
         advancedDifficultyLevel: p?.advancedDifficultyLevel ?? null,
+        favorite: p?.favorite ?? false,
       };
     });
   }),
@@ -159,7 +175,7 @@ export const flashcardsRouter = router({
 
       const progress = await ctx.prisma.cardProgress.findUnique({
         where: { userId_cardId: { userId: ctx.userId, cardId: card.id } },
-        select: { difficultyLevel: true, advancedDifficultyLevel: true },
+        select: { difficultyLevel: true, advancedDifficultyLevel: true, favorite: true },
       });
 
       // Strip the relation field — the existing callers expect the flat
@@ -169,6 +185,7 @@ export const flashcardsRouter = router({
         ...flat,
         difficultyLevel: progress?.difficultyLevel ?? null,
         advancedDifficultyLevel: progress?.advancedDifficultyLevel ?? null,
+        favorite: progress?.favorite ?? false,
       };
     }),
 
@@ -267,12 +284,13 @@ export const flashcardsRouter = router({
     // otherwise type-error against the enriched `byId` shape.
     const progress = await ctx.prisma.cardProgress.findUnique({
       where: { userId_cardId: { userId: ctx.userId, cardId: updated.id } },
-      select: { difficultyLevel: true, advancedDifficultyLevel: true },
+      select: { difficultyLevel: true, advancedDifficultyLevel: true, favorite: true },
     });
     return {
       ...updated,
       difficultyLevel: progress?.difficultyLevel ?? null,
       advancedDifficultyLevel: progress?.advancedDifficultyLevel ?? null,
+      favorite: progress?.favorite ?? false,
     };
   }),
 

@@ -28,6 +28,7 @@ import {
   FolderInput,
   Grid2x2,
   GripVertical,
+  Heart,
   LayersPlus,
   Library,
   List,
@@ -83,6 +84,7 @@ import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
 import { AdvancedRatingFilter } from '@/features/practice/AdvancedRatingFilter';
+import { FavoriteFilter } from '@/features/practice/FavoriteFilter';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
@@ -152,14 +154,22 @@ interface SortableCardProps {
     gender?: string | null;
     verb_type?: string | null;
     difficultyLevel?: string | null;
+    favorite?: boolean;
   };
   cardIdx: number;
   isOwner: boolean;
   cardListViewMode: 'grid' | 'list';
+  /**
+   * Whether the favorite heart can be toggled from this row. False for
+   * public-deck viewers (they can see other people's cards but per-user
+   * favorite isn't theirs to flip).
+   */
+  canFavorite: boolean;
   onPreview: () => void;
   onEdit: () => void;
   onMove: () => void;
   onDelete: () => void;
+  onToggleFavorite: () => void;
 }
 
 function SortableCard({
@@ -167,10 +177,12 @@ function SortableCard({
   cardIdx: _cardIdx,
   isOwner,
   cardListViewMode,
+  canFavorite,
   onPreview,
   onEdit,
   onMove,
   onDelete,
+  onToggleFavorite,
 }: SortableCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -187,6 +199,7 @@ function SortableCard({
   const gender = card.gender ?? null;
   const verbType = card.verb_type ?? null;
   const difficultyLevel = card.difficultyLevel ?? null;
+  const isFavorite = card.favorite ?? false;
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -280,20 +293,41 @@ function SortableCard({
               </>
             )}
           </div>
-          {/* Stop propagation so edit/delete don't also open the preview */}
-          {isOwner ? (
-            <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Edit">
-                <Pencil className="h-4 w-4" />
+          {/* Stop propagation so the action buttons don't also open the preview.
+              Favorite renders even for non-owners (any group member can favorite
+              their own per-user copy of a shared card), gated only by canFavorite. */}
+          <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+            {canFavorite ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleFavorite}
+                aria-pressed={isFavorite}
+                aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
+                title={isFavorite ? 'Unfavorite' : 'Favorite'}
+                className={cn(
+                  isFavorite
+                    ? 'text-rose-500 hover:text-rose-600'
+                    : 'text-muted-foreground hover:text-rose-500',
+                )}
+              >
+                <Heart className={cn('h-4 w-4', isFavorite && 'fill-current')} />
               </Button>
-              <Button variant="ghost" size="icon" onClick={onMove} aria-label="Move to deck">
-                <FolderInput className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Delete">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : null}
+            ) : null}
+            {isOwner ? (
+              <>
+                <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Edit">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={onMove} aria-label="Move to deck">
+                  <FolderInput className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Delete">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -332,6 +366,7 @@ export function CategoryDetail({ categoryId }: Props) {
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
+  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
   const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function togglePlayClass(value: string) {
@@ -349,13 +384,22 @@ export function CategoryDetail({ categoryId }: Props) {
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   }
+  function togglePlayFavorite(value: string) {
+    setSelectedFavorites((prev) =>
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
+    );
+  }
   const hasPlayFilters =
-    selectedClasses.length > 0 || selectedRatings.length > 0 || selectedAdvancedRatings.length > 0;
+    selectedClasses.length > 0 ||
+    selectedRatings.length > 0 ||
+    selectedAdvancedRatings.length > 0 ||
+    selectedFavorites.length > 0;
 
   function resetPlayFilters() {
     setSelectedClasses([]);
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
+    setSelectedFavorites([]);
     setPlayMode('in_order');
   }
 
@@ -365,6 +409,7 @@ export function CategoryDetail({ categoryId }: Props) {
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
     if (selectedAdvancedRatings.length > 0)
       params.set('advancedDifficultyLevels', selectedAdvancedRatings.join(','));
+    if (selectedFavorites.length > 0) params.set('favorites', selectedFavorites.join(','));
     if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs
@@ -395,9 +440,26 @@ export function CategoryDetail({ categoryId }: Props) {
         return tokens.some((t) => selectedAdvancedRatings.includes(t));
       });
     }
+    if (selectedFavorites.length > 0) {
+      const wantFav = selectedFavorites.includes('favorite');
+      const wantNotFav = selectedFavorites.includes('not_favorite');
+      if (wantFav !== wantNotFav) {
+        result = result.filter((c) => {
+          const fav = (c as { favorite?: boolean }).favorite ?? false;
+          return wantFav ? fav : !fav;
+        });
+      }
+    }
     return result.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards, selectedClasses, selectedRatings, selectedAdvancedRatings, hasPlayFilters]);
+  }, [
+    cards,
+    selectedClasses,
+    selectedRatings,
+    selectedAdvancedRatings,
+    selectedFavorites,
+    hasPlayFilters,
+  ]);
 
   // Local ordering state for drag-and-drop. Seeded from the server query and
   // updated optimistically on drag so the UI doesn't flash before the mutation
@@ -448,6 +510,29 @@ export function CategoryDetail({ categoryId }: Props) {
     },
   });
 
+  // Per-user favorite toggle from the list rows. Optimistically rewrites
+  // the listByCategory cache so the heart flips instantly; on failure we
+  // restore the previous list. We don't touch practice.stats here —
+  // favorite doesn't affect the difficulty breakdown tiles.
+  const setFavorite = trpc.practice.setFavorite.useMutation({
+    onMutate: async ({ cardId, favorite }) => {
+      await utils.flashcards.listByCategory.cancel({ categoryId });
+      const previous = utils.flashcards.listByCategory.getData({ categoryId });
+      if (previous) {
+        utils.flashcards.listByCategory.setData(
+          { categoryId },
+          previous.map((c) => (c.id === cardId ? { ...c, favorite } : c)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        utils.flashcards.listByCategory.setData({ categoryId }, ctx.previous);
+      }
+    },
+  });
+
   const deleteCategory = trpc.categories.delete.useMutation({
     onSuccess: () => {
       utils.categories.list.invalidate();
@@ -473,6 +558,7 @@ export function CategoryDetail({ categoryId }: Props) {
     // the deck detail view.
     advancedDifficultyLevel:
       (card as { advancedDifficultyLevel?: string | null }).advancedDifficultyLevel ?? null,
+    favorite: (card as { favorite?: boolean }).favorite ?? false,
   }));
 
   return (
@@ -613,11 +699,19 @@ export function CategoryDetail({ categoryId }: Props) {
                     cardIdx={cardIdx}
                     isOwner={isOwner}
                     cardListViewMode={cardListViewMode}
+                    // Favorite is gated on isOwner to match the existing
+                    // edit/delete pattern. Group members can still favorite
+                    // via the practice / preview flows.
+                    canFavorite={isOwner}
                     onPreview={() => setPreviewIndex(cardIdx)}
                     onEdit={() => setEditingId(card.id)}
                     onMove={() => setMovingCardId(card.id)}
                     onDelete={() => {
                       if (confirm('Delete this card?')) remove.mutate({ id: card.id });
+                    }}
+                    onToggleFavorite={() => {
+                      const next = !(card.favorite ?? false);
+                      setFavorite.mutate({ cardId: card.id, favorite: next });
                     }}
                   />
                 ))}
@@ -770,6 +864,10 @@ export function CategoryDetail({ categoryId }: Props) {
               selected={selectedAdvancedRatings}
               onToggle={togglePlayAdvancedRating}
             />
+
+            {/* Favorite — per-user flag toggled from the back of a card or
+                the heart in the card list. Both chips selected = no filter. */}
+            <FavoriteFilter selected={selectedFavorites} onToggle={togglePlayFavorite} />
           </div>
 
           <DialogFooter className="sm:items-center sm:justify-between">
@@ -854,6 +952,18 @@ export function CategoryDetail({ categoryId }: Props) {
           // No-arg invalidate so the dashboard's `practice.stats({})`
           // also refreshes — not just this view's `{ categoryId }` query.
           utils.practice.stats.invalidate();
+        }}
+        onFavoriteToggled={(cardId, favorite) => {
+          // Mirror the modal's optimistic update into this view's
+          // listByCategory cache so the heart on the underlying card row
+          // stays in sync without waiting for an invalidate round-trip.
+          const previous = utils.flashcards.listByCategory.getData({ categoryId });
+          if (previous) {
+            utils.flashcards.listByCategory.setData(
+              { categoryId },
+              previous.map((c) => (c.id === cardId ? { ...c, favorite } : c)),
+            );
+          }
         }}
       />
     </div>

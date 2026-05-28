@@ -73,6 +73,7 @@ import { cn } from '@/lib/utils';
 import { FolderModal } from '@/features/folders/FolderModal';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
 import { AdvancedRatingFilter } from '@/features/practice/AdvancedRatingFilter';
+import { FavoriteFilter } from '@/features/practice/FavoriteFilter';
 import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
 
 // Sentinels because the Radix Select doesn't allow an empty-string value.
@@ -91,6 +92,7 @@ export function CategoriesDashboard() {
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
+  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
   const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function togglePlayCategory(id: string) {
@@ -113,18 +115,25 @@ export function CategoriesDashboard() {
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   }
+  function togglePlayFavorite(value: string) {
+    setSelectedFavorites((prev) =>
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
+    );
+  }
 
   const hasPlayFilters =
     selectedCategoryIds.length > 0 ||
     selectedClasses.length > 0 ||
     selectedRatings.length > 0 ||
-    selectedAdvancedRatings.length > 0;
+    selectedAdvancedRatings.length > 0 ||
+    selectedFavorites.length > 0;
 
   function resetPlayFilters() {
     setSelectedCategoryIds([]);
     setSelectedClasses([]);
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
+    setSelectedFavorites([]);
     setPlayMode('in_order');
   }
 
@@ -135,6 +144,7 @@ export function CategoriesDashboard() {
     if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
     if (selectedAdvancedRatings.length > 0)
       params.set('advancedDifficultyLevels', selectedAdvancedRatings.join(','));
+    if (selectedFavorites.length > 0) params.set('favorites', selectedFavorites.join(','));
     if (playMode === 'shuffle') params.set('shuffle', '1');
     const qs = params.toString();
     return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
@@ -180,6 +190,16 @@ export function CategoriesDashboard() {
         return tokens.some((t) => selectedAdvancedRatings.includes(t));
       });
     }
+    if (selectedFavorites.length > 0) {
+      const wantFav = selectedFavorites.includes('favorite');
+      const wantNotFav = selectedFavorites.includes('not_favorite');
+      if (wantFav !== wantNotFav) {
+        result = result.filter((c) => {
+          const fav = (c as { favorite?: boolean }).favorite ?? false;
+          return wantFav ? fav : !fav;
+        });
+      }
+    }
     return result.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -188,6 +208,7 @@ export function CategoriesDashboard() {
     selectedClasses,
     selectedRatings,
     selectedAdvancedRatings,
+    selectedFavorites,
     hasPlayFilters,
   ]);
 
@@ -597,6 +618,10 @@ export function CategoriesDashboard() {
               selected={selectedAdvancedRatings}
               onToggle={togglePlayAdvancedRating}
             />
+
+            {/* Favorite — per-user flag toggled from the back of a card.
+                Both chips selected (or neither) = no favorite filter. */}
+            <FavoriteFilter selected={selectedFavorites} onToggle={togglePlayFavorite} />
           </div>
 
           <DialogFooter className="sm:items-center sm:justify-between">

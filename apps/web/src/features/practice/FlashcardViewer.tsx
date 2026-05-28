@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Loader2, Volume2 } from 'lucide-react';
 
 import type { AdvancedDifficultyLevel, BackLanguageValue, DifficultyLevel } from '@ensemble/types';
 import {
@@ -333,31 +333,90 @@ export function AudioButton({
   );
 }
 
+// ── FavoriteButton ─────────────────────────────────────────────────────────────
+
+/**
+ * Heart-icon toggle for the per-user "favorite" flag. Lives to the right of
+ * the rating buttons in simple mode and as a visually-distinct 8th row in
+ * the advanced panel.
+ *
+ * Filled-red heart = favorited; outline = not. Click toggles. We deliberately
+ * keep this narrower than a rating button so the three Challenging / Good /
+ * Easy choices stay the primary affordance.
+ */
+export function FavoriteButton({
+  favorite,
+  onToggle,
+  disabled,
+  className,
+}: {
+  favorite: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      aria-pressed={favorite}
+      aria-label={favorite ? 'Unfavorite' : 'Favorite'}
+      title={favorite ? 'Unfavorite' : 'Favorite'}
+      className={cn(
+        'bg-background flex shrink-0 items-center justify-center rounded-md border px-3 py-3 transition disabled:opacity-50',
+        favorite
+          ? 'border-rose-500/60 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
+          : 'border-muted-foreground/30 text-muted-foreground hover:border-rose-500/40 hover:text-rose-500',
+        className,
+      )}
+    >
+      <Heart className={cn('h-5 w-5', favorite && 'fill-current')} />
+    </button>
+  );
+}
+
 // ── RatingButtons ──────────────────────────────────────────────────────────────
 
 export function RatingButtons({
   onRate,
   disabled,
+  favorite,
+  onToggleFavorite,
 }: {
   onRate: (level: DifficultyLevel) => void;
   disabled?: boolean;
+  /**
+   * Optional favorite state. When provided, a heart toggle is rendered to
+   * the right of the three rating buttons. Omitting both `favorite` and
+   * `onToggleFavorite` hides the heart entirely — useful for callers that
+   * don't yet have a card id (e.g. legacy preview surfaces).
+   */
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
 }) {
+  const showFavorite = favorite !== undefined && onToggleFavorite !== undefined;
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {RATINGS.map((r) => (
-        <button
-          key={r.value}
-          onClick={() => onRate(r.value)}
-          disabled={disabled}
-          className={cn(
-            'bg-background flex flex-col items-center rounded-md border py-3 transition disabled:opacity-50',
-            r.tone,
-          )}
-        >
-          <span className="text-base font-semibold">{r.label}</span>
-          <span className="text-muted-foreground text-xs">{r.sub}</span>
-        </button>
-      ))}
+    <div className="flex items-stretch gap-2">
+      <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
+        {RATINGS.map((r) => (
+          <button
+            key={r.value}
+            onClick={() => onRate(r.value)}
+            disabled={disabled}
+            className={cn(
+              'bg-background flex flex-col items-center rounded-md border py-3 transition disabled:opacity-50',
+              r.tone,
+            )}
+          >
+            <span className="text-base font-semibold">{r.label}</span>
+            <span className="text-muted-foreground text-xs">{r.sub}</span>
+          </button>
+        ))}
+      </div>
+      {showFavorite ? (
+        <FavoriteButton favorite={favorite} onToggle={onToggleFavorite} disabled={disabled} />
+      ) : null}
     </div>
   );
 }
@@ -379,12 +438,26 @@ export function AdvancedRatingPanel({
   onSubmit,
   disabled,
   initial,
+  favorite,
+  onToggleFavorite,
 }: {
   onSubmit: (level: DifficultyLevel, advanced: AdvancedDifficultyLevel[]) => void;
   disabled?: boolean;
   /** Pre-tick these boxes on mount (e.g. after a re-rate). */
   initial?: readonly AdvancedDifficultyLevel[];
+  /**
+   * Optional favorite state. When both are provided, the panel renders an
+   * 8th row at the bottom of the checkbox list (visually distinct, separated
+   * by a divider, with a heart icon) that toggles the per-user favorite
+   * column independently of the advanced rating selection.
+   *
+   * NOTE: this row is intentionally NOT part of the do_not_know / know_all
+   * mutual-exclusion rules — it lives outside the rating set.
+   */
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
 }) {
+  const showFavorite = favorite !== undefined && onToggleFavorite !== undefined;
   // "Do not know" is the default sentinel until the user picks something
   // else — matches the "← defaults until you check another" spec.
   const [selected, setSelected] = useState<Set<AdvancedDifficultyLevel>>(() => {
@@ -491,6 +564,40 @@ export function AdvancedRatingPanel({
           );
         })}
       </ul>
+      {/* Favorite — visually distinct 8th row that toggles the per-user
+          favorite column independently of the rating selection. Border-top
+          + heart icon + slight background tint signal that it's a different
+          kind of action from the 7 advanced-rating checkboxes above. */}
+      {showFavorite ? (
+        <label
+          className={cn(
+            'border-border/70 hover:bg-rose-500/5 mt-1 flex cursor-pointer items-center gap-2 rounded-md border-t px-2 py-2 pt-3 transition',
+            disabled && 'pointer-events-none opacity-60',
+            favorite && 'bg-rose-500/5',
+          )}
+        >
+          <input
+            type="checkbox"
+            className="h-4 w-4 shrink-0 cursor-pointer accent-rose-500"
+            checked={favorite}
+            disabled={disabled}
+            onChange={() => onToggleFavorite?.()}
+          />
+          <Heart
+            className={cn(
+              'h-4 w-4 shrink-0',
+              favorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground',
+            )}
+            aria-hidden
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium">Favorite</span>
+            <span className="text-muted-foreground block text-xs">
+              Mark this card to find it quickly in the Favorite filter
+            </span>
+          </span>
+        </label>
+      ) : null}
       <button
         type="button"
         onClick={handleSubmit}
@@ -560,6 +667,8 @@ export function RatingPanel({
   onRate,
   disabled,
   initialAdvanced,
+  favorite,
+  onToggleFavorite,
 }: {
   /**
    * Called with the coarse `DifficultyLevel` (always) and the advanced
@@ -571,6 +680,14 @@ export function RatingPanel({
   disabled?: boolean;
   /** Pre-tick these boxes when the advanced panel opens (re-rate UX). */
   initialAdvanced?: readonly AdvancedDifficultyLevel[];
+  /**
+   * Current favorite state and toggle callback. Threaded straight into the
+   * simple and advanced sub-panels so the heart button / row appears in
+   * both modes. Omit both to hide the heart entirely (e.g. public-deck
+   * read-only previews where favoriting is meaningless).
+   */
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
 }) {
   // Lazy initializer reads the persisted preference on mount. This is a
   // client component (PracticeSession / FlashcardPreviewModal both render
@@ -613,10 +730,17 @@ export function RatingPanel({
         <AdvancedRatingPanel
           disabled={disabled}
           initial={initialAdvanced}
+          favorite={favorite}
+          onToggleFavorite={onToggleFavorite}
           onSubmit={(level, values) => onRate(level, values)}
         />
       ) : (
-        <RatingButtons disabled={disabled} onRate={(level) => onRate(level)} />
+        <RatingButtons
+          disabled={disabled}
+          onRate={(level) => onRate(level)}
+          favorite={favorite}
+          onToggleFavorite={onToggleFavorite}
+        />
       )}
     </div>
   );

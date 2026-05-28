@@ -374,3 +374,15 @@ export const SubmitReviewInput = z.object({
   advancedDifficultyLevel: z.array(AdvancedDifficultyLevelSchema).nullish(),
 });
 export type SubmitReviewInput = z.infer<typeof SubmitReviewInput>;
+
+/**
+ * Wire format accepted by `practice.setFavorite`. Toggles the per-user
+ * `favorite` flag on a card. Deliberately separate from `submitReview` so
+ * favoriting from a list row never has to fabricate a rating, and so rating
+ * a card never accidentally changes its favorite state.
+ */
+export const SetFavoriteInput = z.object({
+  cardId: z.string().cuid(),
+  favorite: z.boolean(),
+});
+export type SetFavoriteInput = z.infer<typeof SetFavoriteInput>;
