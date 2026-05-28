@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { RefreshCw, Settings } from 'lucide-react';
 
+import MobileAppBanner from '@/components/MobileAppBanner';
+
 import { auth, signOut } from '@/server/auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,6 +87,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </DropdownMenu>
         </div>
       </header>
+
+      <MobileAppBanner />
 
       <main className="container flex-1 py-6">{children}</main>
 
