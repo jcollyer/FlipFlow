@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
+import { Check, ChevronDown, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
@@ -13,6 +13,7 @@ import { trpc } from '../lib/trpc';
 import { Button } from './Button';
 import { Card } from './Card';
 import { PlayModeToggle, type PlayMode } from '../features/practice/PlayModeToggle';
+import { RatingModeToggle, type RatingMode } from '../features/practice/RatingModeToggle';
 
 interface PracticeFiltersModalProps {
   visible: boolean;
@@ -39,6 +40,9 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
   const deckMode = Boolean(categoryId);
 
   // ── Filter state ──────────────────────────────────────────────────────────
+  const [deckDropdownOpen, setDeckDropdownOpen] = useState(false);
+  const [classSectionOpen, setClassSectionOpen] = useState(false);
+  const [ratingMode, setRatingMode] = useState<RatingMode>('basic');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
@@ -69,11 +73,21 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
     );
   }
 
+  function handleRatingModeChange(next: RatingMode) {
+    setRatingMode(next);
+    if (next === 'basic') {
+      setSelectedAdvancedRatings([]);
+    } else {
+      setSelectedRatings([]);
+    }
+  }
+
   function resetFilters() {
     setSelectedCategoryIds([]);
     setSelectedClasses([]);
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
+    setRatingMode('basic');
   }
 
   // ── Data queries ──────────────────────────────────────────────────────────
@@ -135,6 +149,26 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
     : baseCards.length > 0
       ? ` (${baseCards.length})`
       : '';
+
+  const deckSummaryLabel = useMemo(() => {
+    if (selectedCategoryIds.length === 0) return 'All decks';
+    if (selectedCategoryIds.length === 1) {
+      return (
+        categoriesQuery.data?.find((cat) => cat.id === selectedCategoryIds[0])?.name ?? '1 deck'
+      );
+    }
+    return `${selectedCategoryIds.length} decks selected`;
+  }, [categoriesQuery.data, selectedCategoryIds]);
+
+  const classSummaryLabel = useMemo(() => {
+    if (selectedClasses.length === 0) return 'All word classes';
+    if (selectedClasses.length === 1) {
+      return (
+        WORD_CLASS_OPTIONS.find((cls) => cls.value === selectedClasses[0])?.label ?? '1 word class'
+      );
+    }
+    return `${selectedClasses.length} word classes selected`;
+  }, [selectedClasses]);
 
   function navigateToPractice() {
     const params = new URLSearchParams();
@@ -205,125 +239,132 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
               )}
             </View>
 
-            {/* Categories — hidden in deck mode (scope is already implicit) */}
+            {/* Decks — hidden in deck mode (scope is already implicit) */}
             {!deckMode && (categoriesQuery.data?.length ?? 0) > 0 && (
               <View className="gap-1.5">
-                <Text className="text-xs text-slate-500">Categories</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View className="flex-row gap-1.5">
-                    {categoriesQuery.data!.map((cat) => {
-                      const selected = selectedCategoryIds.includes(cat.id);
-                      return (
-                        <Pressable
-                          key={cat.id}
-                          onPress={() => toggleCategory(cat.id)}
-                          className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-                            selected ? 'bg-blue-500' : 'bg-slate-100'
-                          }`}
-                        >
-                          <View
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: cat.color ?? '#94a3b8' }}
-                          />
-                          <Text
-                            className={`text-xs font-medium ${
-                              selected ? 'text-white' : 'text-slate-600'
+                <Text className="text-xs text-slate-500">Decks</Text>
+                <Pressable
+                  onPress={() => setDeckDropdownOpen((open) => !open)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Select decks"
+                  className="flex-row items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 active:opacity-80"
+                >
+                  <Text
+                    numberOfLines={1}
+                    className={`${selectedCategoryIds.length > 0 ? 'text-slate-900' : 'text-slate-500'} flex-1 pr-3 text-sm`}
+                  >
+                    {deckSummaryLabel}
+                  </Text>
+                  <ChevronDown
+                    size={18}
+                    color="#94a3b8"
+                    style={{ transform: [{ rotate: deckDropdownOpen ? '180deg' : '0deg' }] }}
+                  />
+                </Pressable>
+
+                {deckDropdownOpen && (
+                  <View className="max-h-56 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                    <ScrollView nestedScrollEnabled>
+                      {categoriesQuery.data!.map((cat, index) => {
+                        const selected = selectedCategoryIds.includes(cat.id);
+                        return (
+                          <Pressable
+                            key={cat.id}
+                            onPress={() => toggleCategory(cat.id)}
+                            className={`flex-row items-center justify-between px-4 py-3 ${
+                              index < categoriesQuery.data!.length - 1
+                                ? 'border-b border-slate-100'
+                                : ''
                             }`}
                           >
-                            {cat.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                            <View className="flex-1 flex-row items-center gap-3 pr-3">
+                              <View
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: cat.color ?? '#94a3b8' }}
+                              />
+                              <Text className="text-sm text-slate-900">{cat.name}</Text>
+                            </View>
+                            {selected ? <Check size={18} color="#5584bb" /> : null}
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
                   </View>
-                </ScrollView>
+                )}
               </View>
             )}
 
             {/* Word classes */}
             <View className="gap-1.5">
-              <Text className="text-xs text-slate-500">Word class</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {WORD_CLASS_OPTIONS.map((cls) => {
-                  const selected = selectedClasses.includes(cls.value);
-                  return (
-                    <Pressable
-                      key={cls.value}
-                      onPress={() => toggleClass(cls.value)}
-                      className={`rounded-full px-3 py-1.5 ${
-                        selected ? 'bg-blue-500' : 'bg-slate-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-medium ${
-                          selected ? 'text-white' : 'text-slate-600'
-                        }`}
-                      >
-                        {cls.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <View className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <Pressable
+                  onPress={() => setClassSectionOpen((open) => !open)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Toggle word class filters"
+                  className="flex-row items-center justify-between px-4 py-3 active:opacity-80"
+                >
+                  <View className="flex-1 pr-3">
+                    <Text className="text-xs text-slate-500">Word class</Text>
+                    <Text numberOfLines={1} className="mt-1 text-sm text-slate-900">
+                      {classSummaryLabel}
+                    </Text>
+                  </View>
+                  <ChevronDown
+                    size={18}
+                    color="#94a3b8"
+                    style={{ transform: [{ rotate: classSectionOpen ? '180deg' : '0deg' }] }}
+                  />
+                </Pressable>
+
+                {classSectionOpen && (
+                  <View className="border-t border-slate-100 px-4 py-3">
+                    <View className="flex-row flex-wrap gap-1.5">
+                      {WORD_CLASS_OPTIONS.map((cls) => {
+                        const selected = selectedClasses.includes(cls.value);
+                        return (
+                          <Pressable
+                            key={cls.value}
+                            onPress={() => toggleClass(cls.value)}
+                            className={`rounded-full px-3 py-1.5 ${
+                              selected ? 'bg-blue-500' : 'bg-slate-100'
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-medium ${
+                                selected ? 'text-white' : 'text-slate-600'
+                              }`}
+                            >
+                              {cls.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
               </View>
             </View>
 
-            {/* Rating */}
             <View className="gap-1.5">
-              <Text className="text-xs text-slate-500">Rating</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {(
-                  [
-                    { value: 'easy', label: 'Easy' },
-                    { value: 'good', label: 'Good' },
-                    { value: 'challenging', label: 'Challenging' },
-                    { value: 'no_rating', label: 'No rating' },
-                  ] as const
-                ).map((opt) => {
-                  const selected = selectedRatings.includes(opt.value);
-                  return (
-                    <Pressable
-                      key={opt.value}
-                      onPress={() => toggleRating(opt.value)}
-                      className={`rounded-full px-3 py-1.5 ${
-                        selected ? 'bg-blue-500' : 'bg-slate-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-medium ${
-                          selected ? 'text-white' : 'text-slate-600'
-                        }`}
-                      >
-                        {opt.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
+              <RatingModeToggle value={ratingMode} onChange={handleRatingModeChange} />
 
-            {/* Advanced Rating — mirrors the coarse Rating filter above but
-                slices by the seven advancedDifficultyLevel tokens. Selecting
-                multiple chips is an "any of" match; "No rating" matches cards
-                that have no advanced selection yet. */}
-            <View className="gap-1.5">
-              <Text className="text-xs text-slate-500">Advanced Rating</Text>
-              {(() => {
-                const opts = [
-                  ...ADVANCED_DIFFICULTY_LEVEL_OPTIONS.map((o) => ({
-                    value: o.value as string,
-                    label: o.label,
-                  })),
-                  { value: 'no_rating', label: 'No rating' },
-                ];
-                const half = Math.ceil(opts.length / 2);
-                return [opts.slice(0, half), opts.slice(half)].map((row, rowIdx) => (
-                  <View key={rowIdx} className="flex-row flex-wrap gap-1.5">
-                    {row.map((opt) => {
-                      const selected = selectedAdvancedRatings.includes(opt.value);
+              {ratingMode === 'basic' ? (
+                <View className="gap-1.5">
+                  <Text className="text-xs text-slate-500">Rating</Text>
+                  <View className="flex-row flex-wrap gap-1.5">
+                    {(
+                      [
+                        { value: 'easy', label: 'Easy' },
+                        { value: 'good', label: 'Good' },
+                        { value: 'challenging', label: 'Challenging' },
+                        { value: 'no_rating', label: 'No rating' },
+                      ] as const
+                    ).map((opt) => {
+                      const selected = selectedRatings.includes(opt.value);
                       return (
                         <Pressable
                           key={opt.value}
-                          onPress={() => toggleAdvancedRating(opt.value)}
+                          onPress={() => toggleRating(opt.value)}
                           className={`rounded-full px-3 py-1.5 ${
                             selected ? 'bg-blue-500' : 'bg-slate-100'
                           }`}
@@ -339,8 +380,46 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
                       );
                     })}
                   </View>
-                ));
-              })()}
+                </View>
+              ) : (
+                <View className="gap-1.5">
+                  <Text className="text-xs text-slate-500">Advanced Rating</Text>
+                  {(() => {
+                    const opts = [
+                      ...ADVANCED_DIFFICULTY_LEVEL_OPTIONS.map((o) => ({
+                        value: o.value as string,
+                        label: o.label,
+                      })),
+                      { value: 'no_rating', label: 'No rating' },
+                    ];
+                    const half = Math.ceil(opts.length / 2);
+                    return [opts.slice(0, half), opts.slice(half)].map((row, rowIdx) => (
+                      <View key={rowIdx} className="flex-row flex-wrap gap-1.5">
+                        {row.map((opt) => {
+                          const selected = selectedAdvancedRatings.includes(opt.value);
+                          return (
+                            <Pressable
+                              key={opt.value}
+                              onPress={() => toggleAdvancedRating(opt.value)}
+                              className={`rounded-full px-3 py-1.5 ${
+                                selected ? 'bg-blue-500' : 'bg-slate-100'
+                              }`}
+                            >
+                              <Text
+                                className={`text-xs font-medium ${
+                                  selected ? 'text-white' : 'text-slate-600'
+                                }`}
+                              >
+                                {opt.label}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ));
+                  })()}
+                </View>
+              )}
             </View>
 
             {/* Play order */}

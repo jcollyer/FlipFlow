@@ -15,11 +15,7 @@ import { Audio, type AVPlaybackStatus } from 'expo-av';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native';
 
-import type {
-  AdvancedDifficultyLevel,
-  BackLanguageValue,
-  DifficultyLevel,
-} from '@ensemble/types';
+import type { AdvancedDifficultyLevel, BackLanguageValue, DifficultyLevel } from '@ensemble/types';
 import {
   ADVANCED_DIFFICULTY_LEVEL_OPTIONS,
   difficultyLevelFromAdvanced,
@@ -522,9 +518,7 @@ export function RatingPanel({
   // from the three-button view to the seven-checkbox view if the global
   // pref is on — that's acceptable on mobile (rendering happens after Flip)
   // and matches the React Native idiom for persisted prefs.
-  const [advanced, setAdvanced] = useState<boolean>(
-    () => (initialAdvanced?.length ?? 0) > 0,
-  );
+  const [advanced, setAdvanced] = useState<boolean>(() => (initialAdvanced?.length ?? 0) > 0);
   const userTouchedRef = useRef(false);
 
   useEffect(() => {

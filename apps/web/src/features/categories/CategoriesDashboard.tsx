@@ -58,6 +58,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -79,6 +87,7 @@ import {
   favoriteFilterToArray,
 } from '@/features/practice/FavoriteToggle';
 import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
+import { RatingModeToggle, type RatingMode } from '@/features/practice/RatingModeToggle';
 
 // Sentinels because the Radix Select doesn't allow an empty-string value.
 // We translate these back to `null` before submitting.
@@ -90,6 +99,8 @@ export function CategoriesDashboard() {
   const [deckOpen, setDeckOpen] = useState(false);
   const [folderOpen, setFolderOpen] = useState(false);
   const [playOpen, setPlayOpen] = useState(false);
+  const [playCategorySectionOpen, setPlayCategorySectionOpen] = useState(false);
+  const [playRatingMode, setPlayRatingMode] = useState<RatingMode>('basic');
 
   // ── Play modal filter state ───────────────────────────────────────────────
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -119,6 +130,14 @@ export function CategoriesDashboard() {
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   }
+  function handlePlayRatingModeChange(next: RatingMode) {
+    setPlayRatingMode(next);
+    if (next === 'basic') {
+      setSelectedAdvancedRatings([]);
+    } else {
+      setSelectedRatings([]);
+    }
+  }
   const hasPlayFilters =
     selectedCategoryIds.length > 0 ||
     selectedClasses.length > 0 ||
@@ -132,6 +151,7 @@ export function CategoriesDashboard() {
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
     setSelectedFavorites([]);
+    setPlayRatingMode('basic');
     setPlayMode('in_order');
   }
 
@@ -209,6 +229,24 @@ export function CategoriesDashboard() {
     selectedFavorites,
     hasPlayFilters,
   ]);
+
+  const playDeckLabel = useMemo(() => {
+    if (selectedCategoryIds.length === 0) return 'All decks';
+    if (selectedCategoryIds.length === 1) {
+      return categories?.find((cat) => cat.id === selectedCategoryIds[0])?.name ?? '1 deck';
+    }
+    return `${selectedCategoryIds.length} decks selected`;
+  }, [categories, selectedCategoryIds]);
+
+  const playCategoryLabel = useMemo(() => {
+    if (selectedClasses.length === 0) return 'All categories';
+    if (selectedClasses.length === 1) {
+      return (
+        WORD_CLASS_OPTIONS.find((cls) => cls.value === selectedClasses[0])?.label ?? '1 category'
+      );
+    }
+    return `${selectedClasses.length} categories selected`;
+  }, [selectedClasses]);
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -309,7 +347,7 @@ export function CategoriesDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <ProgressSnapshotCard
           label="Total cards"
           value={stats?.total ?? 0}
@@ -518,104 +556,132 @@ export function CategoriesDashboard() {
             {/* Categories */}
             {(categories?.length ?? 0) > 0 && (
               <div className="space-y-2">
-                <p className="text-muted-foreground text-xs">Deck</p>
-                <div className="flex flex-wrap gap-2">
-                  {categories!.map((cat) => {
-                    const selected = selectedCategoryIds.includes(cat.id);
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => togglePlayCategory(cat.id)}
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition',
-                          selected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                        )}
-                      >
-                        <span
-                          aria-hidden
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: cat.color ?? '#94a3b8' }}
-                        />
-                        {cat.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      <span className="truncate">{playDeckLabel}</span>
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="max-h-72 w-[--radix-dropdown-menu-trigger-width] overflow-y-auto"
+                  >
+                    <DropdownMenuLabel>Toggle decks</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {categories!.map((cat) => {
+                      const selected = selectedCategoryIds.includes(cat.id);
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={cat.id}
+                          checked={selected}
+                          onSelect={(e) => e.preventDefault()}
+                          onCheckedChange={() => togglePlayCategory(cat.id)}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span
+                              aria-hidden
+                              className="h-2.5 w-2.5 rounded-full"
+                              style={{ backgroundColor: cat.color ?? '#94a3b8' }}
+                            />
+                            <span className="truncate">{cat.name}</span>
+                          </span>
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
 
             {/* Word class */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Category</p>
-              <div className="flex flex-wrap gap-2">
-                {WORD_CLASS_OPTIONS.map((cls) => {
-                  const selected = selectedClasses.includes(cls.value);
-                  return (
-                    <button
-                      key={cls.value}
-                      type="button"
-                      onClick={() => togglePlayClass(cls.value)}
-                      className={cn(
-                        'rounded-full px-3 py-1 text-sm font-medium transition',
-                        selected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                      )}
-                    >
-                      {cls.label}
-                    </button>
-                  );
-                })}
+              <div className="bg-background overflow-hidden rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setPlayCategorySectionOpen((open) => !open)}
+                  className="flex w-full items-center justify-between px-3 py-2 text-left"
+                >
+                  <div className="min-w-0 flex-1 pr-3">
+                    <p className="text-muted-foreground text-xs">Category</p>
+                    <p className="truncate text-sm">{playCategoryLabel}</p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'text-muted-foreground h-4 w-4 transition-transform',
+                      playCategorySectionOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+
+                {playCategorySectionOpen && (
+                  <div className="border-t px-3 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      {WORD_CLASS_OPTIONS.map((cls) => {
+                        const selected = selectedClasses.includes(cls.value);
+                        return (
+                          <button
+                            key={cls.value}
+                            type="button"
+                            onClick={() => togglePlayClass(cls.value)}
+                            className={cn(
+                              'rounded-full px-3 py-1 text-sm font-medium transition',
+                              selected
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                            )}
+                          >
+                            {cls.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Rating */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Rating</p>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { value: 'easy', label: 'Easy' },
-                    { value: 'good', label: 'Good' },
-                    { value: 'challenging', label: 'Challenging' },
-                    { value: 'no_rating', label: 'No rating' },
-                  ] as const
-                ).map((opt) => {
-                  const selected = selectedRatings.includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => togglePlayRating(opt.value)}
-                      className={cn(
-                        'rounded-full px-3 py-1 text-sm font-medium transition',
-                        selected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              <RatingModeToggle value={playRatingMode} onChange={handlePlayRatingModeChange} />
 
-            {/* Advanced Rating — mirrors the coarse Rating filter above but
-                lets the user slice by the seven advancedDifficultyLevel
-                tokens. Selecting multiple chips is an "any of" match (the
-                card's CSV column needs to contain at least one of the
-                selected tokens). "No rating" matches cards that have no
-                advanced selection yet. Markup lives in
-                @/features/practice/AdvancedRatingFilter so the deck-detail
-                Play modal renders the identical UI without duplication. */}
-            <AdvancedRatingFilter
-              selected={selectedAdvancedRatings}
-              onToggle={togglePlayAdvancedRating}
-            />
+              {playRatingMode === 'basic' ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-xs">Rating</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { value: 'easy', label: 'Easy' },
+                        { value: 'good', label: 'Good' },
+                        { value: 'challenging', label: 'Challenging' },
+                        { value: 'no_rating', label: 'No rating' },
+                      ] as const
+                    ).map((opt) => {
+                      const selected = selectedRatings.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => togglePlayRating(opt.value)}
+                          className={cn(
+                            'rounded-full px-3 py-1 text-sm font-medium transition',
+                            selected
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <AdvancedRatingFilter
+                  selected={selectedAdvancedRatings}
+                  onToggle={togglePlayAdvancedRating}
+                />
+              )}
+            </div>
 
             {/* Favorite — segmented "All / Favorite / Not favorite" toggle,
                 styled to match the play-order toggle in the footer. No
@@ -978,7 +1044,8 @@ function GettingStartedSection() {
           className="flex items-center gap-2 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
         >
           <div>
-            Ready to get started? Close this box and let&apos;s begin (<em>English</em>) / Commençons&nbsp;! (<em>French</em>)
+            Ready to get started? Close this box and let&apos;s begin (<em>English</em>) /
+            Commençons&nbsp;! (<em>French</em>)
           </div>
           <ArrowRight className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
         </button>
@@ -1007,7 +1074,7 @@ function LearningTogetherSection() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-blue-200 bg-blue-100/60 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex flex-1 size-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
+          <div className="flex size-8 flex-1 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
             <Users className="size-5 shrink-0" />
           </div>
           <h2 className="text-base font-semibold uppercase tracking-tight text-blue-900">

@@ -122,9 +122,7 @@ export function PracticeSession({
       if (previous) {
         utils.practice.queue.setData(input, {
           ...previous,
-          cards: previous.cards.map((c) =>
-            c.id === cardId ? { ...c, favorite } : c,
-          ),
+          cards: previous.cards.map((c) => (c.id === cardId ? { ...c, favorite } : c)),
         });
       }
       return { previous, input };

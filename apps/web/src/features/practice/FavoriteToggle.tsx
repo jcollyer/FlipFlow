@@ -64,10 +64,7 @@ export function FavoriteToggle({ value, onChange, className }: Props) {
             )}
           >
             <Icon
-              className={cn(
-                'h-3.5 w-3.5',
-                checked && opt.value === 'favorite' && 'fill-current',
-              )}
+              className={cn('h-3.5 w-3.5', checked && opt.value === 'favorite' && 'fill-current')}
             />
             {opt.label}
           </button>

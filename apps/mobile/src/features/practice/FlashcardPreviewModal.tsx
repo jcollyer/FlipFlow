@@ -22,11 +22,7 @@ import { Feather } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
-import type {
-  AdvancedDifficultyLevel,
-  BackLanguageValue,
-  DifficultyLevel,
-} from '@ensemble/types';
+import type { AdvancedDifficultyLevel, BackLanguageValue, DifficultyLevel } from '@ensemble/types';
 import { decodeAdvancedDifficultyLevels } from '@ensemble/types';
 import { Button } from '@/components/Button';
 import { trpc } from '@/lib/trpc';

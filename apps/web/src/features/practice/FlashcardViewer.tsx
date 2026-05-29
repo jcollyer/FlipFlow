@@ -571,7 +571,7 @@ export function AdvancedRatingPanel({
       {showFavorite ? (
         <label
           className={cn(
-            'border-border/70 hover:bg-rose-500/5 mt-1 flex cursor-pointer items-center gap-2 rounded-md border-t px-2 py-2 pt-3 transition',
+            'border-border/70 mt-1 flex cursor-pointer items-center gap-2 rounded-md border-t px-2 py-2 pt-3 transition hover:bg-rose-500/5',
             disabled && 'pointer-events-none opacity-60',
             favorite && 'bg-rose-500/5',
           )}

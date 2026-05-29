@@ -23,7 +23,7 @@ export default function MobileAppBanner() {
   if (!visible) return null;
 
   return (
-    <div className="border-b bg-muted/30">
+    <div className="bg-muted/30 border-b">
       <div className="container flex items-center gap-3 py-2.5 sm:gap-4">
         <Image
           src={appIconPng}

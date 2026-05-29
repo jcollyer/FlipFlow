@@ -24,6 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   ArrowLeft,
+  ChevronDown,
   ChevronRight,
   FolderInput,
   Grid2x2,
@@ -91,6 +92,7 @@ import {
 } from '@/features/practice/FavoriteToggle';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
 import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
+import { RatingModeToggle, type RatingMode } from '@/features/practice/RatingModeToggle';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -367,6 +369,8 @@ export function CategoryDetail({ categoryId }: Props) {
 
   // ── Play modal filter state ───────────────────────────────────────────────
   const [playOpen, setPlayOpen] = useState(false);
+  const [playCategorySectionOpen, setPlayCategorySectionOpen] = useState(false);
+  const [playRatingMode, setPlayRatingMode] = useState<RatingMode>('basic');
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
@@ -388,6 +392,14 @@ export function CategoryDetail({ categoryId }: Props) {
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   }
+  function handlePlayRatingModeChange(next: RatingMode) {
+    setPlayRatingMode(next);
+    if (next === 'basic') {
+      setSelectedAdvancedRatings([]);
+    } else {
+      setSelectedRatings([]);
+    }
+  }
   const hasPlayFilters =
     selectedClasses.length > 0 ||
     selectedRatings.length > 0 ||
@@ -399,6 +411,7 @@ export function CategoryDetail({ categoryId }: Props) {
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
     setSelectedFavorites([]);
+    setPlayRatingMode('basic');
     setPlayMode('in_order');
   }
 
@@ -459,6 +472,16 @@ export function CategoryDetail({ categoryId }: Props) {
     selectedFavorites,
     hasPlayFilters,
   ]);
+
+  const playCategoryLabel = useMemo(() => {
+    if (selectedClasses.length === 0) return 'All categories';
+    if (selectedClasses.length === 1) {
+      return (
+        WORD_CLASS_OPTIONS.find((cls) => cls.value === selectedClasses[0])?.label ?? '1 category'
+      );
+    }
+    return `${selectedClasses.length} categories selected`;
+  }, [selectedClasses]);
 
   // Local ordering state for drag-and-drop. Seeded from the server query and
   // updated optimistically on drag so the UI doesn't flash before the mutation
@@ -601,7 +624,7 @@ export function CategoryDetail({ categoryId }: Props) {
       </div>
 
       {isOwner ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <ProgressSnapshotCard
             label="Total cards in this deck"
             value={stats?.total ?? cards?.length ?? 0}
@@ -800,69 +823,92 @@ export function CategoryDetail({ categoryId }: Props) {
 
             {/* Word class */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Category</p>
-              <div className="flex flex-wrap gap-2">
-                {WORD_CLASS_OPTIONS.map((cls) => {
-                  const selected = selectedClasses.includes(cls.value);
-                  return (
-                    <button
-                      key={cls.value}
-                      type="button"
-                      onClick={() => togglePlayClass(cls.value)}
-                      className={cn(
-                        'rounded-full px-3 py-1 text-sm font-medium transition',
-                        selected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                      )}
-                    >
-                      {cls.label}
-                    </button>
-                  );
-                })}
+              <div className="bg-background overflow-hidden rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setPlayCategorySectionOpen((open) => !open)}
+                  className="flex w-full items-center justify-between px-3 py-2 text-left"
+                >
+                  <div className="min-w-0 flex-1 pr-3">
+                    <p className="text-muted-foreground text-xs">Category</p>
+                    <p className="truncate text-sm">{playCategoryLabel}</p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'text-muted-foreground h-4 w-4 transition-transform',
+                      playCategorySectionOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+
+                {playCategorySectionOpen && (
+                  <div className="border-t px-3 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      {WORD_CLASS_OPTIONS.map((cls) => {
+                        const selected = selectedClasses.includes(cls.value);
+                        return (
+                          <button
+                            key={cls.value}
+                            type="button"
+                            onClick={() => togglePlayClass(cls.value)}
+                            className={cn(
+                              'rounded-full px-3 py-1 text-sm font-medium transition',
+                              selected
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                            )}
+                          >
+                            {cls.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Rating */}
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs">Rating</p>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { value: 'easy', label: 'Easy' },
-                    { value: 'good', label: 'Good' },
-                    { value: 'challenging', label: 'Challenging' },
-                    { value: 'no_rating', label: 'No rating' },
-                  ] as const
-                ).map((opt) => {
-                  const selected = selectedRatings.includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => togglePlayRating(opt.value)}
-                      className={cn(
-                        'rounded-full px-3 py-1 text-sm font-medium transition',
-                        selected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              <RatingModeToggle value={playRatingMode} onChange={handlePlayRatingModeChange} />
 
-            {/* Advanced Rating — shared with the home dashboard's Play
-                modal via @/features/practice/AdvancedRatingFilter so the two
-                surfaces can't drift. See that component / CategoriesDashboard
-                for the full rationale. */}
-            <AdvancedRatingFilter
-              selected={selectedAdvancedRatings}
-              onToggle={togglePlayAdvancedRating}
-            />
+              {playRatingMode === 'basic' ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-xs">Rating</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { value: 'easy', label: 'Easy' },
+                        { value: 'good', label: 'Good' },
+                        { value: 'challenging', label: 'Challenging' },
+                        { value: 'no_rating', label: 'No rating' },
+                      ] as const
+                    ).map((opt) => {
+                      const selected = selectedRatings.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => togglePlayRating(opt.value)}
+                          className={cn(
+                            'rounded-full px-3 py-1 text-sm font-medium transition',
+                            selected
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <AdvancedRatingFilter
+                  selected={selectedAdvancedRatings}
+                  onToggle={togglePlayAdvancedRating}
+                />
+              )}
+            </div>
 
             {/* Favorite — segmented "All / Favorite / Not favorite" toggle,
                 styled to match the play-order toggle in the footer. */}
