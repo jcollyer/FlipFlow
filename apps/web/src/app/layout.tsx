@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${bodoniModa.variable} ${cormorantGaramond.variable} ${inter.variable}`}
     >
-      <body className="bg-background min-h-dvh font-sans">
+      <body className="bg-background min-h-dvh font-sans text-gray-700">
         <TRPCProvider>{children}</TRPCProvider>
         <Analytics />
       </body>

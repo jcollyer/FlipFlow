@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { List } from 'lucide-react';
 
 export type RatingMode = 'all' | 'basic' | 'advanced';
 
@@ -10,8 +11,8 @@ interface Props {
   className?: string;
 }
 
-const OPTIONS: { value: RatingMode; label: string }[] = [
-  { value: 'all', label: 'All' },
+const OPTIONS: { value: RatingMode; label: string; Icon?: typeof List }[] = [
+  { value: 'all', label: 'All cards', Icon: List },
   { value: 'basic', label: 'Basic Rating' },
   { value: 'advanced', label: 'Advanced Rating' },
 ];
@@ -28,6 +29,7 @@ export function RatingModeToggle({ value, onChange, className }: Props) {
     >
       {OPTIONS.map((opt) => {
         const checked = value === opt.value;
+        const { Icon } = opt;
         return (
           <button
             key={opt.value}
@@ -36,12 +38,14 @@ export function RatingModeToggle({ value, onChange, className }: Props) {
             aria-checked={checked}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'inline-flex items-center rounded-full px-3 py-1 font-medium transition',
+              'inline-flex items-center gap-1 rounded-full px-3 py-1 font-semibold transition',
               checked
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
+              checked && opt.value === 'all' && 'text-primary',
             )}
           >
+            {Icon && <Icon className={cn('h-3.5 w-3.5', checked && 'fill-current')} />}
             {opt.label}
           </button>
         );

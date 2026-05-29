@@ -33,10 +33,10 @@ import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggl
 import { RatingModeToggle, type RatingMode } from '@/features/practice/RatingModeToggle';
 
 const BASIC_RATING_OPTIONS = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'good', label: 'Good' },
   { value: 'challenging', label: 'Challenging' },
-  { value: 'no_rating', label: 'No rating' },
+  { value: 'good', label: 'Good' },
+  { value: 'easy', label: 'Easy' },
+  { value: 'no_rating', label: 'Not rated' },
 ] as const;
 
 export interface PlayFlashcardsDialogCard {
@@ -349,7 +349,7 @@ export function PlayFlashcardsDialog({
             <RatingModeToggle value={ratingMode} onChange={handleRatingModeChange} />
 
             {ratingMode === 'basic' || ratingMode === 'advanced' ? (
-              <div className="from-muted border-muted ml-1 mt-0 w-[97%] rounded-bl-xl rounded-br-xl border-b border-l border-r bg-gradient-to-t to-white px-3 py-3">
+              <div className="border-muted ml-1 mt-0 rounded-bl-xl border-b border-l bg-gradient-to-t to-white px-3 py-3">
                 {ratingMode === 'basic' ? (
                   <div className="flex flex-wrap gap-2">
                     {BASIC_RATING_OPTIONS.map((option) => {
@@ -363,7 +363,7 @@ export function PlayFlashcardsDialog({
                             'rounded-full px-3 py-1 text-sm font-medium transition',
                             selected
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-background text-muted-foreground hover:bg-muted/70',
+                              : 'bg-muted text-muted-foreground hover:bg-muted/70',
                           )}
                         >
                           {option.label}

@@ -376,10 +376,10 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
                   <View className="flex-row flex-wrap gap-1.5">
                     {(
                       [
-                        { value: 'easy', label: 'Easy' },
-                        { value: 'good', label: 'Good' },
                         { value: 'challenging', label: 'Challenging' },
-                        { value: 'no_rating', label: 'No rating' },
+                        { value: 'good', label: 'Good' },
+                        { value: 'easy', label: 'Easy' },
+                        { value: 'no_rating', label: 'Not rated' },
                       ] as const
                     ).map((opt) => {
                       const selected = selectedRatings.includes(opt.value);

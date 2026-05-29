@@ -27,7 +27,7 @@ interface Props {
 }
 
 const OPTIONS: { value: FavoriteFilterValue; label: string; Icon: typeof Heart }[] = [
-  { value: 'all', label: 'All', Icon: List },
+  { value: 'all', label: 'All cards', Icon: List },
   { value: 'favorite', label: 'Favorite', Icon: Heart },
   { value: 'not_favorite', label: 'Not favorite', Icon: HeartOff },
 ];

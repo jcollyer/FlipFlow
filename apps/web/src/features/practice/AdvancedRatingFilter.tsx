@@ -33,11 +33,11 @@ interface Props {
 export function AdvancedRatingFilter({ selected, onToggle }: Props) {
   // Build the option list once per render. The seven advanced tokens come
   // straight from the types package so a rename or addition there flows here
-  // automatically; we then append the synthetic "No rating" pill that maps
+  // automatically; we then append the synthetic "Not rated" pill that maps
   // to "advancedDifficultyLevel IS NULL or empty" on the filter side.
   const options: { value: string; label: string }[] = [
     ...ADVANCED_DIFFICULTY_LEVEL_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
-    { value: 'no_rating', label: 'No rating' },
+    { value: 'no_rating', label: 'Not rated' },
   ];
 
   return (
@@ -54,7 +54,7 @@ export function AdvancedRatingFilter({ selected, onToggle }: Props) {
                 'rounded-full px-3 py-1 text-sm font-medium transition',
                 isSelected
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted/70 bg-white',
+                  : 'text-muted-foreground hover:bg-muted/70 bg-muted',
               )}
             >
               {opt.label}
