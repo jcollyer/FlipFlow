@@ -55,12 +55,12 @@ export function FavoriteToggle({ value, onChange, className }: Props) {
             className={cn(
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition',
               checked
-                ? 'bg-background text-foreground shadow-sm'
+                ? 'bg-background text-primary font-semibold shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
               // Tint the heart rose when "Favorite" is the active segment so
               // it visually echoes the heart used on cards / in the rating
               // panel.
-              checked && opt.value === 'favorite' && 'text-rose-500',
+              checked && opt.value === 'favorite' && 'text-primary',
             )}
           >
             <Icon

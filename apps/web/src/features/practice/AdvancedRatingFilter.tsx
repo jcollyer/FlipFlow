@@ -54,7 +54,7 @@ export function AdvancedRatingFilter({ selected, onToggle }: Props) {
                 'rounded-full px-3 py-1 text-sm font-medium transition',
                 isSelected
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/70',
+                  : 'text-muted-foreground hover:bg-muted/70 bg-white',
               )}
             >
               {opt.label}

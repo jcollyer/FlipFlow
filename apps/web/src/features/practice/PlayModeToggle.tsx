@@ -44,7 +44,7 @@ export function PlayModeToggle({ value, onChange, className }: PlayModeTogglePro
         className={cn(
           'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition',
           value === 'in_order'
-            ? 'bg-background text-foreground shadow-sm'
+            ? 'bg-background text-primary font-semibold shadow-sm'
             : 'text-muted-foreground hover:text-foreground',
         )}
       >
@@ -59,7 +59,7 @@ export function PlayModeToggle({ value, onChange, className }: PlayModeTogglePro
         className={cn(
           'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition',
           value === 'shuffle'
-            ? 'bg-background text-foreground shadow-sm'
+            ? 'bg-background text-primary font-semibold shadow-sm'
             : 'text-muted-foreground hover:text-foreground',
         )}
       >

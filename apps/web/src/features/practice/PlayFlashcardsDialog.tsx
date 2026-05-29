@@ -83,7 +83,9 @@ export function PlayFlashcardsDialog({
   const showDeckFilter = availableCategories.length > 0;
 
   function toggleValue(value: string, setValue: React.Dispatch<React.SetStateAction<string[]>>) {
-    setValue((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+    setValue((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+    );
   }
 
   function handleRatingModeChange(next: RatingMode) {
@@ -123,7 +125,9 @@ export function PlayFlashcardsDialog({
     let result = [...availableCards];
 
     if (selectedCategoryIds.length > 0) {
-      result = result.filter((card) => card.categoryId && selectedCategoryIds.includes(card.categoryId));
+      result = result.filter(
+        (card) => card.categoryId && selectedCategoryIds.includes(card.categoryId),
+      );
     }
 
     if (selectedClasses.length > 0) {
@@ -171,7 +175,10 @@ export function PlayFlashcardsDialog({
   const deckLabel = useMemo(() => {
     if (selectedCategoryIds.length === 0) return 'All decks';
     if (selectedCategoryIds.length === 1) {
-      return availableCategories.find((category) => category.id === selectedCategoryIds[0])?.name ?? '1 deck';
+      return (
+        availableCategories.find((category) => category.id === selectedCategoryIds[0])?.name ??
+        '1 deck'
+      );
     }
     return `${selectedCategoryIds.length} decks selected`;
   }, [availableCategories, selectedCategoryIds]);
@@ -179,7 +186,10 @@ export function PlayFlashcardsDialog({
   const classLabel = useMemo(() => {
     if (selectedClasses.length === 0) return 'All categories';
     if (selectedClasses.length === 1) {
-      return WORD_CLASS_OPTIONS.find((option) => option.value === selectedClasses[0])?.label ?? '1 category';
+      return (
+        WORD_CLASS_OPTIONS.find((option) => option.value === selectedClasses[0])?.label ??
+        '1 category'
+      );
     }
     return `${selectedClasses.length} categories selected`;
   }, [selectedClasses]);
@@ -245,7 +255,9 @@ export function PlayFlashcardsDialog({
 
           {showDeckFilter && (
             <div className="space-y-2">
-              <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">DECKS</p>
+              <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">
+                DECKS
+              </p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" variant="outline" className="w-full justify-between">
@@ -285,7 +297,9 @@ export function PlayFlashcardsDialog({
           )}
 
           <div className="space-y-2">
-            <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">CATEGORY</p>
+            <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">
+              CATEGORY
+            </p>
             <div className="bg-background overflow-hidden rounded-md border">
               <button
                 type="button"
@@ -329,15 +343,13 @@ export function PlayFlashcardsDialog({
           </div>
 
           <div className="space-y-2">
-            <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">RATINGS</p>
+            <p className="text-muted-foreground ml-1 text-xs font-semibold tracking-[0.18em]">
+              RATINGS
+            </p>
             <RatingModeToggle value={ratingMode} onChange={handleRatingModeChange} />
 
             {ratingMode === 'basic' || ratingMode === 'advanced' ? (
-              <div className="bg-muted/30 border-border/60 ml-1 w-[97%] rounded-xl border px-3 py-3">
-                <p className="text-muted-foreground mb-2 ml-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  {ratingMode === 'basic' ? 'Basic rating options' : 'Advanced rating options'}
-                </p>
-
+              <div className="from-muted border-muted ml-1 mt-0 w-[97%] rounded-bl-xl rounded-br-xl border-b border-l border-r bg-gradient-to-t to-white px-3 py-3">
                 {ratingMode === 'basic' ? (
                   <div className="flex flex-wrap gap-2">
                     {BASIC_RATING_OPTIONS.map((option) => {
@@ -351,7 +363,7 @@ export function PlayFlashcardsDialog({
                             'rounded-full px-3 py-1 text-sm font-medium transition',
                             selected
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-background text-muted-foreground hover:bg-background/70',
+                              : 'bg-background text-muted-foreground hover:bg-muted/70',
                           )}
                         >
                           {option.label}
@@ -370,7 +382,9 @@ export function PlayFlashcardsDialog({
           </div>
 
           <div>
-            <p className="text-muted-foreground mb-2 ml-1 text-xs font-semibold tracking-[0.18em]">FAVORITES</p>
+            <p className="text-muted-foreground mb-2 ml-1 text-xs font-semibold tracking-[0.18em]">
+              FAVORITES
+            </p>
             <FavoriteToggle
               value={favoriteFilterFromArray(selectedFavorites)}
               onChange={(next) => setSelectedFavorites(favoriteFilterToArray(next))}
@@ -379,7 +393,12 @@ export function PlayFlashcardsDialog({
         </div>
 
         <DialogFooter className="sm:items-center sm:justify-between">
-          <PlayModeToggle value={playMode} onChange={setPlayMode} />
+          <div>
+            <p className="text-muted-foreground mb-2 ml-1 text-xs font-semibold tracking-[0.18em]">
+              PLAY ORDER
+            </p>
+            <PlayModeToggle value={playMode} onChange={setPlayMode} />
+          </div>
           <Button onClick={handlePlay}>
             <Play className="h-4 w-4" />
             Play{filteredCount > 0 ? ` (${filteredCount})` : ''}
