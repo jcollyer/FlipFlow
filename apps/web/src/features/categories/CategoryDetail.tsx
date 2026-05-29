@@ -24,14 +24,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   ArrowLeft,
-  ChevronDown,
   ChevronRight,
   FolderInput,
   Grid2x2,
   GripVertical,
   Heart,
   LayersPlus,
-  Library,
   List,
   Loader2,
   Pencil,
@@ -47,7 +45,6 @@ import {
   DECK_FOLDER_COLOR_PALETTE,
   type BackLanguageValue,
   CategoryUpdateInput,
-  decodeAdvancedDifficultyLevels,
   FlashcardUpdateInput,
   GENDER_OPTIONS,
   genderLabel,
@@ -84,15 +81,8 @@ import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
-import { AdvancedRatingFilter } from '@/features/practice/AdvancedRatingFilter';
-import {
-  FavoriteToggle,
-  favoriteFilterFromArray,
-  favoriteFilterToArray,
-} from '@/features/practice/FavoriteToggle';
 import { FlashcardPreviewModal, type PreviewCard } from '@/features/practice/FlashcardPreviewModal';
-import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
-import { RatingModeToggle, type RatingMode } from '@/features/practice/RatingModeToggle';
+import { PlayFlashcardsDialog } from '@/features/practice/PlayFlashcardsDialog';
 
 const TRANSLATE_TARGETS = [
   { value: 'fr', label: 'French' },
@@ -369,119 +359,6 @@ export function CategoryDetail({ categoryId }: Props) {
 
   // ── Play modal filter state ───────────────────────────────────────────────
   const [playOpen, setPlayOpen] = useState(false);
-  const [playCategorySectionOpen, setPlayCategorySectionOpen] = useState(false);
-  const [playRatingMode, setPlayRatingMode] = useState<RatingMode>('basic');
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
-  const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
-  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
-  const [playMode, setPlayMode] = useState<PlayMode>('in_order');
-
-  function togglePlayClass(value: string) {
-    setSelectedClasses((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function togglePlayRating(value: string) {
-    setSelectedRatings((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function togglePlayAdvancedRating(value: string) {
-    setSelectedAdvancedRatings((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function handlePlayRatingModeChange(next: RatingMode) {
-    setPlayRatingMode(next);
-    if (next === 'basic') {
-      setSelectedAdvancedRatings([]);
-    } else {
-      setSelectedRatings([]);
-    }
-  }
-  const hasPlayFilters =
-    selectedClasses.length > 0 ||
-    selectedRatings.length > 0 ||
-    selectedAdvancedRatings.length > 0 ||
-    selectedFavorites.length > 0;
-
-  function resetPlayFilters() {
-    setSelectedClasses([]);
-    setSelectedRatings([]);
-    setSelectedAdvancedRatings([]);
-    setSelectedFavorites([]);
-    setPlayRatingMode('basic');
-    setPlayMode('in_order');
-  }
-
-  function buildPracticeHref() {
-    const params = new URLSearchParams();
-    if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
-    if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
-    if (selectedAdvancedRatings.length > 0)
-      params.set('advancedDifficultyLevels', selectedAdvancedRatings.join(','));
-    if (selectedFavorites.length > 0) params.set('favorites', selectedFavorites.join(','));
-    if (playMode === 'shuffle') params.set('shuffle', '1');
-    const qs = params.toString();
-    return qs
-      ? `/app/categories/${categoryId}/practice?${qs}`
-      : `/app/categories/${categoryId}/practice`;
-  }
-
-  const playFilteredCount = useMemo(() => {
-    const allCards = cards ?? [];
-    if (!hasPlayFilters) return allCards.length;
-    let result = allCards;
-    if (selectedClasses.length > 0) {
-      result = result.filter((c) => c.class && selectedClasses.includes(c.class));
-    }
-    if (selectedRatings.length > 0) {
-      result = result.filter((c) => {
-        const level = (c as { difficultyLevel?: string | null }).difficultyLevel ?? null;
-        if (selectedRatings.includes('no_rating') && level === null) return true;
-        return level !== null && selectedRatings.includes(level);
-      });
-    }
-    if (selectedAdvancedRatings.length > 0) {
-      result = result.filter((c) => {
-        const raw =
-          (c as { advancedDifficultyLevel?: string | null }).advancedDifficultyLevel ?? null;
-        const tokens = decodeAdvancedDifficultyLevels(raw);
-        if (selectedAdvancedRatings.includes('no_rating') && tokens.length === 0) return true;
-        return tokens.some((t) => selectedAdvancedRatings.includes(t));
-      });
-    }
-    if (selectedFavorites.length > 0) {
-      const wantFav = selectedFavorites.includes('favorite');
-      const wantNotFav = selectedFavorites.includes('not_favorite');
-      if (wantFav !== wantNotFav) {
-        result = result.filter((c) => {
-          const fav = (c as { favorite?: boolean }).favorite ?? false;
-          return wantFav ? fav : !fav;
-        });
-      }
-    }
-    return result.length;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    cards,
-    selectedClasses,
-    selectedRatings,
-    selectedAdvancedRatings,
-    selectedFavorites,
-    hasPlayFilters,
-  ]);
-
-  const playCategoryLabel = useMemo(() => {
-    if (selectedClasses.length === 0) return 'All categories';
-    if (selectedClasses.length === 1) {
-      return (
-        WORD_CLASS_OPTIONS.find((cls) => cls.value === selectedClasses[0])?.label ?? '1 category'
-      );
-    }
-    return `${selectedClasses.length} categories selected`;
-  }, [selectedClasses]);
 
   // Local ordering state for drag-and-drop. Seeded from the server query and
   // updated optimistically on drag so the UI doesn't flash before the mutation
@@ -781,160 +658,12 @@ export function CategoryDetail({ categoryId }: Props) {
         </div>
       ) : null}
 
-      {/* Play Flashcards modal */}
-      <Dialog
+      <PlayFlashcardsDialog
         open={playOpen}
-        onOpenChange={(o) => {
-          setPlayOpen(o);
-          if (!o) resetPlayFilters();
-        }}
-      >
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div
-                aria-hidden
-                className="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md"
-              >
-                <Library className="h-5 w-5" />
-              </div>
-              <DialogTitle className="text-xl">Play Flashcards</DialogTitle>
-            </div>
-            <DialogDescription className="pt-1">
-              Choose none, one or multiple filter option to play a subset of your cards, or leave
-              blank to play all.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* ── Filter body ── */}
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Play filters</span>
-              {hasPlayFilters && (
-                <button
-                  type="button"
-                  onClick={resetPlayFilters}
-                  className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-
-            {/* Word class */}
-            <div className="space-y-2">
-              <div className="bg-background overflow-hidden rounded-md border">
-                <button
-                  type="button"
-                  onClick={() => setPlayCategorySectionOpen((open) => !open)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left"
-                >
-                  <div className="min-w-0 flex-1 pr-3">
-                    <p className="text-muted-foreground text-xs">Category</p>
-                    <p className="truncate text-sm">{playCategoryLabel}</p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      'text-muted-foreground h-4 w-4 transition-transform',
-                      playCategorySectionOpen && 'rotate-180',
-                    )}
-                  />
-                </button>
-
-                {playCategorySectionOpen && (
-                  <div className="border-t px-3 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {WORD_CLASS_OPTIONS.map((cls) => {
-                        const selected = selectedClasses.includes(cls.value);
-                        return (
-                          <button
-                            key={cls.value}
-                            type="button"
-                            onClick={() => togglePlayClass(cls.value)}
-                            className={cn(
-                              'rounded-full px-3 py-1 text-sm font-medium transition',
-                              selected
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                            )}
-                          >
-                            {cls.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <RatingModeToggle value={playRatingMode} onChange={handlePlayRatingModeChange} />
-
-              {playRatingMode === 'basic' ? (
-                <div className="space-y-2">
-                  <p className="text-muted-foreground text-xs ml-1">Basic Rating</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: 'easy', label: 'Easy' },
-                        { value: 'good', label: 'Good' },
-                        { value: 'challenging', label: 'Challenging' },
-                        { value: 'no_rating', label: 'No rating' },
-                      ] as const
-                    ).map((opt) => {
-                      const selected = selectedRatings.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => togglePlayRating(opt.value)}
-                          className={cn(
-                            'rounded-full px-3 py-1 text-sm font-medium transition',
-                            selected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <AdvancedRatingFilter
-                  selected={selectedAdvancedRatings}
-                  onToggle={togglePlayAdvancedRating}
-                />
-              )}
-            </div>
-
-            {/* Favorite — segmented "All / Favorite / Not favorite" toggle,
-                styled to match the play-order toggle in the footer. */}
-            <div>
-              <FavoriteToggle
-                value={favoriteFilterFromArray(selectedFavorites)}
-                onChange={(next) => setSelectedFavorites(favoriteFilterToArray(next))}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="sm:items-center sm:justify-between">
-            <PlayModeToggle value={playMode} onChange={setPlayMode} />
-            <Button
-              onClick={() => {
-                setPlayOpen(false);
-                resetPlayFilters();
-                router.push(buildPracticeHref());
-              }}
-            >
-              <Play className="h-4 w-4" />
-              Play{playFilteredCount > 0 ? ` (${playFilteredCount})` : ''}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setPlayOpen}
+        practicePath={`/app/categories/${categoryId}/practice`}
+        cards={cards}
+      />
 
       {/* Create card dialog (deck is fixed to this category). */}
       {isOwner ? (

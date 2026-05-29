@@ -25,7 +25,6 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Plus,
   Layers,
-  Library,
   Users,
   FolderTree,
   Play,
@@ -43,7 +42,6 @@ import {
   BACK_LANGUAGES,
   CategoryCreateInput,
   DECK_FOLDER_COLOR_PALETTE,
-  decodeAdvancedDifficultyLevels,
   FolderCreateInput,
   WORD_CLASS_OPTIONS,
 } from '@ensemble/types';
@@ -58,14 +56,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -80,14 +70,7 @@ import { trpc } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
 import { FolderModal } from '@/features/folders/FolderModal';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
-import { AdvancedRatingFilter } from '@/features/practice/AdvancedRatingFilter';
-import {
-  FavoriteToggle,
-  favoriteFilterFromArray,
-  favoriteFilterToArray,
-} from '@/features/practice/FavoriteToggle';
-import { PlayModeToggle, type PlayMode } from '@/features/practice/PlayModeToggle';
-import { RatingModeToggle, type RatingMode } from '@/features/practice/RatingModeToggle';
+import { PlayFlashcardsDialog } from '@/features/practice/PlayFlashcardsDialog';
 
 // Sentinels because the Radix Select doesn't allow an empty-string value.
 // We translate these back to `null` before submitting.
@@ -99,74 +82,6 @@ export function CategoriesDashboard() {
   const [deckOpen, setDeckOpen] = useState(false);
   const [folderOpen, setFolderOpen] = useState(false);
   const [playOpen, setPlayOpen] = useState(false);
-  const [playCategorySectionOpen, setPlayCategorySectionOpen] = useState(false);
-  const [playRatingMode, setPlayRatingMode] = useState<RatingMode>('basic');
-
-  // ── Play modal filter state ───────────────────────────────────────────────
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
-  const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
-  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
-  const [playMode, setPlayMode] = useState<PlayMode>('in_order');
-
-  function togglePlayCategory(id: string) {
-    setSelectedCategoryIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
-  function togglePlayClass(value: string) {
-    setSelectedClasses((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function togglePlayRating(value: string) {
-    setSelectedRatings((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function togglePlayAdvancedRating(value: string) {
-    setSelectedAdvancedRatings((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  }
-  function handlePlayRatingModeChange(next: RatingMode) {
-    setPlayRatingMode(next);
-    if (next === 'basic') {
-      setSelectedAdvancedRatings([]);
-    } else {
-      setSelectedRatings([]);
-    }
-  }
-  const hasPlayFilters =
-    selectedCategoryIds.length > 0 ||
-    selectedClasses.length > 0 ||
-    selectedRatings.length > 0 ||
-    selectedAdvancedRatings.length > 0 ||
-    selectedFavorites.length > 0;
-
-  function resetPlayFilters() {
-    setSelectedCategoryIds([]);
-    setSelectedClasses([]);
-    setSelectedRatings([]);
-    setSelectedAdvancedRatings([]);
-    setSelectedFavorites([]);
-    setPlayRatingMode('basic');
-    setPlayMode('in_order');
-  }
-
-  function buildPracticeHref() {
-    const params = new URLSearchParams();
-    if (selectedCategoryIds.length > 0) params.set('categoryIds', selectedCategoryIds.join(','));
-    if (selectedClasses.length > 0) params.set('classes', selectedClasses.join(','));
-    if (selectedRatings.length > 0) params.set('difficultyLevels', selectedRatings.join(','));
-    if (selectedAdvancedRatings.length > 0)
-      params.set('advancedDifficultyLevels', selectedAdvancedRatings.join(','));
-    if (selectedFavorites.length > 0) params.set('favorites', selectedFavorites.join(','));
-    if (playMode === 'shuffle') params.set('shuffle', '1');
-    const qs = params.toString();
-    return qs ? `/app/all-categories/practice?${qs}` : '/app/all-categories/practice';
-  }
   const utils = trpc.useUtils();
   const { data: me } = trpc.auth.me.useQuery();
   const { data: categories, isLoading } = trpc.categories.list.useQuery();
@@ -181,72 +96,6 @@ export function CategoriesDashboard() {
   const { data: stats } = trpc.practice.stats.useQuery({});
   // All cards — used in the Play modal to compute the filtered count.
   const { data: allCards } = trpc.flashcards.listAll.useQuery();
-
-  const playFilteredCount = useMemo(() => {
-    const cards = allCards ?? [];
-    if (!hasPlayFilters) return cards.length;
-    let result = cards;
-    if (selectedCategoryIds.length > 0) {
-      result = result.filter((c) => c.categoryId && selectedCategoryIds.includes(c.categoryId));
-    }
-    if (selectedClasses.length > 0) {
-      result = result.filter((c) => c.class && selectedClasses.includes(c.class));
-    }
-    if (selectedRatings.length > 0) {
-      result = result.filter((c) => {
-        const level = (c as { difficultyLevel?: string | null }).difficultyLevel ?? null;
-        if (selectedRatings.includes('no_rating') && level === null) return true;
-        return level !== null && selectedRatings.includes(level);
-      });
-    }
-    if (selectedAdvancedRatings.length > 0) {
-      result = result.filter((c) => {
-        const raw =
-          (c as { advancedDifficultyLevel?: string | null }).advancedDifficultyLevel ?? null;
-        const tokens = decodeAdvancedDifficultyLevels(raw);
-        if (selectedAdvancedRatings.includes('no_rating') && tokens.length === 0) return true;
-        return tokens.some((t) => selectedAdvancedRatings.includes(t));
-      });
-    }
-    if (selectedFavorites.length > 0) {
-      const wantFav = selectedFavorites.includes('favorite');
-      const wantNotFav = selectedFavorites.includes('not_favorite');
-      if (wantFav !== wantNotFav) {
-        result = result.filter((c) => {
-          const fav = (c as { favorite?: boolean }).favorite ?? false;
-          return wantFav ? fav : !fav;
-        });
-      }
-    }
-    return result.length;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    allCards,
-    selectedCategoryIds,
-    selectedClasses,
-    selectedRatings,
-    selectedAdvancedRatings,
-    selectedFavorites,
-    hasPlayFilters,
-  ]);
-
-  const playDeckLabel = useMemo(() => {
-    if (selectedCategoryIds.length === 0) return 'All decks';
-    if (selectedCategoryIds.length === 1) {
-      return categories?.find((cat) => cat.id === selectedCategoryIds[0])?.name ?? '1 deck';
-    }
-    return `${selectedCategoryIds.length} decks selected`;
-  }, [categories, selectedCategoryIds]);
-
-  const playCategoryLabel = useMemo(() => {
-    if (selectedClasses.length === 0) return 'All categories';
-    if (selectedClasses.length === 1) {
-      return (
-        WORD_CLASS_OPTIONS.find((cls) => cls.value === selectedClasses[0])?.label ?? '1 category'
-      );
-    }
-    return `${selectedClasses.length} categories selected`;
-  }, [selectedClasses]);
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -513,202 +362,13 @@ export function CategoriesDashboard() {
 
       <LearningTogetherSection />
 
-      {/* ── Play Flashcards modal ─────────────────────────────────────────── */}
-      <Dialog
+      <PlayFlashcardsDialog
         open={playOpen}
-        onOpenChange={(o) => {
-          setPlayOpen(o);
-          if (!o) resetPlayFilters();
-        }}
-      >
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div
-                aria-hidden
-                className="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md"
-              >
-                <Library className="h-5 w-5" />
-              </div>
-              <DialogTitle className="text-xl">Play Flashcards</DialogTitle>
-            </div>
-            <DialogDescription className="pt-1">
-              Choose none, one or multiple filter option to play a subset of your cards, or leave
-              blank to play all.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* ── Filter body ── */}
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Play filters</span>
-              {hasPlayFilters && (
-                <button
-                  type="button"
-                  onClick={resetPlayFilters}
-                  className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-
-            {/* Categories */}
-            {(categories?.length ?? 0) > 0 && (
-              <div className="space-y-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-between">
-                      <span className="truncate">{playDeckLabel}</span>
-                      <ChevronDown className="h-4 w-4 text-slate-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="max-h-72 w-[--radix-dropdown-menu-trigger-width] overflow-y-auto"
-                  >
-                    <DropdownMenuLabel>Toggle decks</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {categories!.map((cat) => {
-                      const selected = selectedCategoryIds.includes(cat.id);
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={cat.id}
-                          checked={selected}
-                          onSelect={(e) => e.preventDefault()}
-                          onCheckedChange={() => togglePlayCategory(cat.id)}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span
-                              aria-hidden
-                              className="h-2.5 w-2.5 rounded-full"
-                              style={{ backgroundColor: cat.color ?? '#94a3b8' }}
-                            />
-                            <span className="truncate">{cat.name}</span>
-                          </span>
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-
-            {/* Word class */}
-            <div className="space-y-2">
-              <div className="bg-background overflow-hidden rounded-md border">
-                <button
-                  type="button"
-                  onClick={() => setPlayCategorySectionOpen((open) => !open)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left"
-                >
-                  <div className="min-w-0 flex-1 pr-3">
-                    <p className="text-muted-foreground text-xs">Category</p>
-                    <p className="truncate text-sm">{playCategoryLabel}</p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      'text-muted-foreground h-4 w-4 transition-transform',
-                      playCategorySectionOpen && 'rotate-180',
-                    )}
-                  />
-                </button>
-
-                {playCategorySectionOpen && (
-                  <div className="border-t px-3 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {WORD_CLASS_OPTIONS.map((cls) => {
-                        const selected = selectedClasses.includes(cls.value);
-                        return (
-                          <button
-                            key={cls.value}
-                            type="button"
-                            onClick={() => togglePlayClass(cls.value)}
-                            className={cn(
-                              'rounded-full px-3 py-1 text-sm font-medium transition',
-                              selected
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                            )}
-                          >
-                            {cls.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <RatingModeToggle value={playRatingMode} onChange={handlePlayRatingModeChange} />
-
-              {playRatingMode === 'basic' ? (
-                <div className="space-y-2">
-                  <p className="text-muted-foreground ml-1 text-xs">Basic Rating</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: 'easy', label: 'Easy' },
-                        { value: 'good', label: 'Good' },
-                        { value: 'challenging', label: 'Challenging' },
-                        { value: 'no_rating', label: 'No rating' },
-                      ] as const
-                    ).map((opt) => {
-                      const selected = selectedRatings.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => togglePlayRating(opt.value)}
-                          className={cn(
-                            'rounded-full px-3 py-1 text-sm font-medium transition',
-                            selected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <AdvancedRatingFilter
-                  selected={selectedAdvancedRatings}
-                  onToggle={togglePlayAdvancedRating}
-                />
-              )}
-            </div>
-
-            {/* Favorite — segmented "All / Favorite / Not favorite" toggle,
-                styled to match the play-order toggle in the footer. No
-                section label by design; the segments speak for themselves. */}
-            <div>
-              <FavoriteToggle
-                value={favoriteFilterFromArray(selectedFavorites)}
-                onChange={(next) => setSelectedFavorites(favoriteFilterToArray(next))}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="sm:items-center sm:justify-between">
-            <PlayModeToggle value={playMode} onChange={setPlayMode} />
-            <Button
-              onClick={() => {
-                setPlayOpen(false);
-                resetPlayFilters();
-                router.push(buildPracticeHref());
-              }}
-            >
-              <Play className="h-4 w-4" />
-              Play{playFilteredCount > 0 ? ` (${playFilteredCount})` : ''}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setPlayOpen}
+        practicePath="/app/all-categories/practice"
+        cards={allCards}
+        categories={categories}
+      />
 
       <Dialog
         open={deckOpen}
