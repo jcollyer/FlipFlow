@@ -372,7 +372,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
 
               {ratingMode === 'basic' ? (
                 <View className="gap-1.5">
-                  <Text className="text-xs text-slate-500">Rating</Text>
+                  <Text className="text-xs ml-1 text-slate-500">Rating</Text>
                   <View className="flex-row flex-wrap gap-1.5">
                     {(
                       [
@@ -405,7 +405,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
                 </View>
               ) : (
                 <View className="gap-1.5">
-                  <Text className="text-xs text-slate-500">Advanced Rating</Text>
+                  <Text className="text-xs ml-1 text-slate-500">Advanced Rating</Text>
                   {(() => {
                     const opts = [
                       ...ADVANCED_DIFFICULTY_LEVEL_OPTIONS.map((o) => ({
