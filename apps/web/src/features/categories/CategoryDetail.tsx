@@ -549,9 +549,16 @@ export function CategoryDetail({ categoryId }: Props) {
 
       {isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-muted/50 h-20 animate-pulse rounded-xl border" />
-          ))}
+          {!category || isOwner ? <CategoryStatsSkeleton /> : null}
+          <div className="flex justify-end gap-2">
+            <div className="bg-muted h-11 w-11 animate-pulse rounded-md border" />
+            <div className="bg-muted h-11 w-11 animate-pulse rounded-md border" />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CategoryCardSkeleton key={i} showHandle={!category || isOwner} />
+            ))}
+          </div>
         </div>
       ) : orderedCards && orderedCards.length > 0 ? (
         <div className="space-y-3">
@@ -754,6 +761,63 @@ export function CategoryDetail({ categoryId }: Props) {
 function getPercentage(value: number, total: number) {
   if (total <= 0) return 0;
   return Math.round((value / total) * 100);
+}
+
+function CategoryStatsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index}>
+          <CardContent className="flex h-full items-start justify-between gap-4 p-5">
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="bg-muted h-10 w-3/4 animate-pulse rounded-md" />
+              <div className="space-y-2">
+                <div className="bg-muted h-9 w-12 animate-pulse rounded-md" />
+                <div className="bg-muted h-4 w-24 animate-pulse rounded-md" />
+              </div>
+            </div>
+            <div className="bg-muted h-10 w-14 animate-pulse rounded-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function CategoryCardSkeleton({ showHandle }: { showHandle: boolean }) {
+  return (
+    <Card>
+      <CardContent className="flex items-start justify-between gap-3 p-4">
+        {showHandle ? <div className="bg-muted mt-1 h-4 w-4 animate-pulse rounded-sm" /> : null}
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="space-y-2">
+            <div className="bg-muted h-6 w-1/3 animate-pulse rounded-md" />
+            <div className="bg-muted h-5 w-1/4 animate-pulse rounded-md" />
+          </div>
+          <div className="space-y-2 rounded-lg border border-dashed px-3 py-2">
+            <div className="flex gap-3">
+              <div className="bg-muted h-4 w-40 animate-pulse rounded-md" />
+              <div className="bg-muted h-4 w-48 animate-pulse rounded-md" />
+            </div>
+            <div className="flex gap-3">
+              <div className="bg-muted h-4 w-32 animate-pulse rounded-md" />
+              <div className="bg-muted h-4 w-44 animate-pulse rounded-md" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="bg-muted h-6 w-24 animate-pulse rounded-full" />
+            <div className="bg-muted h-6 w-20 animate-pulse rounded-full" />
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <div className="bg-muted h-9 w-9 animate-pulse rounded-md" />
+          <div className="bg-muted h-9 w-9 animate-pulse rounded-md" />
+          <div className="bg-muted h-9 w-9 animate-pulse rounded-md" />
+          <div className="bg-muted h-9 w-9 animate-pulse rounded-md" />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 function EditCardDialog({

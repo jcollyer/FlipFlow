@@ -85,15 +85,15 @@ export function CategoriesDashboard() {
   const utils = trpc.useUtils();
   const { data: me } = trpc.auth.me.useQuery();
   const { data: categories, isLoading } = trpc.categories.list.useQuery();
-  const { data: folders } = trpc.folders.list.useQuery();
+  const { data: folders, isLoading: foldersLoading } = trpc.folders.list.useQuery();
   // Groups + pending invites. Both queries run unconditionally so the home
   // page reacts the moment a user creates/joins a group or receives an
   // invite from another window.
-  const { data: groups } = trpc.groups.list.useQuery();
+  const { data: groups, isLoading: groupsLoading } = trpc.groups.list.useQuery();
   const { data: pendingInvites } = trpc.invites.listMine.useQuery();
   // Aggregate counts across every card the user owns. Drives the four
   // ProgressSnapshotCard tiles below the header.
-  const { data: stats } = trpc.practice.stats.useQuery({});
+  const { data: stats, isLoading: statsLoading } = trpc.practice.stats.useQuery({});
   // All cards — used in the Play modal to compute the filtered count.
   const { data: allCards } = trpc.flashcards.listAll.useQuery();
 
@@ -166,6 +166,7 @@ export function CategoriesDashboard() {
   const hasFolders = (folders?.length ?? 0) > 0;
   const hasGroups = (groups?.length ?? 0) > 0;
   const invitesCount = pendingInvites?.length ?? 0;
+  const isDashboardLoading = isLoading || foldersLoading || groupsLoading || statsLoading;
 
   return (
     <div className="space-y-6">
@@ -196,42 +197,46 @@ export function CategoriesDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-        <ProgressSnapshotCard
-          label="Total cards"
-          value={stats?.total ?? 0}
-          tone="slate"
-          percentageLabel="of total cards"
-          valueLabel="Across every deck"
-        />
-        <ProgressSnapshotCard
-          label="Challenging cards"
-          value={stats?.difficultyBreakdown.challenging ?? 0}
-          percentage={getPercentage(stats?.difficultyBreakdown.challenging ?? 0, stats?.total ?? 0)}
-          tone="amber"
-          percentageLabel="of total cards"
-          valueLabel="Across every deck"
-        />
-        <ProgressSnapshotCard
-          label="Good cards"
-          value={stats?.difficultyBreakdown.good ?? 0}
-          percentage={getPercentage(stats?.difficultyBreakdown.good ?? 0, stats?.total ?? 0)}
-          tone="blue"
-          percentageLabel="of total cards"
-          valueLabel="Across every deck"
-        />
-        <ProgressSnapshotCard
-          label="Easy cards"
-          value={stats?.difficultyBreakdown.easy ?? 0}
-          percentage={getPercentage(stats?.difficultyBreakdown.easy ?? 0, stats?.total ?? 0)}
-          tone="green"
-          percentageLabel="of total cards"
-          valueLabel="Across every deck"
-        />
-      </div>
+      {isDashboardLoading ? (
+        <DashboardStatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+          <ProgressSnapshotCard
+            label="Total cards"
+            value={stats?.total ?? 0}
+            tone="slate"
+            percentageLabel="of total cards"
+            valueLabel="Across every deck"
+          />
+          <ProgressSnapshotCard
+            label="Challenging cards"
+            value={stats?.difficultyBreakdown.challenging ?? 0}
+            percentage={getPercentage(stats?.difficultyBreakdown.challenging ?? 0, stats?.total ?? 0)}
+            tone="amber"
+            percentageLabel="of total cards"
+            valueLabel="Across every deck"
+          />
+          <ProgressSnapshotCard
+            label="Good cards"
+            value={stats?.difficultyBreakdown.good ?? 0}
+            percentage={getPercentage(stats?.difficultyBreakdown.good ?? 0, stats?.total ?? 0)}
+            tone="blue"
+            percentageLabel="of total cards"
+            valueLabel="Across every deck"
+          />
+          <ProgressSnapshotCard
+            label="Easy cards"
+            value={stats?.difficultyBreakdown.easy ?? 0}
+            percentage={getPercentage(stats?.difficultyBreakdown.easy ?? 0, stats?.total ?? 0)}
+            tone="green"
+            percentageLabel="of total cards"
+            valueLabel="Across every deck"
+          />
+        </div>
+      )}
 
       {/* Empty state — no folders yet */}
-      {!hasFolders && !isLoading && (
+      {!hasFolders && !isDashboardLoading && (
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 px-6 py-12 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
             <FolderPlus className="h-7 w-7 text-gray-400" />
@@ -250,24 +255,11 @@ export function CategoriesDashboard() {
         </div>
       )}
 
-      {/* Folder sections loading */}
-      {isLoading && (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-muted/50 flex animate-pulse items-center gap-3 rounded-xl p-5"
-            >
-              <div className="bg-muted h-5 w-5 shrink-0 rounded-md" />
-              <div className="bg-muted h-5 w-1/4 rounded-md" />
-              <div className="bg-muted h-4 w-16 rounded-md" />
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Dashboard loading */}
+      {isDashboardLoading && <DashboardCollectionsSkeleton />}
 
       {/* Folder sections — collapsible, full-width */}
-      {hasFolders && !isLoading && (
+      {hasFolders && !isDashboardLoading && (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -313,50 +305,52 @@ export function CategoriesDashboard() {
       )}
 
       {/* ── Groups: header + pending-invite shortcut + expandables ─────── */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Users className="text-muted-foreground h-4 w-4" />
-            <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">Groups</h2>
+      {!isDashboardLoading ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Users className="text-muted-foreground h-4 w-4" />
+              <h2 className="text-sm font-semibold uppercase tracking-tight text-gray-700">Groups</h2>
+            </div>
+            <Link
+              href="/app/groups"
+              className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium"
+            >
+              {invitesCount > 0 ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Mail className="h-4 w-4" />
+                  {invitesCount} pending invitation{invitesCount === 1 ? '' : 's'}
+                </span>
+              ) : (
+                <span>All groups</span>
+              )}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <Link
-            href="/app/groups"
-            className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium"
-          >
-            {invitesCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Mail className="h-4 w-4" />
-                {invitesCount} pending invitation{invitesCount === 1 ? '' : 's'}
-              </span>
-            ) : (
-              <span>All groups</span>
-            )}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
 
-        {hasGroups ? (
-          <div className="space-y-2">
-            {(groups ?? []).map((group) => (
-              <GroupSection key={group.id} group={group} />
-            ))}
-          </div>
-        ) : (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-muted-foreground text-sm">
-                Groups let you share decks with other people.
-              </p>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/app/groups">
-                  <Plus className="h-4 w-4" />
-                  Create a group
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          {hasGroups ? (
+            <div className="space-y-2">
+              {(groups ?? []).map((group) => (
+                <GroupSection key={group.id} group={group} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+                <p className="text-muted-foreground text-sm">
+                  Groups let you share decks with other people.
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/app/groups">
+                    <Plus className="h-4 w-4" />
+                    Create a group
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : null}
 
       <GettingStartedSection />
 
@@ -592,6 +586,97 @@ export function CategoriesDashboard() {
 function getPercentage(value: number, total: number) {
   if (total <= 0) return 0;
   return Math.round((value / total) * 100);
+}
+
+function DashboardStatsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index}>
+          <CardContent className="flex h-full items-start justify-between gap-4 p-5">
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="bg-muted h-6 w-1/2 animate-pulse rounded-md" />
+              <div className="space-y-2">
+                <div className="bg-muted h-9 w-14 animate-pulse rounded-md" />
+                <div className="bg-muted h-4 w-28 animate-pulse rounded-md" />
+              </div>
+            </div>
+            <div className="bg-muted h-10 w-14 animate-pulse rounded-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function DashboardCollectionsSkeleton() {
+  return (
+    <div className="space-y-7">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-muted h-4 w-4 animate-pulse rounded-sm" />
+            <div className="bg-muted h-4 w-20 animate-pulse rounded-md" />
+          </div>
+          <div className="bg-muted h-4 w-20 animate-pulse rounded-md" />
+        </div>
+        <div className="overflow-hidden rounded-xl border">
+          <div className="flex items-center gap-3 px-5 py-4">
+            <div className="bg-muted h-5 w-5 animate-pulse rounded-md" />
+            <div className="bg-muted h-5 w-40 animate-pulse rounded-md" />
+            <div className="bg-muted ml-auto h-4 w-14 animate-pulse rounded-md" />
+            <div className="bg-muted h-4 w-4 animate-pulse rounded-sm" />
+          </div>
+          <div className="border-t px-5 py-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <DashboardDeckTileSkeleton key={index} dashed={index === 4} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-muted h-4 w-4 animate-pulse rounded-sm" />
+            <div className="bg-muted h-4 w-16 animate-pulse rounded-md" />
+          </div>
+          <div className="bg-muted h-4 w-20 animate-pulse rounded-md" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="overflow-hidden rounded-xl border">
+              <div className="flex items-center gap-3 px-5 py-4">
+                <div className="bg-muted h-5 w-5 animate-pulse rounded-md" />
+                <div className="bg-muted h-5 w-36 animate-pulse rounded-md" />
+                <div className="bg-muted ml-auto h-4 w-14 animate-pulse rounded-md" />
+                <div className="bg-muted h-4 w-12 animate-pulse rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DashboardDeckTileSkeleton({ dashed = false }: { dashed?: boolean }) {
+  return (
+    <Card className={cn(dashed && 'border-dashed shadow-none')}>
+      <CardHeader className="flex flex-row items-center gap-3">
+        <div className="bg-muted h-10 w-10 animate-pulse rounded-md" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="bg-muted h-4 w-3/4 animate-pulse rounded-md" />
+          <div className="bg-muted h-3 w-full animate-pulse rounded-md" />
+        </div>
+      </CardHeader>
+      <CardContent className="flex items-center gap-3">
+        <div className="bg-muted h-3.5 w-16 animate-pulse rounded-md" />
+      </CardContent>
+    </Card>
+  );
 }
 
 const GETTING_STARTED_KEY = 'flipflow_getting_started_dismissed';
