@@ -418,13 +418,13 @@ export function RatingButtons({
  *   - When every middle option is ticked by hand, "Know all" auto-ticks too.
  */
 export function AdvancedRatingPanel({
-  onSubmit,
+  onChange,
   disabled,
   initial,
   favorite,
   onToggleFavorite,
 }: {
-  onSubmit: (advanced: AdvancedDifficultyLevel[]) => void;
+  onChange: (advanced: AdvancedDifficultyLevel[]) => void;
   disabled?: boolean;
   initial?: readonly AdvancedDifficultyLevel[];
   /**
@@ -445,63 +445,65 @@ export function AdvancedRatingPanel({
     return new Set(['do_not_know']);
   });
 
-  function toggle(value: AdvancedDifficultyLevel) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      const isChecked = next.has(value);
+  function getNextSelected(
+    prev: ReadonlySet<AdvancedDifficultyLevel>,
+    value: AdvancedDifficultyLevel,
+  ): Set<AdvancedDifficultyLevel> {
+    const next = new Set(prev);
+    const isChecked = next.has(value);
 
-      if (value === 'know_all') {
-        if (isChecked) {
-          // Unticking "Know all" leaves nothing checked; fall back to the
-          // sentinel so the panel always has a coherent state.
-          return new Set(['do_not_know']);
-        }
-        return new Set<AdvancedDifficultyLevel>([
-          'know_definition',
-          'know_gender',
-          'know_pronunciation',
-          'know_audibly',
-          'know_spelling',
-          'know_all',
-        ]);
-      }
-
-      if (value === 'do_not_know') {
-        if (isChecked) {
-          if (next.size === 1) return prev;
-          next.delete('do_not_know');
-          return next;
-        }
+    if (value === 'know_all') {
+      if (isChecked) {
+        // Unticking "Know all" leaves nothing checked; fall back to the
+        // sentinel so the panel always has a coherent state.
         return new Set(['do_not_know']);
       }
+      return new Set<AdvancedDifficultyLevel>([
+        'know_definition',
+        'know_gender',
+        'know_pronunciation',
+        'know_audibly',
+        'know_spelling',
+        'know_all',
+      ]);
+    }
 
+    if (value === 'do_not_know') {
       if (isChecked) {
-        next.delete(value);
-        if (next.size === 0) return new Set(['do_not_know']);
-        next.delete('know_all');
+        if (next.size === 1) return new Set(prev);
+        next.delete('do_not_know');
         return next;
       }
-      next.add(value);
-      next.delete('do_not_know');
-      const middleFiveCovered =
-        next.has('know_definition') &&
-        next.has('know_gender') &&
-        next.has('know_pronunciation') &&
-        next.has('know_audibly') &&
-        next.has('know_spelling');
-      if (middleFiveCovered) next.add('know_all');
-      else next.delete('know_all');
+      return new Set(['do_not_know']);
+    }
+
+    if (isChecked) {
+      next.delete(value);
+      if (next.size === 0) return new Set(['do_not_know']);
+      next.delete('know_all');
       return next;
-    });
+    }
+    next.add(value);
+    next.delete('do_not_know');
+    const middleFiveCovered =
+      next.has('know_definition') &&
+      next.has('know_gender') &&
+      next.has('know_pronunciation') &&
+      next.has('know_audibly') &&
+      next.has('know_spelling');
+    if (middleFiveCovered) next.add('know_all');
+    else next.delete('know_all');
+    return next;
   }
 
-  function handleSubmit() {
-    const values = Array.from(selected) as AdvancedDifficultyLevel[];
-    onSubmit(values);
+  function toggle(value: AdvancedDifficultyLevel) {
+    const next = getNextSelected(selected, value);
+    setSelected(next);
+    onChange(Array.from(next) as AdvancedDifficultyLevel[]);
   }
 
   return (
-    <View className="mt-6 gap-3 rounded-lg border border-slate-200 bg-white p-3">
+    <View className="mt-2 gap-3 rounded-lg border border-slate-200 bg-white p-3">
       <View className="gap-1">
         {ADVANCED_DIFFICULTY_LEVEL_OPTIONS.map((opt) => {
           const checked = selected.has(opt.value);
@@ -571,17 +573,6 @@ export function AdvancedRatingPanel({
           </View>
         </Pressable>
       ) : null}
-
-      <Pressable
-        onPress={handleSubmit}
-        disabled={disabled}
-        accessibilityRole="button"
-        className={`items-center rounded-md bg-blue-500 px-3 py-3 active:opacity-80 ${
-          disabled ? 'opacity-50' : ''
-        }`}
-      >
-        <Text className="text-sm font-semibold text-white">Submit rating</Text>
-      </Pressable>
     </View>
   );
 }
@@ -667,6 +658,12 @@ export function RatingPanel({
 
   return (
     <View className="mt-6 gap-2">
+      <RatingButtons
+        disabled={disabled}
+        onRate={(level) => onRate(level)}
+        favorite={favorite}
+        onToggleFavorite={onToggleFavorite}
+      />
       <View className="flex-row items-center justify-end gap-2">
         <Text className="text-xs text-slate-500">Advanced rating</Text>
         <Switch value={advanced} onValueChange={handleToggle} disabled={disabled} />
@@ -675,18 +672,9 @@ export function RatingPanel({
         <AdvancedRatingPanel
           disabled={disabled}
           initial={initialAdvanced}
-          favorite={favorite}
-          onToggleFavorite={onToggleFavorite}
-          onSubmit={(values) => onRate(undefined, values)}
+          onChange={(values) => onRate(undefined, values)}
         />
-      ) : (
-        <RatingButtons
-          disabled={disabled}
-          onRate={(level) => onRate(level)}
-          favorite={favorite}
-          onToggleFavorite={onToggleFavorite}
-        />
-      )}
+      ) : null}
     </View>
   );
 }
