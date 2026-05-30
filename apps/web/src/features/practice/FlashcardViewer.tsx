@@ -712,6 +712,12 @@ export function RatingPanel({
 
   return (
     <div className="space-y-3">
+      <RatingButtons
+        disabled={disabled}
+        onRate={(level) => onRate(level)}
+        favorite={favorite}
+        onToggleFavorite={onToggleFavorite}
+      />
       <div className="flex items-center justify-end gap-2">
         <Label htmlFor="advanced-rating-toggle" className="cursor-pointer text-xs">
           Advanced rating
@@ -727,18 +733,9 @@ export function RatingPanel({
         <AdvancedRatingPanel
           disabled={disabled}
           initial={initialAdvanced}
-          favorite={favorite}
-          onToggleFavorite={onToggleFavorite}
           onSubmit={(values) => onRate(undefined, values)}
         />
-      ) : (
-        <RatingButtons
-          disabled={disabled}
-          onRate={(level) => onRate(level)}
-          favorite={favorite}
-          onToggleFavorite={onToggleFavorite}
-        />
-      )}
+      ) : null}
     </div>
   );
 }
