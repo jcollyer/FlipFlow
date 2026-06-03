@@ -18,6 +18,12 @@ export type FavoriteFilterValue = 'all' | 'favorite' | 'not_favorite';
 interface Props {
   value: FavoriteFilterValue;
   onChange: (next: FavoriteFilterValue) => void;
+  /**
+   * When true the control is non-interactive and visually muted. Used by the
+   * Favorites view's Play modal, where every card is already a favorite so the
+   * filter is fixed to "Favorite" and shown grayed out.
+   */
+  disabled?: boolean;
 }
 
 const OPTIONS: {
@@ -30,12 +36,14 @@ const OPTIONS: {
   { value: 'not_favorite', label: 'Not favorite', icon: 'slash' },
 ];
 
-export function FavoriteToggle({ value, onChange }: Props) {
+export function FavoriteToggle({ value, onChange, disabled = false }: Props) {
   return (
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel="Favorite filter"
+      accessibilityState={{ disabled }}
       className="flex-row items-center gap-0.5 self-start rounded-full bg-slate-100 p-0.5"
+      style={disabled ? { opacity: 0.5 } : undefined}
     >
       {OPTIONS.map((opt) => {
         const checked = value === opt.value;
@@ -47,8 +55,9 @@ export function FavoriteToggle({ value, onChange }: Props) {
           <Pressable
             key={opt.value}
             accessibilityRole="radio"
-            accessibilityState={{ selected: checked }}
+            accessibilityState={{ selected: checked, disabled }}
             accessibilityLabel={opt.label}
+            disabled={disabled}
             onPress={() => onChange(opt.value)}
             className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
             style={

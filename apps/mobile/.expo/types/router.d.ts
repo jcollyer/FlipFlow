@@ -16,6 +16,7 @@ declare module 'expo-router' {
             params?: Router.UnknownInputParams;
           }
         | { pathname: `${'/(app)'}/all-cards` | `/all-cards`; params?: Router.UnknownInputParams }
+        | { pathname: `${'/(app)'}/favorites` | `/favorites`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}` | `/`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}/new-card` | `/new-card`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}/new-deck` | `/new-deck`; params?: Router.UnknownInputParams }
@@ -56,6 +57,7 @@ declare module 'expo-router' {
             params?: Router.UnknownOutputParams;
           }
         | { pathname: `${'/(app)'}/all-cards` | `/all-cards`; params?: Router.UnknownOutputParams }
+        | { pathname: `${'/(app)'}/favorites` | `/favorites`; params?: Router.UnknownOutputParams }
         | { pathname: `${'/(app)'}` | `/`; params?: Router.UnknownOutputParams }
         | { pathname: `${'/(app)'}/new-card` | `/new-card`; params?: Router.UnknownOutputParams }
         | { pathname: `${'/(app)'}/new-deck` | `/new-deck`; params?: Router.UnknownOutputParams }
@@ -95,6 +97,8 @@ declare module 'expo-router' {
         | `/all-cards-practice${`?${string}` | `#${string}` | ''}`
         | `${'/(app)'}/all-cards${`?${string}` | `#${string}` | ''}`
         | `/all-cards${`?${string}` | `#${string}` | ''}`
+        | `${'/(app)'}/favorites${`?${string}` | `#${string}` | ''}`
+        | `/favorites${`?${string}` | `#${string}` | ''}`
         | `${'/(app)'}${`?${string}` | `#${string}` | ''}`
         | `/${`?${string}` | `#${string}` | ''}`
         | `${'/(app)'}/new-card${`?${string}` | `#${string}` | ''}`
@@ -116,6 +120,7 @@ declare module 'expo-router' {
             params?: Router.UnknownInputParams;
           }
         | { pathname: `${'/(app)'}/all-cards` | `/all-cards`; params?: Router.UnknownInputParams }
+        | { pathname: `${'/(app)'}/favorites` | `/favorites`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}` | `/`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}/new-card` | `/new-card`; params?: Router.UnknownInputParams }
         | { pathname: `${'/(app)'}/new-deck` | `/new-deck`; params?: Router.UnknownInputParams }

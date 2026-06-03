@@ -29,6 +29,12 @@ interface PracticeFiltersModalProps {
    * Used from the Deck detail screen's Play button.
    */
   categoryId?: string;
+  /**
+   * When true the Favorites filter is locked to "Favorite" and shown grayed
+   * out. Used by the Favorites screen, where every card is already a favorite,
+   * so the filter is fixed and flows through to the practice session.
+   */
+  lockFavorites?: boolean;
 }
 
 /**
@@ -40,7 +46,12 @@ interface PracticeFiltersModalProps {
  *   deck is already implicit), routes to /all-cards-practice with the deck
  *   pre-locked via categoryIds param.
  */
-export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeFiltersModalProps) {
+export function PracticeFiltersModal({
+  visible,
+  onClose,
+  categoryId,
+  lockFavorites = false,
+}: PracticeFiltersModalProps) {
   const router = useRouter();
   const deckMode = Boolean(categoryId);
 
@@ -52,7 +63,9 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedAdvancedRatings, setSelectedAdvancedRatings] = useState<string[]>([]);
-  const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
+  const [selectedFavorites, setSelectedFavorites] = useState<string[]>(
+    lockFavorites ? ['favorite'] : [],
+  );
   const [playMode, setPlayMode] = useState<PlayMode>('in_order');
 
   function toggleCategory(id: string) {
@@ -99,7 +112,7 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
     setSelectedRatings([]);
     setSelectedAdvancedRatings([]);
     setRatingMode('all');
-    setSelectedFavorites([]);
+    setSelectedFavorites(lockFavorites ? ['favorite'] : []);
     setChooseCategoryMode(false);
     setPlayMode('in_order');
   }
@@ -447,8 +460,9 @@ export function PracticeFiltersModal({ visible, onClose, categoryId }: PracticeF
             <View className="gap-2">
               <Text className={SECTION_LABEL}>Favorites</Text>
               <FavoriteToggle
-                value={favoriteFilterFromArray(selectedFavorites)}
+                value={lockFavorites ? 'favorite' : favoriteFilterFromArray(selectedFavorites)}
                 onChange={(next) => setSelectedFavorites(favoriteFilterToArray(next))}
+                disabled={lockFavorites}
               />
             </View>
 

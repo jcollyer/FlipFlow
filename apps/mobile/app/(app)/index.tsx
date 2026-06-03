@@ -6,6 +6,7 @@ import {
   FolderPlus,
   FolderTree,
   GalleryHorizontalEnd,
+  Heart,
   Layers,
   LogOut,
   Play,
@@ -122,6 +123,10 @@ function SignedInHomeScreen() {
   const { data: groups, refetch: refetchGroups } = trpc.groups.list.useQuery();
   // Global stats across all decks — same query AllDecksEntry used.
   const { data: stats, refetch: refetchStats } = trpc.practice.stats.useQuery({});
+  // Favorited cards across all decks. Powers the optional Favorites shortcut,
+  // which is hidden when the user has no favorites yet.
+  const { data: favorites } = trpc.flashcards.listFavorites.useQuery();
+  const favoritesCount = favorites?.length ?? 0;
 
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(new Set());
@@ -169,6 +174,7 @@ function SignedInHomeScreen() {
     utils.folders.list.invalidate();
     utils.groups.list.invalidate();
     utils.practice.stats.invalidate();
+    utils.flashcards.listFavorites.invalidate();
     refetch();
     refetchFolders();
     refetchGroups();
@@ -385,6 +391,27 @@ function SignedInHomeScreen() {
           <Stat label="Good" value={stats?.difficultyBreakdown?.good ?? 0} tone="blue" />
           <Stat label="Easy" value={stats?.difficultyBreakdown?.easy ?? 0} tone="green" />
         </View>
+
+        {/* Favorites shortcut — only when the user has favorited cards */}
+        {favoritesCount > 0 ? (
+          <Pressable
+            onPress={() => router.push('/favorites' as never)}
+            className="mb-4 active:opacity-70"
+          >
+            <Card className="flex-row items-center gap-3 p-4">
+              <View className="h-10 w-10 shrink-0 items-center justify-center rounded-md bg-rose-100">
+                <Heart size={20} color="#e11d48" fill="#e11d48" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-semibold text-slate-900">Favorites</Text>
+                <Text className="mt-0.5 text-xs text-slate-500">
+                  {favoritesCount} {favoritesCount === 1 ? 'card' : 'cards'} across your decks
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#cbd5e1" />
+            </Card>
+          </Pressable>
+        ) : null}
 
         <View className="gap-6">
           {/* Folders section */}
