@@ -134,7 +134,7 @@ export function FlipCard({
   const linePlay = (e: React.MouseEvent, key: string, texts: string[]) => {
     e.stopPropagation();
     e.preventDefault();
-    tts.play(key, texts);
+    tts.playLine(key, texts);
   };
   return (
     <button
@@ -253,13 +253,25 @@ export function FlipCard({
 
 type TtsStatus = 'idle' | 'loading' | 'playing';
 
+/** Speaking rate used when the user clicks a line a second time. */
+const SLOW_SPEAKING_RATE = 0.6;
+
 export interface CardTtsController {
   /** Begin playing `texts` (one or many segments) under the given key. */
-  play: (key: string, texts: string[]) => void;
+  play: (key: string, texts: string[], speakingRate?: number) => void;
+  /**
+   * Play a single line, toggling speed on repeat clicks: the first click on a
+   * line plays at normal speed, a second consecutive click on the same line
+   * plays slowly, a third returns to normal, and so on. Switching to a
+   * different line resets back to normal speed.
+   */
+  playLine: (key: string, texts: string[]) => void;
   /** Key of the segment currently loading/playing, or null when idle. */
   activeKey: string | null;
   /** Playback state of the active key. */
   status: TtsStatus;
+  /** True while the active playback is the slowed-down variant. */
+  slow: boolean;
   /** Key whose last play attempt errored, or null. */
   errorKey: string | null;
 }
@@ -291,7 +303,12 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
   const runTokenRef = useRef<symbol | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [status, setStatus] = useState<TtsStatus>('idle');
+  const [slow, setSlow] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  // Toggle bookkeeping for `playLine`: the last line key played and whether
+  // that play was the slow variant. A repeat click on the same key flips it.
+  const lastLineKeyRef = useRef<string | null>(null);
+  const lastLineSlowRef = useRef(false);
 
   // If the user navigates away mid-playback the parent unmounts; stop the
   // audio so it doesn't keep playing in the background.
@@ -303,15 +320,23 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
     };
   }, []);
 
-  // Fetch (or return cached) TTS audio for a single text segment.
+  // Fetch (or return cached) TTS audio for a single text segment at a given
+  // speaking rate. The cache key includes the rate so the normal and slow
+  // renderings of the same phrase are stored (and billed) separately.
   const fetchAudio = useCallback(
-    async (t: string): Promise<string> => {
-      const cached = cacheRef.current.get(t);
+    async (t: string, speakingRate: number): Promise<string> => {
+      const cacheKey = `${speakingRate}:${t}`;
+      const cached = cacheRef.current.get(cacheKey);
       if (cached) return cached;
       if (!languageCode) throw new Error('No language configured.');
-      const { audioContent } = await synthesize.mutateAsync({ text: t, languageCode });
+      const { audioContent } = await synthesize.mutateAsync({
+        text: t,
+        languageCode,
+        // Omit when normal so the server uses Google's default 1.0.
+        ...(speakingRate !== 1 ? { speakingRate } : {}),
+      });
       const dataUrl = `data:audio/mp3;base64,${audioContent}`;
-      cacheRef.current.set(t, dataUrl);
+      cacheRef.current.set(cacheKey, dataUrl);
       return dataUrl;
     },
     [synthesize, languageCode],
@@ -330,7 +355,7 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
   }, []);
 
   const play = useCallback(
-    (key: string, texts: string[]) => {
+    (key: string, texts: string[], speakingRate = 1) => {
       void (async () => {
         // Cancel any running sequence.
         audioRef.current?.pause();
@@ -342,13 +367,14 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
         const isActive = () => runTokenRef.current === token;
 
         setActiveKey(key);
+        setSlow(speakingRate < 1);
         setStatus('loading');
         try {
           // Pre-fetch all segments sequentially (uses cache on repeat plays).
           const dataUrls: string[] = [];
           for (const t of texts) {
             if (!isActive()) return;
-            dataUrls.push(await fetchAudio(t));
+            dataUrls.push(await fetchAudio(t, speakingRate));
           }
 
           if (!isActive()) return;
@@ -368,6 +394,7 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
           if (isActive()) {
             setStatus('idle');
             setActiveKey(null);
+            setSlow(false);
           }
         }
       })();
@@ -375,7 +402,19 @@ export function useCardTts(languageCode: BackLanguageValue | null): CardTtsContr
     [fetchAudio, playSingle],
   );
 
-  return { play, activeKey, status, errorKey };
+  // Per-line play with a speed toggle: same line twice in a row → slow; a
+  // third time → normal again; switching lines resets to normal.
+  const playLine = useCallback(
+    (key: string, texts: string[]) => {
+      const slowThisTime = lastLineKeyRef.current === key ? !lastLineSlowRef.current : false;
+      lastLineKeyRef.current = key;
+      lastLineSlowRef.current = slowThisTime;
+      play(key, texts, slowThisTime ? SLOW_SPEAKING_RATE : 1);
+    },
+    [play],
+  );
+
+  return { play, playLine, activeKey, status, slow, errorKey };
 }
 
 // ── CardAudioButton ──────────────────────────────────────────────────────────
@@ -450,6 +489,7 @@ export function LineSpeakerButton({
   const isActive = tts.activeKey === audioKey;
   const loading = isActive && tts.status === 'loading';
   const playing = isActive && tts.status === 'playing';
+  const slow = isActive && tts.slow;
 
   return (
     <button
@@ -457,7 +497,7 @@ export function LineSpeakerButton({
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
-        tts.play(audioKey, texts);
+        tts.playLine(audioKey, texts);
       }}
       disabled={loading}
       aria-label={playing ? 'Playing line' : label}
@@ -477,7 +517,9 @@ export function LineSpeakerButton({
       {loading ? (
         <Loader2 className="h-3 w-3 animate-spin" />
       ) : (
-        <Volume2 className={cn('h-3 w-3', playing && 'animate-speaking')} />
+        <Volume2
+          className={cn('h-3 w-3', playing && (slow ? 'animate-speaking-slow' : 'animate-speaking'))}
+        />
       )}
     </button>
   );

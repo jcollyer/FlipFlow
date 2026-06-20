@@ -62,6 +62,10 @@ export const ttsRouter = router({
       z.object({
         text: z.string().trim().min(1).max(MAX_INPUT_LENGTH),
         languageCode: BackLanguageSchema,
+        // Playback speed passed straight to Google's `audioConfig.speakingRate`
+        // (1.0 = normal). Used by the UI's "click again to hear it slower"
+        // affordance. Clamped to Google's supported 0.25–4.0 range.
+        speakingRate: z.number().min(0.25).max(4).optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -80,7 +84,10 @@ export const ttsRouter = router({
         body: JSON.stringify({
           input: { text: input.text },
           voice: { languageCode: input.languageCode },
-          audioConfig: { audioEncoding: 'MP3' },
+          audioConfig: {
+            audioEncoding: 'MP3',
+            ...(input.speakingRate ? { speakingRate: input.speakingRate } : {}),
+          },
         }),
       });
 
