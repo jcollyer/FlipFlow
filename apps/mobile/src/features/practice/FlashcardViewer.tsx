@@ -146,7 +146,9 @@ export function FlipCard({
 
         {showLineAudio ? (
           <View className="w-full flex-row items-center justify-center gap-2">
-            <Text className="text-center text-xl font-bold leading-snug text-slate-900">{back}</Text>
+            <Text className="text-center text-xl font-bold leading-snug text-slate-900">
+              {back}
+            </Text>
             <LineSpeakerButton tts={tts} audioKey="main" texts={[back]} label="Hear this line" />
           </View>
         ) : (

@@ -37,6 +37,7 @@ import {
   ChevronDown,
   X,
   Mail,
+  Sparkles,
 } from 'lucide-react';
 
 import {
@@ -370,6 +371,12 @@ export function CategoriesDashboard() {
         </div>
       ) : null}
 
+      {/* ── Invitation to join "Coucou Level 1" ─────────────────────────
+          Shown unless the viewer is already a member of that group. */}
+      {!isDashboardLoading && !(groups ?? []).some((g) => g.id === COUCOU_LEVEL_1_GROUP_ID) ? (
+        <CoucouLevel1Invite />
+      ) : null}
+
       <GettingStartedSection />
 
       <LearningTogetherSection />
@@ -699,6 +706,45 @@ function DashboardDeckTileSkeleton({ dashed = false }: { dashed?: boolean }) {
 
 const GETTING_STARTED_KEY = 'flipflow_getting_started_dismissed';
 const LEARNING_TOGETHER_KEY = 'flipflow_learning_together_dismissed';
+
+// "Coucou Level 1" group, owned by Hilary. The homepage surfaces an
+// invitation to join it for anyone who isn't already a member.
+const COUCOU_LEVEL_1_GROUP_ID = 'cmpfhhp5k000213fbzvskrfiz';
+const COUCOU_LEVEL_1_JOIN_URL =
+  'https://ensemblelanguage.com/groups/join/_68IVTCENtWgmhTBu5IlAwzEoaR2WJ85';
+
+/**
+ * Invitation card prompting the user to join the "Coucou Level 1" group.
+ * Rendered on the homepage only when the viewer is not already a member.
+ */
+function CoucouLevel1Invite() {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              You&apos;re invited
+            </p>
+            <h2 className="text-base font-semibold text-gray-900">
+              Join &ldquo;Coucou Level 1&rdquo;
+            </h2>
+            <p className="text-muted-foreground text-sm">Invited by Hilary (ensemble)</p>
+          </div>
+        </div>
+        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+          <Link href={COUCOU_LEVEL_1_JOIN_URL}>
+            <Users className="h-4 w-4" />
+            Join group
+          </Link>
+        </Button>
+      </div>
+    </section>
+  );
+}
 
 function GettingStartedSection() {
   const [visible, setVisible] = useState<boolean | null>(null);

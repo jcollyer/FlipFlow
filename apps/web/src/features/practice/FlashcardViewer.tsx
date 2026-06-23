@@ -206,7 +206,7 @@ export function FlipCard({
             {backExamples.length > 0 ? (
               <ul className="w-fit space-y-[5px] divide-y divide-gray-200 text-left">
                 {backExamples.map((ex, i) => (
-                  <li key={i} className="text-base pt-1">
+                  <li key={i} className="pt-1 text-base">
                     {showLineAudio ? (
                       <span
                         className="group/line flex cursor-pointer items-center gap-2"
@@ -240,9 +240,7 @@ export function FlipCard({
           {/* Card-level play-all button (back text + every example). Kept on
               desktop as a convenient "hear the whole card" affordance; hidden
               on mobile, where the per-line buttons take over (no hover there). */}
-          {showLineAudio ? (
-            <CardAudioButton tts={tts} texts={[back, ...backExamples]} />
-          ) : null}
+          {showLineAudio ? <CardAudioButton tts={tts} texts={[back, ...backExamples]} /> : null}
         </Card>
       </div>
     </button>
@@ -506,7 +504,7 @@ export function LineSpeakerButton({
         // Larger tap target on mobile (where these are the only audio control),
         // tightened to a subtle inline size on desktop where hover reveals them.
         'bg-background text-primary inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm transition sm:h-6 sm:w-6',
-        'hover:bg-primary/10 focus:ring-ring focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-1',
+        'hover:bg-primary/10 focus:ring-ring focus:outline-none focus:ring-2 focus:ring-offset-1 focus-visible:opacity-100',
         'disabled:cursor-progress disabled:opacity-60',
         // Always visible on mobile; hover/focus-reveal on desktop.
         'opacity-100 sm:opacity-0 sm:group-hover/line:opacity-100',
