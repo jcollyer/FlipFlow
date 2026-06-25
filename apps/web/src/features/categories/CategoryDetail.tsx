@@ -29,6 +29,7 @@ import {
   Grid2x2,
   GripVertical,
   Heart,
+  ImagePlus,
   LayersPlus,
   List,
   Loader2,
@@ -78,6 +79,7 @@ import { trpc } from '@/lib/trpc/client';
 import { useDebouncedValue } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { CreateCardDialog } from '@/features/cards/CreateCardDialog';
+import { GenerateCardsFromPhotoDialog } from '@/features/cards/GenerateCardsFromPhotoDialog';
 import { ClassSelect } from '@/features/cards/ClassSelect';
 import { ClassBadge } from '@/features/cards/ClassBadge';
 import { ProgressSnapshotCard } from '@/features/categories/ProgressSnapshotCard';
@@ -355,8 +357,16 @@ export function CategoryDetail({ categoryId }: Props) {
     { categoryId },
     { enabled: category?.isOwner === true },
   );
+  // Feature-detect the photo→cards flow; the button only renders when the
+  // server has an OpenAI key configured.
+  const { data: photoAvailability } = trpc.cardsAi.isAvailable.useQuery(undefined, {
+    staleTime: Infinity,
+  });
+  const photoCardsAvailable = !!photoAvailability?.available;
+  const deckBackLanguage = (category?.backLanguage as BackLanguageValue | null) ?? null;
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [movingCardId, setMovingCardId] = useState<string | null>(null);
   const [editDeckOpen, setEditDeckOpen] = useState(false);
@@ -501,6 +511,12 @@ export function CategoryDetail({ categoryId }: Props) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
+          {isOwner && photoCardsAvailable ? (
+            <Button variant="outline" onClick={() => setPhotoOpen(true)}>
+              <ImagePlus className="h-4 w-4" />
+              New cards from photo
+            </Button>
+          ) : null}
           {isOwner ? (
             <Button variant="outline" onClick={() => setCreateOpen(true)}>
               <LayersPlus className="h-4 w-4" />
@@ -693,6 +709,16 @@ export function CategoryDetail({ categoryId }: Props) {
           categoryId={categoryId}
           open={createOpen}
           onOpenChange={setCreateOpen}
+        />
+      ) : null}
+
+      {/* New cards from photo (AI vision → reviewed bulk create). */}
+      {isOwner && photoCardsAvailable ? (
+        <GenerateCardsFromPhotoDialog
+          open={photoOpen}
+          onOpenChange={setPhotoOpen}
+          categoryId={categoryId}
+          backLanguage={deckBackLanguage}
         />
       ) : null}
 

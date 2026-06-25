@@ -45,3 +45,38 @@ const BACK_LANGUAGE_VALUES = BACK_LANGUAGES.map((l) => l.value) as [
 
 /** Zod enum of the supported back-of-card languages. */
 export const BackLanguageSchema = z.enum(BACK_LANGUAGE_VALUES);
+
+/**
+ * Plain, prompt-friendly language names keyed by BCP-47 tag. Used when asking
+ * an LLM to translate into the deck's language — we want "French", not the
+ * UI label "Spanish (Spain)" with its regional qualifier.
+ */
+const BACK_LANGUAGE_NAMES: Record<BackLanguageValue, string> = {
+  'en-US': 'English',
+  'en-GB': 'English',
+  'fr-FR': 'French',
+  'es-ES': 'Spanish',
+  'es-US': 'Spanish',
+  'de-DE': 'German',
+  'it-IT': 'Italian',
+  'pt-PT': 'Portuguese',
+  'pt-BR': 'Portuguese (Brazilian)',
+  'nl-NL': 'Dutch',
+  'pl-PL': 'Polish',
+  'ru-RU': 'Russian',
+  'ja-JP': 'Japanese',
+  'ko-KR': 'Korean',
+  'cmn-CN': 'Mandarin Chinese (Simplified)',
+  'cmn-TW': 'Mandarin Chinese (Traditional)',
+  'ar-XA': 'Arabic',
+  'hi-IN': 'Hindi',
+};
+
+/**
+ * Map a deck's BCP-47 back-language tag to a plain language name suitable for
+ * an LLM prompt. Falls back to the raw tag for unknown values.
+ */
+export function backLanguageName(value: string | null | undefined): string {
+  if (!value) return '';
+  return BACK_LANGUAGE_NAMES[value as BackLanguageValue] ?? value;
+}

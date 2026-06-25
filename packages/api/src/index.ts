@@ -1,5 +1,6 @@
 import { router } from './trpc';
 import { authRouter } from './routers/auth';
+import { cardsAiRouter } from './routers/cardsAi';
 import { categoriesRouter } from './routers/categories';
 import { dictionaryRouter } from './routers/dictionary';
 import { flashcardsRouter } from './routers/flashcards';
@@ -12,6 +13,7 @@ import { ttsRouter } from './routers/tts';
 
 export const appRouter = router({
   auth: authRouter,
+  cardsAi: cardsAiRouter,
   categories: categoriesRouter,
   dictionary: dictionaryRouter,
   flashcards: flashcardsRouter,

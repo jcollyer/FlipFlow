@@ -195,6 +195,68 @@ export const FlashcardUpdateInput = z.object({
 });
 export type FlashcardUpdateInput = z.infer<typeof FlashcardUpdateInput>;
 
+/**
+ * Bulk-create input. Used by the "New cards from photo" flow to save a whole
+ * batch of reviewed card drafts into one deck in a single round-trip. Each
+ * item mirrors the single-card `FlashcardCreateInput` shape minus the
+ * per-card `categoryId` (the whole batch lands in one deck).
+ */
+export const FlashcardCreateManyItem = z.object({
+  front: z.string().trim().min(1, 'Front is required').max(2000),
+  back: z.string().trim().min(1, 'Back is required').max(4000),
+  frontExamples: ExamplesArray.default([]),
+  backExamples: ExamplesArray.default([]),
+  class: WordClassSchema,
+  gender: GenderSchema,
+  verb_type: VerbTypeSchema,
+  pronunciation: PronunciationSchema,
+});
+export type FlashcardCreateManyItem = z.infer<typeof FlashcardCreateManyItem>;
+
+export const FlashcardCreateManyInput = z.object({
+  categoryId: z.string().cuid(),
+  cards: z.array(FlashcardCreateManyItem).min(1).max(60),
+});
+export type FlashcardCreateManyInput = z.infer<typeof FlashcardCreateManyInput>;
+
+// ----------------------------------------------------------------------------
+// AI: generate cards from a photo
+// ----------------------------------------------------------------------------
+
+/**
+ * A single AI-generated card draft returned by `cardsAi.generateFromImage`.
+ * This is the *unsaved* shape shown in the review UI before the user confirms.
+ * `front` is the English word/phrase; `back` is the deck-language translation;
+ * the paired example arrays carry 2–3 simple present-tense sentences.
+ */
+export const AiCardDraft = z.object({
+  front: z.string().trim().min(1).max(2000),
+  back: z.string().trim().min(1).max(4000),
+  frontExamples: z.array(z.string().trim().min(1).max(500)).max(10).default([]),
+  backExamples: z.array(z.string().trim().min(1).max(500)).max(10).default([]),
+  /** Optional part-of-speech guess — one of WORD_CLASS_OPTIONS values. */
+  class: WordClassSchema,
+  /** Optional grammatical gender guess for the back word. */
+  gender: GenderSchema,
+});
+export type AiCardDraft = z.infer<typeof AiCardDraft>;
+
+/**
+ * Input for the photo → cards mutation. `imageDataUrl` is a base64 data URL
+ * (e.g. "data:image/jpeg;base64,…") produced by the browser after downscaling
+ * the upload. `backLanguage` is the deck's BCP-47 tag (e.g. "fr-FR"); the
+ * server maps it to a human language name for the model prompt.
+ */
+export const GenerateCardsFromImageInput = z.object({
+  imageDataUrl: z
+    .string()
+    .regex(/^data:image\/(png|jpe?g|webp|gif);base64,/, 'Must be a base64 image data URL')
+    // ~8MB of base64 ≈ 6MB image. Generous cap; the client downscales first.
+    .max(8_000_000),
+  backLanguage: BackLanguageSchema,
+});
+export type GenerateCardsFromImageInput = z.infer<typeof GenerateCardsFromImageInput>;
+
 // ----------------------------------------------------------------------------
 // Group
 // ----------------------------------------------------------------------------

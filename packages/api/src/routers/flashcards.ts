@@ -1,7 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { FlashcardCreateInput, FlashcardUpdateInput } from '@ensemble/types';
+import {
+  FlashcardCreateInput,
+  FlashcardCreateManyInput,
+  FlashcardUpdateInput,
+} from '@ensemble/types';
 
 import {
   getGroupSharedCategoryIds,
@@ -320,6 +324,48 @@ export const flashcardsRouter = router({
       },
     });
   }),
+
+  /**
+   * Bulk-create cards into a single deck. Backs the "New cards from photo"
+   * review flow, where the user confirms a whole batch of AI-drafted cards at
+   * once. Same authorization as `create` (owner or group member of the deck),
+   * checked once for the whole batch since they all land in one deck.
+   */
+  createMany: protectedProcedure
+    .input(FlashcardCreateManyInput)
+    .mutation(async ({ ctx, input }) => {
+      const category = await ctx.prisma.category.findUnique({
+        where: { id: input.categoryId },
+        select: { id: true, userId: true },
+      });
+      if (!category) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      if (category.userId !== ctx.userId) {
+        const allowed = await userIsGroupMemberForCategory(
+          ctx.prisma,
+          ctx.userId,
+          input.categoryId,
+        );
+        if (!allowed) throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      const result = await ctx.prisma.flashcard.createMany({
+        data: input.cards.map((c) => ({
+          front: c.front,
+          back: c.back,
+          frontExamples: c.frontExamples,
+          backExamples: c.backExamples,
+          class: c.class ?? null,
+          gender: c.gender ?? null,
+          verb_type: c.verb_type ?? null,
+          pronunciation: c.pronunciation ?? null,
+          categoryId: input.categoryId,
+          userId: ctx.userId,
+        })),
+      });
+
+      return { count: result.count };
+    }),
 
   /**
    * Update a card. Only the card's author may edit it — even in a shared

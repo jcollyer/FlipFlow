@@ -155,7 +155,7 @@ A short version, for the curious. The repo runs on Node 20+ and a Postgres datab
 
 ```bash
 npm install
-cp .env.example .env.local      # fill in DATABASE_URL, AUTH_*, optional Google keys
+cp .env.example .env.local      # fill in DATABASE_URL, AUTH_*, optional Google + OPENAI keys
 npm run db:push                  # sync Prisma schema
 npm run dev                      # web app on http://localhost:3000
 ```
