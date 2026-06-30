@@ -29,6 +29,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../../src/lib/AuthContext';
+import { API_URL } from '../../src/lib/config';
 import { trpc } from '../../src/lib/trpc';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
@@ -218,6 +219,8 @@ function SignedInHomeScreen() {
   if (isLoading && !categories) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-50">
+        {/* TEMP DEBUG: shows which API_URL the build is using. Remove before release. */}
+        <Text style={{ position: 'absolute', top: 8 }}>{API_URL}</Text>
         <ActivityIndicator size="large" color="#5584bb" />
       </View>
     );

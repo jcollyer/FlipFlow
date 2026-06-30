@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   type AiCardDraft,
@@ -75,6 +76,7 @@ export default function NewCardsFromPhotoScreen() {
 
   const router = useRouter();
   const utils = trpc.useUtils();
+  const insets = useSafeAreaInsets();
 
   const { data: category } = trpc.categories.byId.useQuery(
     { id: categoryId },
@@ -253,7 +255,10 @@ export default function NewCardsFromPhotoScreen() {
       className="flex-1 bg-white"
     >
       <Stack.Screen options={{ title: 'New cards from photo' }} />
-      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text className="mb-5 text-base text-slate-500">
           Upload a photo of a vocabulary list. We&apos;ll read it and draft cards with English on
           the front and {languageLabel} on the back. Review and edit before saving.
@@ -447,25 +452,31 @@ export default function NewCardsFromPhotoScreen() {
           </View>
         ) : null}
 
-        <View className="mt-8 flex-row gap-3">
+      </ScrollView>
+
+      {/* Floating action bar — pinned to the bottom of the view so the primary
+          action stays reachable without scrolling to the end of the list. */}
+      <View
+        className="flex-row gap-3 border-t border-slate-200 bg-white px-5 pt-3"
+        style={{ paddingBottom: insets.bottom > 0 ? insets.bottom : 12 }}
+      >
+        <View className="flex-1">
+          <Button variant="ghost" onPress={() => router.back()}>
+            Cancel
+          </Button>
+        </View>
+        {drafts ? (
           <View className="flex-1">
-            <Button variant="ghost" onPress={() => router.back()}>
-              Cancel
+            <Button
+              onPress={handleSave}
+              loading={createMany.isPending}
+              disabled={validCount === 0}
+            >
+              {`Add ${validCount} card${validCount === 1 ? '' : 's'}`}
             </Button>
           </View>
-          {drafts ? (
-            <View className="flex-1">
-              <Button
-                onPress={handleSave}
-                loading={createMany.isPending}
-                disabled={validCount === 0}
-              >
-                {`Add ${validCount} card${validCount === 1 ? '' : 's'}`}
-              </Button>
-            </View>
-          ) : null}
-        </View>
-      </ScrollView>
+        ) : null}
+      </View>
     </KeyboardAvoidingView>
   );
 }

@@ -15,7 +15,17 @@ const fallbackDevUrl = () => {
   return `http://${host}:3000`;
 };
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? fallbackDevUrl();
+/**
+ * Hardcoded production origin. Used as the fallback when EXPO_PUBLIC_API_URL
+ * isn't baked into the bundle — e.g. a release build produced via an Xcode
+ * Archive rather than `eas build` (eas.json's `env` block only applies to EAS
+ * builds). Without this, release builds fell back to http://localhost:3000,
+ * which the device can't reach and ATS blocks → infinite spinner.
+ */
+const PROD_API_URL = 'https://ensemblelanguage.com';
+
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? fallbackDevUrl() : PROD_API_URL);
 
 /** Custom URL scheme registered in app.json. Used for OAuth redirects. */
 export const APP_SCHEME = 'ensemble';

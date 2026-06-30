@@ -28,12 +28,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<StoredSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load any persisted session on mount.
+  // Load any persisted session on mount. The `finally` is critical: if
+  // getStoredSession() throws (e.g. a Keychain/SecureStore error on a release
+  // build), we must still clear isLoading or the app's auth gate spins forever.
   useEffect(() => {
     (async () => {
-      const stored = await getStoredSession();
-      setSession(stored);
-      setIsLoading(false);
+      try {
+        const stored = await getStoredSession();
+        setSession(stored);
+      } catch (err) {
+        // Treat an unreadable store as "no session" rather than bricking the
+        // app; the user can sign in again.
+        console.warn('Failed to load stored session:', err);
+        setSession(null);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, []);
 
